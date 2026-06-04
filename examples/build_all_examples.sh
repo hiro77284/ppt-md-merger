@@ -7,7 +7,7 @@ TEXTCONV_CONFIG=/d/DOCS/SWPJs/textconv/textconv_togithub.yaml
 TEXTCONV_OVERWRITE=--overwrite
 PPTMERGE_FORCE=--force
 
-DO_OVERVIEW=true
+DO_OVERVIEW=false
 
 DEBUG=--debug
 
@@ -26,16 +26,16 @@ fi
 
 targets=(
     pm1
-    pm2
-    pm3
-    pm4
-    pm5
-    pm6
-    pm7
-    pm8
-    pm9
-    pm10
-    pm11
+    # pm2
+    # pm3
+    # pm4
+    # pm5
+    # pm6
+    # pm7
+    # pm8
+    # pm9
+    # pm10
+    # pm11
 )
 
 declare -A samplenames

@@ -114,25 +114,25 @@ procedure:
     pptxfilename: second.pptx
 
   - operation: insertmd
-    mdfilename: simple_ppt_merge_slide1_md.md
+    mdfilename: simple_ppt_merge_guide_slide1_md.md
 
   - operation: insertmd
     mdfilename: ../../defaults/common_assets/tex_newpage.md
     description: "ページ送り"
 
   - operation: insertmd
-    mdfilename: simple_ppt_merge_slide2_md.md
+    mdfilename: simple_ppt_merge_guide_slide2_md.md
 
   - operation: insertmd
     mdfilename: ../../defaults/common_assets/tex_newpage.md
     description: "ページ送り"
 
   - operation: insertmd
-    mdfilename: simple_ppt_merge_slide3_md.md
+    mdfilename: simple_ppt_merge_guide_slide3_md.md
 
   - operation: insertmd
     mdfilename: ../../defaults/common_assets/tex_newpage.md
     description: "ページ送り"
 
   - operation: insertmd
-    mdfilename: simple_ppt_merge_slide4_md.md
+    mdfilename: simple_ppt_merge_guide_slide4_md.md

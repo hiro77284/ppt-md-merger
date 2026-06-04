@@ -5,7 +5,7 @@ document:
   title: <DUMMY>
 generated:
   by: md-merge
-  at: '2026-06-04T20:12:58+09:00'
+  at: '2026-06-04T21:45:52+09:00'
 source:
   config_yaml: simple_ppt_merge_pdf_recipe.yaml
   id_inventory_yaml: build/simple_ppt_merge_collect.yaml
@@ -14,4 +14,56 @@ numbering:
   chapter_enabled: true
   section_numbering: chapter_section
   image_numbering: global
-entries: []
+entries:
+- full_id: section:simple_ppt_merge_guide:slide1
+  identifier_type: section
+  part_id: simple_ppt_merge_guide
+  local_id: slide1
+  title: pptmerge　単純マージ
+  source:
+    pptx: <DUMMY>
+    md: extracted/simple_ppt_merge_guide_slide1_md.md
+  location:
+    file: build/simple_ppt_merge_merged.md
+    line: 2
+  number: '0.1'
+  label: 0.1) pptmerge　単純マージ
+- full_id: section:simple_ppt_merge_guide:slide2
+  identifier_type: section
+  part_id: simple_ppt_merge_guide
+  local_id: slide2
+  title: pm1_simple_ppt_merge 概要
+  source:
+    pptx: <DUMMY>
+    md: extracted/simple_ppt_merge_guide_slide2_md.md
+  location:
+    file: build/simple_ppt_merge_merged.md
+    line: 31
+  number: '0.2'
+  label: 0.2) pm1_simple_ppt_merge 概要
+- full_id: section:simple_ppt_merge_guide:slide3
+  identifier_type: section
+  part_id: simple_ppt_merge_guide
+  local_id: slide3
+  title: マージ結果
+  source:
+    pptx: <DUMMY>
+    md: extracted/simple_ppt_merge_guide_slide3_md.md
+  location:
+    file: build/simple_ppt_merge_merged.md
+    line: 68
+  number: '0.3'
+  label: 0.3) マージ結果
+- full_id: section:simple_ppt_merge_guide:slide4
+  identifier_type: section
+  part_id: simple_ppt_merge_guide
+  local_id: slide4
+  title: 結合指示書サンプル
+  source:
+    pptx: <DUMMY>
+    md: extracted/simple_ppt_merge_guide_slide4_md.md
+  location:
+    file: build/simple_ppt_merge_merged.md
+    line: 92
+  number: '0.4'
+  label: 0.4) 結合指示書サンプル
