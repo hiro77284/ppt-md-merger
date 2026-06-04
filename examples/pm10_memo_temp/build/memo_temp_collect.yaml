@@ -1,0 +1,44 @@
+schema_version: 1
+kind: id_inventory
+document:
+  document_id: <DUMMY>
+  title: <DUMMY>
+generated:
+  by: md-merge
+  at: '2026-06-04T17:38:36+09:00'
+source:
+  config_yaml: memo_temp_pdf_recipe.yaml
+entries:
+- full_id: section:memo_temp_guide:slide1
+  identifier_type: section
+  part_id: memo_temp_guide
+  local_id: slide1
+  title: 作業用のメモを書く
+  source:
+    pptx: <DUMMY>
+    md: extracted/memo_temp_guide_slide1_md.md
+  location:
+    file: build/memo_temp_merged.md
+    line: 2
+- full_id: section:memo_temp_guide:slide2
+  identifier_type: section
+  part_id: memo_temp_guide
+  local_id: slide2
+  title: MEMO, TEMP サンプル
+  source:
+    pptx: <DUMMY>
+    md: extracted/memo_temp_guide_slide2_md.md
+  location:
+    file: build/memo_temp_merged.md
+    line: 38
+- full_id: section:memo_temp_guide:slide3
+  identifier_type: section
+  part_id: memo_temp_guide
+  local_id: slide3
+  title: テーブルシェイプはテーブルごと消去
+  source:
+    pptx: <DUMMY>
+    md: extracted/memo_temp_guide_slide3_md.md
+  location:
+    file: build/memo_temp_merged.md
+    line: 63

@@ -1,0 +1,66 @@
+schema_version: 1
+kind: id_inventory
+document:
+  document_id: <DUMMY>
+  title: <DUMMY>
+generated:
+  by: md-merge
+  at: '2026-06-04T17:33:22+09:00'
+source:
+  config_yaml: chapter_cover_insertion_pdf_recipe.yaml
+entries:
+- full_id: section:chapter_cover_insertion_guide:slide1
+  identifier_type: section
+  part_id: chapter_cover_insertion_guide
+  local_id: slide1
+  title: Chapter Cover 挿入運用
+  source:
+    pptx: <DUMMY>
+    md: extracted/chapter_cover_insertion_guide_slide1_md.md
+  location:
+    file: build/chapter_cover_insertion_merged.md
+    line: 2
+- full_id: section:chapter_cover_insertion_guide:slide2
+  identifier_type: section
+  part_id: chapter_cover_insertion_guide
+  local_id: slide2
+  title: 'operation: chapter が使いにくい問題'
+  source:
+    pptx: <DUMMY>
+    md: extracted/chapter_cover_insertion_guide_slide2_md.md
+  location:
+    file: build/chapter_cover_insertion_merged.md
+    line: 35
+- full_id: section:chapter_cover_insertion_guide:slide3
+  identifier_type: section
+  part_id: chapter_cover_insertion_guide
+  local_id: slide3
+  title: Chapter Cover で話題の転換を明示したい
+  source:
+    pptx: <DUMMY>
+    md: extracted/chapter_cover_insertion_guide_slide3_md.md
+  location:
+    file: build/chapter_cover_insertion_merged.md
+    line: 61
+- full_id: section:chapter_cover_insertion_guide:slide4
+  identifier_type: section
+  part_id: chapter_cover_insertion_guide
+  local_id: slide4
+  title: Chapter Cover の挿入方法
+  source:
+    pptx: <DUMMY>
+    md: extracted/chapter_cover_insertion_guide_slide4_md.md
+  location:
+    file: build/chapter_cover_insertion_merged.md
+    line: 87
+- full_id: section:chapter_cover_insertion_guide:slide5
+  identifier_type: section
+  part_id: chapter_cover_insertion_guide
+  local_id: slide5
+  title: Chapter Cover テンプレートファイルの作り方
+  source:
+    pptx: <DUMMY>
+    md: extracted/chapter_cover_insertion_guide_slide5_md.md
+  location:
+    file: build/chapter_cover_insertion_merged.md
+    line: 113

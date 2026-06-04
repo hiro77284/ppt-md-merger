@@ -1,0 +1,10 @@
+  strip:
+    - name: latex_raw_block
+      type: fenced_block   # ```{lang}...``` ブロックを丸ごと除去
+      lang: "{=latex}"
+    - name: latex_par
+      type: regex
+      pattern: '\\par.*\n?'
+    - name: latex_newpage
+      type: regex
+      pattern: '\\newpage.*\n?'

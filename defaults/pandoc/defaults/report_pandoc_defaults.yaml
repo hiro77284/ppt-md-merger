@@ -1,0 +1,52 @@
+pdf-engine: lualatex
+standalone: true
+
+# 目次を作る設定
+toc: true
+toc-depth: 3
+# toc-title: 目次
+
+# テンプレ指定
+# template: report_template.tex
+
+number-sections: false
+
+filters:
+  - pandoc-crossref
+  - D:/DOCS/SWPJs/md_merge/src/md_merge/filters/include-files-resource-path.lua
+  - D:/DOCS/SWPJs/md_merge/src/md_merge/filters/blockindent.lua
+  - D:/DOCS/SWPJs/md_merge/src/md_merge/filters/largefontblock.lua
+  - D:/DOCS/SWPJs/md_merge/src/md_merge/filters/keep-together.lua
+  - D:/DOCS/SWPJs/md_merge/src/md_merge/filters/divboxes.lua
+  - D:/DOCS/SWPJs/md_merge/src/md_merge/filters/dump-sections.lua
+
+
+# report_pandoc_defaults.yaml 内
+resource-path:
+  - 'D:/DOCS/SWPJs/md_merge/sandbox/medium/build'
+
+metadata:
+  fontsize: 11pt
+  secPrefix:
+    - ""
+    - ""
+  figureTitle: "図"
+  titleDelim: "："
+  figPrefix: ["図", "図"]
+  tblPrefix: ["表", "表"]
+  eqnPrefix: ["式", "式"]
+
+
+variables:
+  documentclass: report
+  mainfont: "BIZ UDPMincho"
+  sansfont: "BIZ UDPGothic"
+  monofont: "Consolas"
+  geometry:
+    - top=15mm
+    - headheight=14pt
+    - headsep=8mm
+    - bottom=15mm
+    - left=20mm
+    - right=20mm
+

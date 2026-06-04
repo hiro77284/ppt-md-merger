@@ -1,0 +1,127 @@
+# PowerPointファイル結合指示サンプル
+
+# 概要：単純に２つのファイルをナンバリングもせずに結合する、最もシンプルな例
+
+vars:
+  COVER_IMAGE: ppt_md_merger.png
+  COVER_TITLE: "pptmerge 変数置換"
+  COVER_SUBTITLE: "pptmerge 機能の 「変数置換」 用例"
+  COVER_DATE: "2026-05-22"
+  COVER_AUTHOR: "開米瑞浩"
+  COVER_AFFILIATION: "アイデアクラフト"
+  COVER_CONTACT: "https://ideacraft"
+  COVER_COPYRIGHT: "© 2026 M. Kaimai"
+  COVER_NOTE: "本書は、 PPT を 「流用できる文書部品」 として統合するツール PPT & MD merger で、pptxファイルに対して変数置換を行う用例の概要説明文書です。"
+  COVER_QRCODE: 
+
+log:
+  level: debug
+  filename: log.txt
+  duplicate: stdout  # ログファイルと同じ内容を標準出力または標準エラーにも出す。未設定または空欄のときは重複出力しない。stdout は標準出力、stderr は標準エラー出力
+
+# puremd サブコマンドのオプション。削除対象とするパターンを指定するyamlファイルのパス
+puremd:
+  strip_config: ../../defaults/common_assets/puremd_strip.yaml
+
+# pptmergeコマンドの設定
+pptmerge:
+
+# 出力ファイル名設定
+output: 
+  force: true          # 既存の出力ファイルを上書きする（既定: false）
+  path_base: source  # source の場合、この yaml の場所を基準に file を決定する。current なら実行時カレントディレクトリ基準。
+  outputdir: build  # 出力ファイルを書き込むディレクトリ
+  cropdir: extracted/figures      # pdfからレンジ範囲で取得した画像を保存するディレクトリ
+
+  mdfilename: variable_replacement_merged.md            # 結合後のmdファイルのファイル名
+  pptxfilename: variable_replacement_merged.pptx        # 結合後のpptxファイルのファイル名
+  idcollectfilename: variable_replacement_collect.yaml  # 結合後のmdファイルから{{#id:...}}マーカーを抽出して生成されるインベントリファイルのファイル名
+  idresolvedfilename: variable_replacement_resolved.yaml  # インベントリファイルを読み込んでnumberとlabelを付与したID解決済みマップファイルのファイル名
+  renderedfilename: variable_replacement_rendered.md    # 結合後のmdファイルに対してタイトル置換・参照置換を行ったレンダー済みmdファイルのファイル名
+  puremdfilename: variable_replacement_puremd.md        # rendered.mdファイルからlatex命令を削除した純粋なmdファイルのファイル名。MD自体でプレビューを見るときはこれを使う
+  pdffilename: variable_replacement_merged.pdf          # 結合後のmdファイルをPandocでレンダーして生成されるpdfファイルのファイル名
+  texfilename: variable_replacement_merged.tex          # 結合後のmdファイルをPandocでレンダーして生成されるtexファイルのファイル名
+  resourcepathfilename: resourcepath.tex  # 結合後のmdファイルで使用するリソースパスを書き込むtexファイルのファイル名
+  htmlfilename: variable_replacement_merged.html        # 結合後のmdファイルをPandocでレンダーして生成されるhtmlファイルのファイル名
+  revealfilename: variable_replacement_merged_reveal.html        # 結合後のmdファイルをPandocでレンダーして生成されるhtmlファイルのファイル名
+
+indexer:
+  pptxnumbering: "no"       # pptmerge での章節番号付番方法。chapt_section の場合、idresolve を使わずに pptx 単独で operation: chapter, operation:section により 章・節番号を付番する
+
+
+# merge サブコマンドのオプション
+merge:
+  no-copy-images: false # trueなら画像ファイルのコピーおよびパス書き換えを行わない。（既定値 false は画像ファイルのコピーおよびパス書き換えを行う）
+  image-dir:          # 画像コピー先サブディレクトリ名（既定: 空値。結合後のmdファイルでもソースのmdファイルの相対パスを維持するように画像ファイルをコピーする）
+  flatten-images: false # trueならすべての画像を<outputdir>/<image-dir>/ にフラット集約する。同名ファイルは _1, _2 … のサフィックスを付けて上書きを回避する（既定: false）
+  strict: false         # 警告をエラーとして扱う（既定: false）
+
+pandoc:
+  defaults: ../../defaults/pandoc/defaults/report_pandoc_defaults.yaml   # Pandoc のデフォルト設定ファイルのパス
+  htmldefaults: ../../defaults/pandoc/defaults/html_pandoc_defaults.yaml   # Pandoc のHTMLデフォルト設定ファイルのパス
+  revealdefaults: ../../defaults/pandoc/defaults/reveal_pandoc_defaults.yaml   # Pandoc のRevealデフォルト設定ファイルのパス
+  # metadata-file: variable_replacement_meta.yaml                   # Pandoc のメタデータファイルのパス。
+  template: ../../defaults/pandoc/templates/report_template.tex  # Pandoc のテンプレートファイルのパス
+  include-in-header: ../../defaults/pandoc/templates/report_header.tex # Pandoc のヘッダー用ファイルのパス
+
+  # ↓condblockprocessコマンドで処理する対象。実質、coverの処理。
+  # inputで参照する cover を選択し、それに変数置換を加えた一時ファイルを output に書く
+  conditional-process-input: ../../defaults/pandoc/standard_cover.tex
+  conditional-process-output: build/cover-processed.tex
+
+  # coverとして挿入するファイル。通常、conditional-process-outputと同じ。
+  include-before-body: # 本文の前に挿入するファイルのリスト。通常、表紙ページを挿入する。
+    - build/cover-processed.tex
+
+  # ↓「Pandoc がユーザー専用の資材（テンプレート、カスタムフィルタ、ユーザーデータなど）を探しに行く基準ディレクトリ」
+  # 主な対象はテンプレート、フィルタ、スタイルファイル。Pandoc の「設定ファイル群」の置き場所
+  # このディレクトリ及びその下の templates, filters, defaults ディレクトリも探しに行く。
+  # --template や --lua-filter で指定した名前
+  # 複数指定は不可（1つだけ指定する）
+  data-dir: ../../defaults/pandoc
+
+  # LaTeX処理時に画像、埋め込みファイルなどを探しに行く基準ディレクトリ。
+  # HTML では処理しない。YAMLリストで複数指定可能
+  # ↓↓↓↓↓↓
+  resource-path: 
+    - build
+    - ../../defaults/common_assets
+
+
+input:
+  mddir: 
+    - extracted
+    - ../../defaults/common_assets
+  pptxdir: 
+  imagesdir: 
+    - extracted/figures
+    - ../../defaults/common_assets
+
+  # pptxから画像を取得してくるための設定
+  cropsrc:
+    pptx: variable_replacement_guide.pptx           # 画像のソースとなる pptx ファイル名
+    pdf: variable_replacement_guide.pdf           # スライド全体画像取得用のPDF
+
+
+# 結合手順： "operation: insertpptx" で、結合したいファイルを結合順に記載する
+procedure:
+  - operation: insertpptx
+    pptxfilename: variable_replacement_guide.pptx
+
+  - operation: insertpptx
+    pptxfilename: variable_replacement_sample1.pptx
+  - operation: insertpptx
+    pptxfilename: variable_replacement_sample2.pptx
+
+  - operation: chapter  # 章番号を付番する。
+    chapter: "+"        # 前の章番号に 1 を加える。結果、0+1 で1になる
+  - operation: insertmd
+    mdfilename: variable_replacement_guide_slide1_md.md
+
+  - operation: insertmd
+    mdfilename: ../../defaults/common_assets/tex_newpage.md
+    description: "ページ送り"
+
+  - operation: insertmd
+    mdfilename: variable_replacement_guide_slide2_md.md
+

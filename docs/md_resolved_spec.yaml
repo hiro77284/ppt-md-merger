@@ -1,0 +1,40 @@
+#IDresolved yamlの仕様
+schema_version: integer
+kind: id_map
+
+document:
+  document_id: string
+  title: string
+
+generated:
+  by: string
+  at: string  # ISO 8601 datetime
+
+source:
+  config_yaml: string
+  id_inventory_yaml: string
+
+numbering:
+  profile: string
+  chapter_enabled: boolean
+  section_numbering: string   # chapter_section | section_only | none
+  image_numbering: string     # global | per_chapter | none
+
+entries:
+  - full_id: string
+    identifier_type: string  # chapter | section | subsection | image
+    part_id: string
+    local_id: string
+    title: string
+
+    number: string           # optional if numbering disabled
+    label: string            # optional if numbering disabled
+
+    source:
+      pptx: string
+      md: string
+      image: string          # optional
+
+    location:
+      file: string
+      line: integer

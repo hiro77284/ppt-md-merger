@@ -1,0 +1,23 @@
+# PowerPointファイル結合指示サンプル
+# 概要：単純に２つのファイルを結合し、ファイルごとに Chapter を構成するとしてナンバリングも行う
+
+# 出力ファイル名
+output: 
+  pptxfilename: simple_numbering_merged.pptx        # 結合後のpptxファイルのファイル名
+
+indexer:
+  pptxnumbering: chapt_section      # pptmerge での章節番号付番方法。chapt_section の場合、idresolve を使わずに 
+                                    # pptx 単独で operation: chapter, operation:section により 章・節番号を付番する。
+
+# 結合手順： "operation: insertpptx" で、結合したいファイルを結合順に記載する
+procedure:
+  # 処理を始める時点での章番号の初期値は 0
+  - operation: chapter  # 章番号を付番する。
+    chapter: "+"        # 前の章番号に 1 を加える。結果、0+1 で1になる
+  - operation: insertpptx
+    pptxfilename: simple_numbering_guide.pptx  # このファイルは Chapter 1 になる
+
+  - operation: chapter  # 次の章番号を付番する。
+    chapter: "+"        # 前の章番号に 1 を加える。結果、1+1 で2になる
+  - operation: insertpptx
+    pptxfilename: second.pptx  # このファイルは Chapter 2 になる

@@ -1,0 +1,13 @@
+# PowerPointファイル結合指示サンプル
+# pptmerge だけを行う、極めて簡単な設定の例
+
+# 出力ファイル名設定
+output: 
+  pptxfilename: simple_ppt_merge_merged.pptx        # 結合後のpptxファイルのファイル名
+
+# 結合手順： "operation: insertpptx" で、結合したいファイルを結合順に記載する
+procedure:
+  - operation: insertpptx
+    pptxfilename: simple_ppt_merge_guide.pptx
+  - operation: insertpptx
+    pptxfilename: second.pptx

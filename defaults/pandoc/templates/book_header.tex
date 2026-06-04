@@ -1,0 +1,443 @@
+% =======================
+% 基本パッケージ
+% =======================
+\usepackage{float}
+\usepackage{titlesec}
+\usepackage{setspace}
+\usepackage{fontspec}
+\usepackage{luatexja}
+\usepackage{luatexja-fontspec}
+\usepackage{graphicx}
+\usepackage{qrcode}
+% \usepackage{xcolor}
+\usepackage{fancyhdr}
+\usepackage{tcolorbox}
+\usepackage{xparse}
+\usepackage{enumitem}
+\usepackage{needspace}
+% \usepackage{hyperref}
+
+% tcolorbox ライブラリ
+\tcbuselibrary{skins,breakable}
+
+% =======================
+% 図の配置
+% =======================
+\floatplacement{figure}{H}
+
+% =======================
+% 行間・段落
+% =======================
+\onehalfspacing
+\setstretch{1.2}
+\setlength{\parskip}{0.5em}
+
+% =======================
+% フォント設定
+% =======================
+\setmainfont{Times New Roman}
+\setsansfont{Arial}
+\setmonofont{Latin Modern Mono}
+
+\setmainjfont{BIZ UDPGothic}
+\setsansjfont{BIZ UDPGothic}
+
+\newcommand{\fontsetA}[1]{%
+  {\fontspec{TeX Gyre Termes}%
+  \jfontspec{BIZ UDPGothic}#1}%
+}
+
+\newcommand{\fontsetB}[1]{%
+  {\fontspec{BIZ UDPMincho}%
+  \jfontspec{BIZ UDPMincho}#1}%
+}
+
+\newenvironment{minchoblock}
+  {\fontspec{BIZ UDPMincho}\jfontspec{BIZ UDPMincho}}
+  {}
+
+\newenvironment{gothicblock}
+  {\fontspec{BIZ UDPGothic}\jfontspec{BIZ UDPGothic}}
+  {}
+
+% =======================
+% 見出し設定
+% =======================
+
+\renewcommand{\chaptername}{Chapter}
+
+% \titleformat{\chapter}
+%   {\bfseries\fontsize{16pt}{18pt}\selectfont}
+%   {\thechapter}
+%   {1em}
+%   {}
+
+% chapter はゴシック体で表示
+% \titleformat{\chapter}
+%   {\sffamily\bfseries\fontsize{16pt}{18pt}\selectfont}
+%   {\thechapter}{1em}{}
+
+% \titleformat{\chapter}[block]
+%   {\bfseries\fontsize{16pt}{18pt}\selectfont}
+%   {\thechapter}
+%   {1em}
+%   {}
+
+\titlespacing*{\chapter}{0pt}{-20pt}{6pt}
+
+
+\titleformat{\chapter}[block]
+  {\gtfamily\sffamily\bfseries\fontsize{18pt}{18pt}\selectfont}
+  {\thechapter}{1em}{}
+
+\titleformat{\section}[block]
+  {\gtfamily\sffamily\bfseries\fontsize{14pt}{16pt}\selectfont}
+  {\thesection}{1em}{}
+
+% \titleformat{\section}
+%   {\bfseries\fontsize{14pt}{16pt}\selectfont}
+%   {\thesection}
+%   {1em}
+%   {}
+
+\titleformat{\subsection}
+  {\bfseries\fontsize{12pt}{14pt}\selectfont}
+  {\thesubsection}
+  {1em}
+  {}
+
+% 章、節、項の前後余白
+% \titlespacing{<コマンド>}{<左>}{<前>}{<後>}
+% \titlespacing{\chapter}{0pt}{0pt}{12pt}
+\titlespacing{\section}{0pt}{18pt}{6pt}
+\titlespacing{\subsection}{0pt}{12pt}{4pt}
+
+
+% \let\oldtextbf\textbf
+% \renewcommand{\textbf}[1]{%
+%   {\color{blue}\oldtextbf{#1}}%
+% }
+
+
+% =======================
+% ヘッダ用マーク設定
+% =======================
+\makeatletter
+\renewcommand{\chaptermark}[1]{%
+  \markboth{%
+    \ifnum\c@secnumdepth>\m@ne
+      \if@mainmatter \@chapapp\ \thechapter.\ \fi
+    \fi
+    #1%
+  }{}%
+}
+\renewcommand{\sectionmark}[1]{%
+  \markright{%
+    \ifnum\c@secnumdepth>\z@
+      \thesection\quad
+    \fi
+    #1%
+  }%
+}
+\makeatother
+
+% =======================
+% 目次設定
+% =======================
+\makeatletter
+\renewcommand*\l@section{\@dottedtocline{1}{1.5em}{3.0em}}
+\renewcommand*\l@subsection{\@dottedtocline{2}{3.8em}{4.8em}}
+\makeatother
+
+% =======================
+% ページ設定
+% =======================
+\AtBeginDocument{%
+  \setcounter{chapter}{0}
+}
+
+% =======================
+% 箇条書き
+% =======================
+\setlist[itemize]{label=\scriptsize●}
+
+% =======================
+% 引用ボックス設定
+% =======================
+% \tcbset{
+%   widequote/base/.style={
+%     breakable,
+%     after upper=\unskip
+%   },
+%   widequote/indent/.style={
+%     widequote/base,
+%     blanker,
+%     left=4mm,
+%     right=2mm
+%   },
+%   widequote/frame/.style={
+%     widequote/base,
+%     colback=white,
+%     colframe=black,
+%     boxrule=0.4pt,
+%     left=4mm,
+%     right=2mm,
+%     top=1.5mm,
+%     bottom=1.5mm
+%   },
+%   widequote/noframe/.style={
+%     widequote/base,
+%     blanker,
+%     left=4mm,
+%     right=2mm,
+%     top=1.5mm,
+%     bottom=1.5mm
+%   },
+%   quote/frame/.style={
+%     breakable,
+%     colback=white,
+%     colframe=black,
+%     boxrule=0.4pt,
+%     left=2mm,
+%     right=2mm,
+%     top=1.5mm,
+%     bottom=1.5mm,
+%     after upper=\unskip
+%   }
+% }
+
+% =======================
+% インデント環境
+% =======================
+\newenvironment{blockindent}
+{
+  \begin{list}{}%
+    {
+      \setlength{\leftmargin}{2em}%
+      \setlength{\rightmargin}{0em}%
+      \setlength{\topsep}{0pt}%
+      \setlength{\partopsep}{0pt}%
+      \setlength{\parsep}{0pt}%
+      \setlength{\itemsep}{0pt}%
+    }%
+  \item[]
+}
+{
+  \end{list}
+}
+
+% =======================
+% 大きい文字環境
+% =======================
+\newenvironment{largefontblock}
+  {\Large}
+  {}
+  
+  
+% =======================
+% 引用ボックス・fenced div 用設定
+% =======================
+\tcbset{
+  leadline/font/.style args={#1}{
+    fontupper=\gtfamily\sffamily\bfseries #1
+  },
+  note/font/.style args={#1}{
+    fontupper=#1
+  },
+  warning/font/.style args={#1}{
+    fontupper=\gtfamily\sffamily\bfseries #1
+  },
+  widequote/font/.style args={#1}{
+    fontupper=#1
+  },
+  widequote/stretch/.style args={#1}{
+    before upper={\setstretch{#1}}
+  },
+  leadline/base/.style={
+    breakable,
+    after upper=\unskip
+  },
+  leadline/frame/.style={
+    leadline/base,
+    colback=white,
+    colframe=black,
+    boxrule=0.4pt,
+    left=0mm,
+    right=0mm,
+    top=0.5mm,
+    bottom=0.5mm
+  },
+  leadline/noframe/.style={
+    leadline/base,
+    blanker,
+    left=0mm,
+    right=0mm,
+    top=0.5mm,
+    bottom=0.5mm
+  },
+  note/base/.style={
+    breakable,
+    after upper=\unskip
+  },
+  note/frame/.style={
+    note/base,
+    colback=black!3,
+    colframe=black!30,
+    boxrule=0.3pt,
+    left=2mm,
+    right=2mm,
+    top=1mm,
+    bottom=1mm
+  },
+  note/noframe/.style={
+    note/base,
+    blanker,
+    left=2mm,
+    right=2mm,
+    top=1mm,
+    bottom=1mm
+  },
+  warning/base/.style={
+    breakable,
+    after upper=\unskip
+  },
+  warning/frame/.style={
+    warning/base,
+    colback=black!5,
+    colframe=black,
+    boxrule=0.5pt,
+    left=2mm,
+    right=2mm,
+    top=1mm,
+    bottom=1mm
+  },
+  warning/noframe/.style={
+    warning/base,
+    blanker,
+    left=2mm,
+    right=2mm,
+    top=1mm,
+    bottom=1mm
+  },
+  widequote/base/.style={
+    breakable,
+    widequote/stretch={1.4},
+    after upper=\unskip
+  },
+  widequote/indent/.style={
+    widequote/base,
+    blanker,
+    left=4mm,
+    right=2mm
+  },
+  widequote/frame/.style={
+    widequote/base,
+    colback=white,
+    colframe=black,
+    boxrule=0.4pt,
+    left=4mm,
+    right=2mm,
+    top=1.5mm,
+    bottom=1.5mm
+  },
+  widequote/noframe/.style={
+    widequote/base,
+    blanker,
+    left=4mm,
+    right=2mm,
+    top=1.5mm,
+    bottom=1.5mm
+  }
+}
+
+% =======================
+% quote 環境
+% =======================
+% \renewenvironment{quote}
+%   {
+%     \begin{tcolorbox}[quote/frame]
+%     \begin{spacing}{1.2}
+%   }
+%   {
+%     \end{spacing}
+%     \unskip
+%     \end{tcolorbox}
+%   }
+
+% =======================
+% widequote 環境
+% =======================
+\NewDocumentEnvironment{widequote}{ O{} }
+  {
+    \begin{tcolorbox}[widequote/noframe,#1]
+    \ignorespaces
+    \begin{spacing}{1.4}
+  }
+  {
+    \end{spacing}
+    \unskip\ignorespacesafterend
+    \end{tcolorbox}
+  }
+
+\newenvironment{widequotenoframe}
+  {
+    \begin{widequote}[widequote/noframe]
+  }
+  {
+    \end{widequote}
+  }
+
+% =======================
+% fenced div 用ボックス
+% =======================
+\newtcolorbox{leadlinebox}[1][]{
+  enhanced,
+  breakable,
+  blanker,
+  before skip=10pt,
+  after skip=8pt,
+  left=0pt,
+  right=0pt,
+  top=1mm,
+  bottom=1mm,
+  leadline/font={\Large},
+  #1
+}
+
+\newtcolorbox{notebox}[1][]{
+  enhanced,
+  breakable,
+  colback=black!3,
+  colframe=black!35,
+  boxrule=0.4pt,
+  left=3mm,
+  right=3mm,
+  top=1.5mm,
+  bottom=1.5mm,
+  before skip=8pt,
+  after skip=8pt,
+  note/font={\normalsize},
+  #1
+}
+
+\newtcolorbox{warningbox}[1][]{
+  enhanced,
+  breakable,
+  colback=black!6,
+  colframe=black,
+  boxrule=0.8pt,
+  left=3mm,
+  right=3mm,
+  top=1.5mm,
+  bottom=1.5mm,
+  before skip=10pt,
+  after skip=10pt,
+  warning/font={\normalsize},
+  #1
+}
+
+\newtcolorbox{widequotebox}[1][]{
+  widequote/font={\normalsize},
+  #1
+}
+

@@ -1,0 +1,66 @@
+schema_version: 1
+kind: id_inventory
+document:
+  document_id: <DUMMY>
+  title: <DUMMY>
+generated:
+  by: md-merge
+  at: '2026-06-04T17:34:31+09:00'
+source:
+  config_yaml: stylebase_pdf_recipe.yaml
+entries:
+- full_id: section:stylebase_guide:slide1
+  identifier_type: section
+  part_id: stylebase_guide
+  local_id: slide1
+  title: stylebaseを別に指定する機能
+  source:
+    pptx: <DUMMY>
+    md: extracted/stylebase_guide_slide1_md.md
+  location:
+    file: build/stylebase_merged.md
+    line: 2
+- full_id: section:stylebase_guide:slide2
+  identifier_type: section
+  part_id: stylebase_guide
+  local_id: slide2
+  title: なぜstylebaseを別途指定すべき？
+  source:
+    pptx: <DUMMY>
+    md: extracted/stylebase_guide_slide2_md.md
+  location:
+    file: build/stylebase_merged.md
+    line: 24
+- full_id: section:stylebase_guide:slide3
+  identifier_type: section
+  part_id: stylebase_guide
+  local_id: slide3
+  title: stylebaseを別途指定するしくみ
+  source:
+    pptx: <DUMMY>
+    md: extracted/stylebase_guide_slide3_md.md
+  location:
+    file: build/stylebase_merged.md
+    line: 57
+- full_id: section:stylebase_guide:slide4
+  identifier_type: section
+  part_id: stylebase_guide
+  local_id: slide4
+  title: 結合指示書サンプル
+  source:
+    pptx: <DUMMY>
+    md: extracted/stylebase_guide_slide4_md.md
+  location:
+    file: build/stylebase_merged.md
+    line: 77
+- full_id: section:different_style_sample:slide1
+  identifier_type: section
+  part_id: different_style_sample
+  local_id: slide1
+  title: styleの違うサンプル
+  source:
+    pptx: <DUMMY>
+    md: extracted/different_style_sample_slide1_md.md
+  location:
+    file: build/stylebase_merged.md
+    line: 103

@@ -1,0 +1,44 @@
+schema_version: 1
+kind: id_inventory
+document:
+  document_id: <DUMMY>
+  title: <DUMMY>
+generated:
+  by: md-merge
+  at: '2026-05-14T19:18:27+09:00'
+source:
+  config_yaml: recipe.yaml
+entries:
+- full_id: chapter:intro:preface
+  identifier_type: chapter
+  part_id: intro
+  local_id: preface
+  title: <DUMMY>
+  source:
+    pptx: <DUMMY>
+    md: md/a.md
+  location:
+    file: out/merged.md
+    line: 4
+- full_id: subsection:intro:background
+  identifier_type: subsection
+  part_id: intro
+  local_id: background
+  title: <DUMMY>
+  source:
+    pptx: <DUMMY>
+    md: md/sub/detail.md
+  location:
+    file: out/merged.md
+    line: 9
+- full_id: unknown_type:main:test
+  identifier_type: unknown_type
+  part_id: main
+  local_id: test
+  title: <DUMMY>
+  source:
+    pptx: <DUMMY>
+    md: md/b.md
+  location:
+    file: out/merged.md
+    line: 17

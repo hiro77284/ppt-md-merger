@@ -1,0 +1,77 @@
+schema_version: 1
+kind: id_inventory
+document:
+  document_id: <DUMMY>
+  title: <DUMMY>
+generated:
+  by: md-merge
+  at: '2026-06-04T17:31:31+09:00'
+source:
+  config_yaml: chapter_marker_numbering_pdf_recipe.yaml
+entries:
+- full_id: chapter:AUTOCHAPTER:AUTOID_1
+  identifier_type: chapter
+  part_id: AUTOCHAPTER
+  local_id: AUTOID_1
+  title: TITLE NOT FOUND
+  source:
+    pptx: <DUMMY>
+    md: <DUMMY>
+  location:
+    file: build/chapter_marker_numbering_merged.md
+    line: 2
+- full_id: section:chapter_marker_numbering_guide:slide1
+  identifier_type: section
+  part_id: chapter_marker_numbering_guide
+  local_id: slide1
+  title: chapter_marker によるナンバリング
+  source:
+    pptx: <DUMMY>
+    md: extracted/chapter_marker_numbering_guide_slide1_md.md
+  location:
+    file: build/chapter_marker_numbering_merged.md
+    line: 6
+- full_id: section:chapter_marker_numbering_guide:slide2
+  identifier_type: section
+  part_id: chapter_marker_numbering_guide
+  local_id: slide2
+  title: '#CHAPT# マーカーの埋め込み'
+  source:
+    pptx: <DUMMY>
+    md: extracted/chapter_marker_numbering_guide_slide2_md.md
+  location:
+    file: build/chapter_marker_numbering_merged.md
+    line: 36
+- full_id: section:chapter_marker_numbering_guide:slide3
+  identifier_type: section
+  part_id: chapter_marker_numbering_guide
+  local_id: slide3
+  title: '1ファイル中の複数 #CHAPT# も可能'
+  source:
+    pptx: <DUMMY>
+    md: extracted/chapter_marker_numbering_guide_slide3_md.md
+  location:
+    file: build/chapter_marker_numbering_merged.md
+    line: 62
+- full_id: section:chapter_marker_numbering_guide:slide4
+  identifier_type: section
+  part_id: chapter_marker_numbering_guide
+  local_id: slide4
+  title: '#SECTION# マーカーは節番号をリセット'
+  source:
+    pptx: <DUMMY>
+    md: extracted/chapter_marker_numbering_guide_slide4_md.md
+  location:
+    file: build/chapter_marker_numbering_merged.md
+    line: 84
+- full_id: section:chapter_marker_numbering_guide:slide5
+  identifier_type: section
+  part_id: chapter_marker_numbering_guide
+  local_id: slide5
+  title: 結合指示書サンプル
+  source:
+    pptx: <DUMMY>
+    md: extracted/chapter_marker_numbering_guide_slide5_md.md
+  location:
+    file: build/chapter_marker_numbering_merged.md
+    line: 109

@@ -1,0 +1,30 @@
+schema_version: 1
+kind: id_map
+document:
+  document_id: <DUMMY>
+  title: <DUMMY>
+generated:
+  by: md-merge
+  at: '2026-06-04T17:39:12+09:00'
+source:
+  config_yaml: title_filename_pdf_recipe.yaml
+  id_inventory_yaml: build/title_filename_collect.yaml
+numbering:
+  profile: default
+  chapter_enabled: true
+  section_numbering: chapter_section
+  image_numbering: global
+entries:
+- full_id: section:title_filename_guide:slide1
+  identifier_type: section
+  part_id: title_filename_guide
+  local_id: slide1
+  title: TITLE、FILENAME置換
+  source:
+    pptx: <DUMMY>
+    md: extracted/title_filename_guide_slide1_md.md
+  location:
+    file: build/title_filename_merged.md
+    line: 2
+  number: '0.1'
+  label: 0.1) TITLE、FILENAME置換

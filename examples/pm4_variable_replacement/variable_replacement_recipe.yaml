@@ -1,0 +1,31 @@
+# MD, PowerPointファイルの結合指示書のサンプル
+
+output: 
+  pptxfilename: variable_replacement_merged.pptx        # 結合後のpptxファイルのファイル名
+
+indexer:
+  pptxnumbering: chapt_section       # pptmerge での章節番号付番方法。chapt_section の場合、idresolve を使わずに pptx 単独で operation: chapter, operation:section により 章・節番号を付番する
+
+vars:
+  PRODUCT_NAME: 極上モンブラン
+  PRICE: 980円
+  FEATURE: 熊本県産和栗の濃厚クリーム
+
+procedure:
+  - operation: chapter
+    chapter: "+"
+  - operation: insertpptx
+    pptxfilename: variable_replacement_guide.pptx
+
+  - operation: chapter
+    chapter: "+"
+  - operation: insertpptx
+    pptxfilename: variable_replacement_sample1.pptx
+
+  - operation: chapter
+    chapter: "+"
+  - operation: insertpptx
+    pptxfilename: variable_replacement_sample2.pptx
+    vars:
+      PRODUCT_NAME: 極上モンブラン（4月限定）
+      FEATURE: 最高級イタリア栗の味わい

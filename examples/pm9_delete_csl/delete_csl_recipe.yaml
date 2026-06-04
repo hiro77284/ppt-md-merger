@@ -1,0 +1,13 @@
+# MD, PowerPointファイルの結合指示書のサンプル
+output: 
+  pptxfilename: delete_csl_merged.pptx        # 結合後のpptxファイル名
+
+indexer:
+  deletecsl: true  # pptmerge 時に #CSL# マーカーのあるスライドを削除するかどうか。デフォルトはfalse。 --deletecsl オプションで上書きされる
+  pptxnumbering: no       # pptmerge での章節番号付番方法。chapt_section の場合、idresolve を使わずに pptx 単独で operation: chapter, operation:section により 章・節番号を付番する
+
+procedure:
+  - operation: insertpptx
+    pptxfilename: delete_csl_guide.pptx
+  - operation: insertpptx
+    pptxfilename: delete_csl_sample1.pptx

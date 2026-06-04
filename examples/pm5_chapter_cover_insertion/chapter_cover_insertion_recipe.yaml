@@ -1,0 +1,28 @@
+# MD, PowerPointファイルの結合指示書のサンプル
+
+output: 
+  pptxfilename: chapter_cover_insertion_merged.pptx        # 結合後のpptxファイルのファイル名
+
+indexer:
+  pptxnumbering: chapt_section       # pptmerge での章節番号付番方法。chapt_section の場合、idresolve を使わずに pptx 単独で operation: chapter, operation:section により 章・節番号を付番する
+  deletecsp: true
+
+procedure:
+  - operation: chapter
+    chapter: "+"
+  - operation: insertpptx
+    pptxfilename: chapter_cover_insertion_guide.pptx
+
+  - operation: insertpptx
+    pptxfilename: chaptercover_withdetailguide.pptx
+    vars:
+      CHAPT_TITLE: 章カバーサンプル(その１)
+  - operation: insertpptx
+    pptxfilename: no_contents.pptx
+
+  - operation: insertpptx
+    pptxfilename: chaptercover_withdetailguide.pptx
+    vars:
+      CHAPT_TITLE: 章カバーサンプル(その２)
+  - operation: insertpptx
+    pptxfilename: no_contents.pptx

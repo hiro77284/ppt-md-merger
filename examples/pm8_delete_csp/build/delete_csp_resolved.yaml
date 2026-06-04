@@ -1,0 +1,82 @@
+schema_version: 1
+kind: id_map
+document:
+  document_id: <DUMMY>
+  title: <DUMMY>
+generated:
+  by: md-merge
+  at: '2026-06-04T17:35:52+09:00'
+source:
+  config_yaml: delete_csp_pdf_recipe.yaml
+  id_inventory_yaml: build/delete_csp_collect.yaml
+numbering:
+  profile: default
+  chapter_enabled: true
+  section_numbering: chapter_section
+  image_numbering: global
+entries:
+- full_id: section:delete_csp_guide:slide1
+  identifier_type: section
+  part_id: delete_csp_guide
+  local_id: slide1
+  title: 指定したシェイプを消去する
+  source:
+    pptx: <DUMMY>
+    md: extracted/delete_csp_guide_slide1_md.md
+  location:
+    file: build/delete_csp_merged.md
+    line: 2
+  number: '0.1'
+  label: 0.1) 指定したシェイプを消去する
+- full_id: section:delete_csp_guide:slide2
+  identifier_type: section
+  part_id: delete_csp_guide
+  local_id: slide2
+  title: 消去したいシェイプにCSPマーカーを入れておく
+  source:
+    pptx: <DUMMY>
+    md: extracted/delete_csp_guide_slide2_md.md
+  location:
+    file: build/delete_csp_merged.md
+    line: 33
+  number: '0.2'
+  label: 0.2) 消去したいシェイプにCSPマーカーを入れておく
+- full_id: section:delete_csp_guide:slide4
+  identifier_type: section
+  part_id: delete_csp_guide
+  local_id: slide4
+  title: CSPマーカー利用例
+  source:
+    pptx: <DUMMY>
+    md: extracted/delete_csp_guide_slide4_md.md
+  location:
+    file: build/delete_csp_merged.md
+    line: 59
+  number: '0.3'
+  label: 0.3) CSPマーカー利用例
+- full_id: section:delete_csp_guide:slide6
+  identifier_type: section
+  part_id: delete_csp_guide
+  local_id: slide6
+  title: テーブルシェイプはテーブルごと消去
+  source:
+    pptx: <DUMMY>
+    md: extracted/delete_csp_guide_slide6_md.md
+  location:
+    file: build/delete_csp_merged.md
+    line: 85
+  number: '0.4'
+  label: 0.4) テーブルシェイプはテーブルごと消去
+- full_id: section:delete_csp_guide:slide7
+  identifier_type: section
+  part_id: delete_csp_guide
+  local_id: slide7
+  title: シェイプを残して文字列だけ消去するには？
+  source:
+    pptx: <DUMMY>
+    md: extracted/delete_csp_guide_slide7_md.md
+  location:
+    file: build/delete_csp_merged.md
+    line: 109
+  number: '0.5'
+  label: 0.5) シェイプを残して文字列だけ消去するには？

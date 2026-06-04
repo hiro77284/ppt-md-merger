@@ -1,0 +1,32 @@
+# MD, PowerPointファイルの結合指示書のサンプル
+
+output: 
+  pptxfilename: splitted_insertion_merged.pptx        # 結合後のpptxファイルのファイル名
+
+indexer:
+  deletecsp: true
+  pptxnumbering: no       # pptmerge での章節番号付番方法。chapt_section の場合、idresolve を使わずに pptx 単独で operation: chapter, operation:section により 章・節番号を付番する
+
+procedure:
+  - operation: insertpptx
+    pptxfilename: splitted_insertion_guide.pptx
+    slides: 1-2
+
+  - operation: insertpptx
+    pptxfilename: splitted_insertion_guide.pptx
+    slides: "3"
+
+  # この下は分割挿入のサンプル
+  - operation: insertpptx
+    pptxfilename: splitted_insertion_sample1.pptx
+    slides: 1-2
+  - operation: insertpptx
+    pptxfilename: splitted_insertion_sample2.pptx
+    slides: [1,2]
+  - operation: insertpptx
+    pptxfilename: splitted_insertion_sample1.pptx
+    slides: 3
+  - operation: insertpptx
+    pptxfilename: splitted_insertion_sample2.pptx
+    slides: "3"
+

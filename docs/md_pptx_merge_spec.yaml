@@ -1,0 +1,213 @@
+#md,PowerPointファイルの結合指示書yamlの仕様
+version:
+  type: integer
+  required: true
+  description: 構成指示ファイルの仕様バージョン
+
+output:
+  renderedmdfilename:
+    type: string
+    required: true
+    description: レンダリング（付番・参照解決）された md ファイル名。ディレクトリを含めない単一ファイル名
+
+  mdfilename:
+    type: string
+    required: true
+    description: 出力する md ファイル名。ディレクトリを含めない単一ファイル名
+
+  mddir:
+    type: string
+    required: true
+    description: mdファイル出力ディレクトリ。相対パスまたは絶対パス
+
+  pptxfilename:
+    type: string
+    required: true
+    description: 出力する pptx ファイル名。ディレクトリを含めない単一ファイル名
+
+  outputdir:
+    type: string
+    required: true
+    description: 出力ディレクトリ。すべての出力ファイルの基準となる。相対パスまたは絶対パス
+
+  idcollectfilename:
+    type: string
+    required: true
+    description: 出力する id インベントリファイル名。ディレクトリを含めない単一ファイル名
+
+  inventorydir:
+    type: string
+    required: true
+    description: id インベントリファイル出力ディレクトリ。相対パスまたは絶対パス
+
+  force:
+    type: boolean
+    required: false
+    default: false
+    description: true のとき --force 相当の動作をすべてのサブコマンドに適用する。CLI で --force を明示指定した場合はその値を優先する
+
+  path_base:
+    type: string
+    required: false
+    default: source
+    enum: [source, current]
+    description: 相対パスの基準。source はこの yaml ファイルの場所、current は実行時カレントディレクトリ
+
+input:
+  pptxdir:
+    type: string
+    required: true
+    description: 入力 pptx ファイルを探すディレクトリ
+
+  mddir:
+    type: string
+    required: true
+    description: 入力 md ファイルを探すディレクトリ
+
+  path_base:
+    type: string
+    required: false
+    default: source
+    enum: [source, current]
+    description: input.dir が相対パスの場合の基準
+
+separator:
+  enabled:
+    type: boolean
+    required: false
+    default: false
+    description: 入力ファイルの切れ目に区切りスライドを挿入するか
+
+  mode:
+    type: string
+    required: false
+    default: blank
+    enum: [blank]
+    description: 区切りスライドの種類
+
+indexer:
+
+  chapter_marker: 
+    type: string
+    required: false
+    default: '#CHAPT#'
+    description: 章番号操作を行うマーカー文字列
+  
+  section_marker:
+    type: string
+    required: false
+    default: '#SECTION#'
+    description: 節番号操作を行うマーカー文字列
+
+  stay_marker:
+    type: string
+    required: false
+    default: '#STAY#'
+    description: 章・節番号操作を行わず、前スライドの章・節番号を維持するマーカー文字列
+
+  delimiter:
+    type: string
+    required: false
+    default: '.'
+    description: 章番号と節番号のあいだに入れる区切り文字（インデックス付与処理）
+
+  separator:
+    type: string
+    required: false
+    default: ') '
+    description: 番号付き見出しとタイトル本文のあいだに入れる区切り文字（インデックス付与処理）
+
+  deletecsl:
+    type: boolean
+    required: false
+    default: false
+    description: "#CSL# を含むスライドを削除するか（インデックス付与処理）"
+
+  deletecsp:
+    type: boolean
+    required: false
+    default: false
+    description: "#CSP# を含む図形を削除するか（インデックス付与処理）"
+
+log:
+  level:
+    type: string
+    required: false
+    default: info
+    description: ログの詳しさ。debug または info など（実装に依存）
+
+  filename:
+    type: string
+    required: false
+    default: STDOUT
+    description: ログ出力先ファイル名。STDOUT のときは標準出力へ書く
+  
+  duplicate:
+    type: string
+    required: false
+    description: ログファイルと同じ内容を標準出力または標準エラーにも出す。未設定または空欄のときは重複出力しない。stdout は標準出力、stderr は標準エラー出力
+    enum: [stdout, stderr]
+
+  dir:
+    type: string
+    required: false
+    description: ログファイルを書き込むディレクトリ（filename がファイルのとき）
+
+  path_base:
+    type: string
+    required: false
+    default: source
+    enum: [source, current]
+    description: log.dir が相対パスのときの基準。source はこの yaml の場所、current は実行時カレントディレクトリ
+
+procedure:
+  type: array
+  required: true
+  description: 結合する PowerPoint ファイルの一覧。記載順に結合する
+
+  item:
+    operation:
+      type: string
+      required: true
+      description: スライド操作の種類。insertpptx はファイルを挿入、chapter は章カウントアップ、section は節カウントアップ
+      enum: [insertmd,insertpptx, chapter, section, beginstay, endstay]
+
+    insertpptx:
+      type: string
+      required: false
+      description: input.dir からの相対ファイル名、または絶対パス
+
+    insertmd:
+      type: string
+      required: false
+      description: input.dir からの相対ファイル名、または絶対パス
+
+    slides:
+      type: string | array[integer]
+      required: false
+      default: all
+      description: 読み込むスライド。all またはスライド番号リスト。スライド番号は1始まり
+
+    separator_before:
+      type: boolean
+      required: false
+      default: null
+      description: このファイルの前に区切りスライドを入れるか。未指定なら separator.enabled に従う。ただし先頭ファイルの前には入れない
+
+    chapter:
+      type: string
+      required: false
+      description: "章番号操作を行う。+n または -n または n の形式で指定。n は整数。"
+
+    section:
+      type: string
+      required: false
+      description: "節番号操作を行う。+n または -n または n の形式で指定。n は整数。"
+    note:
+      type: string
+      required: false
+      description: 人間向けメモ。処理には使わない
+    title:
+      type: string
+      required: false
+      description: chapter/sectionを追加定義するときにtitleを付与する

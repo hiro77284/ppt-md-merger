@@ -1,0 +1,11 @@
+schema_version: 1
+kind: id_inventory
+document:
+  document_id: <DUMMY>
+  title: <DUMMY>
+generated:
+  by: md-merge
+  at: '2026-06-04T17:23:46+09:00'
+source:
+  config_yaml: simple_ppt_merge_pdf_recipe.yaml
+entries: []

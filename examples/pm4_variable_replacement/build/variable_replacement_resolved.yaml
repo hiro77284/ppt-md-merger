@@ -1,0 +1,56 @@
+schema_version: 1
+kind: id_map
+document:
+  document_id: <DUMMY>
+  title: <DUMMY>
+generated:
+  by: md-merge
+  at: '2026-06-04T17:32:34+09:00'
+source:
+  config_yaml: variable_replacement_pdf_recipe.yaml
+  id_inventory_yaml: build/variable_replacement_collect.yaml
+numbering:
+  profile: default
+  chapter_enabled: true
+  section_numbering: chapter_section
+  image_numbering: global
+entries:
+- full_id: chapter:AUTOCHAPTER:AUTOID_1
+  identifier_type: chapter
+  part_id: AUTOCHAPTER
+  local_id: AUTOID_1
+  title: TITLE NOT FOUND
+  source:
+    pptx: <DUMMY>
+    md: <DUMMY>
+  location:
+    file: build/variable_replacement_merged.md
+    line: 2
+  number: '1'
+  label: 1) TITLE NOT FOUND
+- full_id: section:variable_replacement_guide:slide1
+  identifier_type: section
+  part_id: variable_replacement_guide
+  local_id: slide1
+  title: スライド中の変数置換
+  source:
+    pptx: <DUMMY>
+    md: extracted/variable_replacement_guide_slide1_md.md
+  location:
+    file: build/variable_replacement_merged.md
+    line: 6
+  number: '1.1'
+  label: 1.1) スライド中の変数置換
+- full_id: section:variable_replacement_guide:slide2
+  identifier_type: section
+  part_id: variable_replacement_guide
+  local_id: slide2
+  title: 結合指示書サンプル
+  source:
+    pptx: <DUMMY>
+    md: extracted/variable_replacement_guide_slide2_md.md
+  location:
+    file: build/variable_replacement_merged.md
+    line: 34
+  number: '1.2'
+  label: 1.2) 結合指示書サンプル

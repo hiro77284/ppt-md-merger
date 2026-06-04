@@ -1,0 +1,30 @@
+standalone: true
+
+css:
+  - D:\sandbox\pandoctemplates\html_style.css
+
+# 目次を作る設定
+toc: true
+toc-depth: 3
+# toc-title: 目次
+
+filters:
+  - D:/DOCS/SWPJs/md_merge/src/md_merge/filters/back-to-top.lua
+  - pandoc-crossref
+  - D:/DOCS/SWPJs/md_merge/src/md_merge/filters/include-files-resource-path.lua
+
+# report_pandoc_defaults.yaml 内
+resource-path:
+  - 'D:/DOCS/SWPJs/md_merge/sandbox/medium/build'
+
+metadata:
+  secPrefix:
+    - ""
+    - ""
+  figureTitle: "図"
+  titleDelim: "："
+  figPrefix: ["図", "図"]
+  tblPrefix: ["表", "表"]
+  eqnPrefix: ["式", "式"]
+
+

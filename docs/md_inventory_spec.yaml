@@ -1,0 +1,30 @@
+#IDインベントリyamlの仕様
+schema_version: integer
+kind: id_inventory
+
+document:
+  document_id: string
+  title: string
+
+generated:
+  by: string
+  at: string  # ISO 8601 datetime
+
+source:
+  config_yaml: string
+
+entries:
+  - full_id: string
+    identifier_type: string  # chapter | section | subsection | image
+    part_id: string
+    local_id: string
+    title: string
+
+    source:
+      pptx: string
+      md: string
+      image: string  # optional
+
+    location:
+      file: string
+      line: integer

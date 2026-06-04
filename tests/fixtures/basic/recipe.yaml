@@ -1,0 +1,14 @@
+version: 1
+input:
+  mddir: md
+output:
+  mdfilename: merged.md
+  inventoryfilename: inventory.yaml
+  mddir: out
+procedure:
+  - operation: insertmd
+    mdfilename: a.md
+  - operation: insertpptx
+    insertpptx: ignored.pptx
+  - operation: insertmd
+    mdfilename: b.md
