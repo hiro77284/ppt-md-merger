@@ -20,7 +20,7 @@ chapt_section ナンバリングにおいて、operation: chapter ではなく�
 ![](build/figures/chapter_marker_numbering_guide_keyvisual.png)
 
 
-<!-- source: D:/DOCS/SWPJs/md_merge/defaults/common_assets/tex_newpage.md -->
+<!-- source: D:/DOCS/SWPJs/new_md_merge/defaults/common_assets/tex_newpage.md -->
 
 
 
@@ -39,7 +39,7 @@ chapt_section ナンバリングにおいて、operation: chapter ではなく�
 ![](build/figures/chapter_marker_numbering_guide_slide2_fig.png)
 
 
-<!-- source: D:/DOCS/SWPJs/md_merge/defaults/common_assets/tex_newpage.md -->
+<!-- source: D:/DOCS/SWPJs/new_md_merge/defaults/common_assets/tex_newpage.md -->
 
 
 
@@ -54,7 +54,7 @@ chapt_section ナンバリングにおいて、operation: chapter ではなく�
 ![](build/figures/chapter_marker_numbering_guide_slide3_fig.png)
 
 
-<!-- source: D:/DOCS/SWPJs/md_merge/defaults/common_assets/tex_newpage.md -->
+<!-- source: D:/DOCS/SWPJs/new_md_merge/defaults/common_assets/tex_newpage.md -->
 
 
 
@@ -72,7 +72,7 @@ chapt_section ナンバリングにおいて、operation: chapter ではなく�
 ![](build/figures/chapter_marker_numbering_guide_slide4_fig.png)
 
 
-<!-- source: D:/DOCS/SWPJs/md_merge/defaults/common_assets/tex_newpage.md -->
+<!-- source: D:/DOCS/SWPJs/new_md_merge/defaults/common_assets/tex_newpage.md -->
 
 
 

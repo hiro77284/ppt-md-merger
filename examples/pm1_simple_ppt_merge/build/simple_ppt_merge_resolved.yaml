@@ -5,7 +5,7 @@ document:
   title: <DUMMY>
 generated:
   by: md-merge
-  at: '2026-06-04T17:23:46+09:00'
+  at: '2026-06-04T20:12:58+09:00'
 source:
   config_yaml: simple_ppt_merge_pdf_recipe.yaml
   id_inventory_yaml: build/simple_ppt_merge_collect.yaml

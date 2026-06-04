@@ -23,7 +23,7 @@
 \par\vspace{1\baselineskip}
 ```
 
-<!-- source: D:/DOCS/SWPJs/md_merge/defaults/common_assets/tex_newpage.md -->
+<!-- source: D:/DOCS/SWPJs/new_md_merge/defaults/common_assets/tex_newpage.md -->
 
 \newpage
 
@@ -49,7 +49,7 @@ deletecsp がfalseまたは未指定の場合は、#CSP#マーカーだけが消
 \par\vspace{1\baselineskip}
 ```
 
-<!-- source: D:/DOCS/SWPJs/md_merge/defaults/common_assets/tex_newpage.md -->
+<!-- source: D:/DOCS/SWPJs/new_md_merge/defaults/common_assets/tex_newpage.md -->
 
 \newpage
 
@@ -75,7 +75,7 @@ CSPマーカーの基本的な利用イメージです。左側が原本ファ�
 \par\vspace{1\baselineskip}
 ```
 
-<!-- source: D:/DOCS/SWPJs/md_merge/defaults/common_assets/tex_newpage.md -->
+<!-- source: D:/DOCS/SWPJs/new_md_merge/defaults/common_assets/tex_newpage.md -->
 
 \newpage
 
@@ -99,7 +99,7 @@ CSPマーカーの基本的な利用イメージです。左側が原本ファ�
 \par\vspace{1\baselineskip}
 ```
 
-<!-- source: D:/DOCS/SWPJs/md_merge/defaults/common_assets/tex_newpage.md -->
+<!-- source: D:/DOCS/SWPJs/new_md_merge/defaults/common_assets/tex_newpage.md -->
 
 \newpage
 

@@ -25,7 +25,7 @@
 
 機能としては単なる operation:insertpptx と varsであり、Chapter Cover 用ファイルを用意して中身を変数置換することで実現します。
 
-<!-- source: D:/DOCS/SWPJs/md_merge/defaults/common_assets/tex_newpage.md -->
+<!-- source: D:/DOCS/SWPJs/new_md_merge/defaults/common_assets/tex_newpage.md -->
 
 \newpage
 
@@ -51,7 +51,7 @@ Chapter Cover 挿入運用の詳しい説明をします。
 \par\vspace{1\baselineskip}
 ```
 
-<!-- source: D:/DOCS/SWPJs/md_merge/defaults/common_assets/tex_newpage.md -->
+<!-- source: D:/DOCS/SWPJs/new_md_merge/defaults/common_assets/tex_newpage.md -->
 
 \newpage
 
@@ -77,7 +77,7 @@ Chapter Cover 挿入運用の詳しい説明をします。
 
 はっきりとデザインの違う Chapter Cover スライドを挿入しておけば、この問題を解決できます。
 
-<!-- source: D:/DOCS/SWPJs/md_merge/defaults/common_assets/tex_newpage.md -->
+<!-- source: D:/DOCS/SWPJs/new_md_merge/defaults/common_assets/tex_newpage.md -->
 
 \newpage
 
@@ -103,7 +103,7 @@ Chapter Cover 挿入運用の詳しい説明をします。
 \par\vspace{1\baselineskip}
 ```
 
-<!-- source: D:/DOCS/SWPJs/md_merge/defaults/common_assets/tex_newpage.md -->
+<!-- source: D:/DOCS/SWPJs/new_md_merge/defaults/common_assets/tex_newpage.md -->
 
 \newpage
 

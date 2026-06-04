@@ -5,7 +5,7 @@ document:
   title: <DUMMY>
 generated:
   by: md-merge
-  at: '2026-06-04T17:31:31+09:00'
+  at: '2026-06-04T20:14:14+09:00'
 source:
   config_yaml: chapter_marker_numbering_pdf_recipe.yaml
   id_inventory_yaml: build/chapter_marker_numbering_collect.yaml

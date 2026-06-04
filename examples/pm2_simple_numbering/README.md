@@ -17,7 +17,7 @@ chapter とは日本語でいえば「章」のことで、 「1章2節」 の�
 
 
 
-<!-- source: D:/DOCS/SWPJs/md_merge/defaults/common_assets/tex_newpage.md -->
+<!-- source: D:/DOCS/SWPJs/new_md_merge/defaults/common_assets/tex_newpage.md -->
 
 
 
@@ -52,7 +52,7 @@ pptmdmerge pptmerge PROJECT_ROOT/examples/pm2_simple_numbering_recipe.yaml --for
 
 結果、ファイル4が生成されれば成功です
 
-<!-- source: D:/DOCS/SWPJs/md_merge/defaults/common_assets/tex_newpage.md -->
+<!-- source: D:/DOCS/SWPJs/new_md_merge/defaults/common_assets/tex_newpage.md -->
 
 
 
@@ -69,7 +69,7 @@ pptmdmerge pptmerge PROJECT_ROOT/examples/pm2_simple_numbering_recipe.yaml --for
 ![](build/figures/simple_numbering_guide_slide3_fig.png)
 
 
-<!-- source: D:/DOCS/SWPJs/md_merge/defaults/common_assets/tex_newpage.md -->
+<!-- source: D:/DOCS/SWPJs/new_md_merge/defaults/common_assets/tex_newpage.md -->
 
 
 
@@ -92,7 +92,7 @@ procedure の operation: chapter という項目で章番号のカウントア�
 ![](build/figures/simple_numbering_guide_slide4_fig.png)
 
 
-<!-- source: D:/DOCS/SWPJs/md_merge/defaults/common_assets/tex_newpage.md -->
+<!-- source: D:/DOCS/SWPJs/new_md_merge/defaults/common_assets/tex_newpage.md -->
 
 
 

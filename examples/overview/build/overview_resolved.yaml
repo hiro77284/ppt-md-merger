@@ -5,7 +5,7 @@ document:
   title: <DUMMY>
 generated:
   by: md-merge
-  at: '2026-06-04T17:22:52+09:00'
+  at: '2026-06-04T20:12:13+09:00'
 source:
   config_yaml: overview_recipe.yaml
   id_inventory_yaml: build/overview_collect.yaml

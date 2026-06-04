@@ -878,3 +878,91 @@
 [20] 5.3.1) 2. Create merge recipe YAML
 [21] 5.3.2) 3. Run merge
 [22] 5.4) Examples
+2026-06-04 20:12:35,960 - INFO - [timing] COM Dispatch: 0.009s
+2026-06-04 20:12:36,310 - INFO - [timing] create+clear: 0.349s
+2026-06-04 20:12:36,336 - INFO - [timing] simple_chaptercover.pptx filter_csl: 0.025s
+2026-06-04 20:12:36,354 - INFO - [timing] simple_chaptercover.pptx build_ops(pptx読込): 0.007s
+2026-06-04 20:12:36,461 - INFO - [timing] simple_chaptercover.pptx InsertFromFile: 0.107s
+2026-06-04 20:12:36,792 - INFO - [timing] simple_chaptercover.pptx replace_all: 0.330s
+2026-06-04 20:12:36,880 - INFO - [timing] simple_chaptercover.pptx pending_notes収集: 0.088s
+2026-06-04 20:12:36,881 - INFO - 挿入: D:\DOCS\SWPJs\new_md_merge\defaults\common_assets\simple_chaptercover.pptx スライド: 1 [ファイル合計 0.570s]
+2026-06-04 20:12:36,963 - INFO - [timing] ppt_md_merger_overview.pptx filter_csl: 0.081s
+2026-06-04 20:12:37,005 - INFO - [timing] ppt_md_merger_overview.pptx build_ops(pptx読込): 0.037s
+2026-06-04 20:12:37,114 - INFO - [timing] ppt_md_merger_overview.pptx InsertFromFile: 0.108s
+2026-06-04 20:12:38,675 - INFO - [timing] ppt_md_merger_overview.pptx replace_all: 1.561s
+2026-06-04 20:12:39,413 - INFO - [timing] ppt_md_merger_overview.pptx pending_notes収集: 0.738s
+2026-06-04 20:12:39,413 - INFO - 挿入: D:\DOCS\SWPJs\new_md_merge\examples\overview\src\ppt_md_merger_overview.pptx スライド: 1 [ファイル合計 2.532s]
+2026-06-04 20:12:39,413 - INFO - chapter 操作（pptx 挿入なし）: chapter='+' section=None note=None
+2026-06-04 20:12:39,418 - INFO - [timing] simple_chaptercover.pptx filter_csl: 0.004s
+2026-06-04 20:12:39,431 - INFO - [timing] simple_chaptercover.pptx build_ops(pptx読込): 0.011s
+2026-06-04 20:12:39,483 - INFO - [timing] simple_chaptercover.pptx InsertFromFile: 0.052s
+2026-06-04 20:12:39,600 - INFO - [timing] simple_chaptercover.pptx replace_all: 0.116s
+2026-06-04 20:12:39,643 - INFO - [timing] simple_chaptercover.pptx pending_notes収集: 0.043s
+2026-06-04 20:12:39,643 - INFO - 挿入: D:\DOCS\SWPJs\new_md_merge\defaults\common_assets\simple_chaptercover.pptx スライド: 1 [ファイル合計 0.230s]
+2026-06-04 20:12:39,721 - INFO - [timing] ppt_md_merger_overview.pptx filter_csl: 0.077s
+2026-06-04 20:12:39,776 - INFO - [timing] ppt_md_merger_overview.pptx build_ops(pptx読込): 0.048s
+2026-06-04 20:12:40,021 - INFO - [timing] ppt_md_merger_overview.pptx InsertFromFile: 0.245s
+2026-06-04 20:12:41,456 - INFO - [timing] ppt_md_merger_overview.pptx replace_all: 1.434s
+2026-06-04 20:12:42,201 - INFO - [timing] ppt_md_merger_overview.pptx pending_notes収集: 0.745s
+2026-06-04 20:12:42,201 - INFO - 挿入: D:\DOCS\SWPJs\new_md_merge\examples\overview\src\ppt_md_merger_overview.pptx スライド: 2-5 [ファイル合計 2.557s]
+2026-06-04 20:12:42,201 - INFO - chapter 操作（pptx 挿入なし）: chapter='+' section=None note=None
+2026-06-04 20:12:42,205 - INFO - [timing] simple_chaptercover.pptx filter_csl: 0.004s
+2026-06-04 20:12:42,213 - INFO - [timing] simple_chaptercover.pptx build_ops(pptx読込): 0.005s
+2026-06-04 20:12:42,278 - INFO - [timing] simple_chaptercover.pptx InsertFromFile: 0.064s
+2026-06-04 20:12:42,392 - INFO - [timing] simple_chaptercover.pptx replace_all: 0.114s
+2026-06-04 20:12:42,458 - INFO - [timing] simple_chaptercover.pptx pending_notes収集: 0.067s
+2026-06-04 20:12:42,459 - INFO - 挿入: D:\DOCS\SWPJs\new_md_merge\defaults\common_assets\simple_chaptercover.pptx スライド: 1 [ファイル合計 0.258s]
+2026-06-04 20:12:42,541 - INFO - [timing] ppt_md_merger_overview.pptx filter_csl: 0.082s
+2026-06-04 20:12:42,623 - INFO - [timing] ppt_md_merger_overview.pptx build_ops(pptx読込): 0.058s
+2026-06-04 20:12:42,911 - INFO - [timing] ppt_md_merger_overview.pptx InsertFromFile: 0.288s
+2026-06-04 20:12:45,177 - INFO - [timing] ppt_md_merger_overview.pptx replace_all: 2.266s
+2026-06-04 20:12:46,815 - INFO - [timing] ppt_md_merger_overview.pptx pending_notes収集: 1.638s
+2026-06-04 20:12:46,815 - INFO - 挿入: D:\DOCS\SWPJs\new_md_merge\examples\overview\src\ppt_md_merger_overview.pptx スライド: 6-9, 11 [ファイル合計 4.356s]
+2026-06-04 20:12:46,815 - INFO - chapter 操作（pptx 挿入なし）: chapter='+' section=None note=None
+2026-06-04 20:12:46,821 - INFO - [timing] simple_chaptercover.pptx filter_csl: 0.005s
+2026-06-04 20:12:46,829 - INFO - [timing] simple_chaptercover.pptx build_ops(pptx読込): 0.004s
+2026-06-04 20:12:46,895 - INFO - [timing] simple_chaptercover.pptx InsertFromFile: 0.066s
+2026-06-04 20:12:47,022 - INFO - [timing] simple_chaptercover.pptx replace_all: 0.127s
+2026-06-04 20:12:47,083 - INFO - [timing] simple_chaptercover.pptx pending_notes収集: 0.061s
+2026-06-04 20:12:47,083 - INFO - 挿入: D:\DOCS\SWPJs\new_md_merge\defaults\common_assets\simple_chaptercover.pptx スライド: 1 [ファイル合計 0.268s]
+2026-06-04 20:12:47,155 - INFO - [timing] ppt_md_merger_overview.pptx filter_csl: 0.071s
+2026-06-04 20:12:47,213 - INFO - [timing] ppt_md_merger_overview.pptx build_ops(pptx読込): 0.050s
+2026-06-04 20:12:47,361 - INFO - [timing] ppt_md_merger_overview.pptx InsertFromFile: 0.148s
+2026-06-04 20:12:48,435 - INFO - [timing] ppt_md_merger_overview.pptx replace_all: 1.074s
+2026-06-04 20:12:49,008 - INFO - [timing] ppt_md_merger_overview.pptx pending_notes収集: 0.573s
+2026-06-04 20:12:49,008 - INFO - 挿入: D:\DOCS\SWPJs\new_md_merge\examples\overview\src\ppt_md_merger_overview.pptx スライド: 12 [ファイル合計 1.925s]
+2026-06-04 20:12:49,008 - INFO - chapter 操作（pptx 挿入なし）: chapter='+' section=None note=None
+2026-06-04 20:12:49,013 - INFO - [timing] simple_chaptercover.pptx filter_csl: 0.005s
+2026-06-04 20:12:49,028 - INFO - [timing] simple_chaptercover.pptx build_ops(pptx読込): 0.012s
+2026-06-04 20:12:49,088 - INFO - [timing] simple_chaptercover.pptx InsertFromFile: 0.060s
+2026-06-04 20:12:49,190 - INFO - [timing] simple_chaptercover.pptx replace_all: 0.102s
+2026-06-04 20:12:49,255 - INFO - [timing] simple_chaptercover.pptx pending_notes収集: 0.065s
+2026-06-04 20:12:49,255 - INFO - 挿入: D:\DOCS\SWPJs\new_md_merge\defaults\common_assets\simple_chaptercover.pptx スライド: 1 [ファイル合計 0.246s]
+2026-06-04 20:12:49,330 - INFO - [timing] ppt_md_merger_overview.pptx filter_csl: 0.075s
+2026-06-04 20:12:49,388 - INFO - [timing] ppt_md_merger_overview.pptx build_ops(pptx読込): 0.049s
+2026-06-04 20:12:49,590 - INFO - [timing] ppt_md_merger_overview.pptx InsertFromFile: 0.202s
+2026-06-04 20:12:50,974 - INFO - [timing] ppt_md_merger_overview.pptx replace_all: 1.384s
+2026-06-04 20:12:51,499 - INFO - [timing] ppt_md_merger_overview.pptx pending_notes収集: 0.525s
+2026-06-04 20:12:51,499 - INFO - 挿入: D:\DOCS\SWPJs\new_md_merge\examples\overview\src\ppt_md_merger_overview.pptx スライド: 13-18 [ファイル合計 2.244s]
+2026-06-04 20:12:51,499 - INFO - chapter 操作（pptx 挿入なし）: chapter='+' section=None note=None
+2026-06-04 20:12:51,676 - INFO - [timing] SaveAs+Close: 0.177s
+2026-06-04 20:12:51,750 - INFO - [timing] notes_replacements: 0.074s
+2026-06-04 20:12:51,750 - INFO - [timing] 合計: 15.800s
+出力スライド一覧 (idresolve モード):
+[2] 1.1) PPT \& MD merger とは？
+[4] 2.1) どんな人のためのツール？
+[5] 2.2) 悩み１： ちょっとずつ違うPowerPointのコピーが増殖
+[6] 2.3) 悩み２： 章・節番号をつけるのが面倒くさい
+[7] 2.4) なんとかこの悩みを解決できないか？
+[9] 3.1) まずは問題の構造を整理すると・・・
+[10] 3.2) 部品を組み合わせて完成版を構成する仕組みを作る
+[11] 3.3) 自動マージするときに章・節番号を付与する
+[12] 3.4) 補助機能：変数置換
+[13] 3.6) 補助機能： 一時メモ用シェイプの自動削除
+[15] 4.1) PPTX生成機能と、その他の形式文書生成機能
+[17] 5.1) システム要件
+[18] 5.2) インストール方法
+[19] 5.3) Quick Start
+[20] 5.3.1) 2. Create merge recipe YAML
+[21] 5.3.2) 3. Run merge
+[22] 5.4) Examples

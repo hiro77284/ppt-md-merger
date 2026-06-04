@@ -20,7 +20,7 @@ MEMO、TEMP の動作は同じです。
 
 
 
-<!-- source: D:/DOCS/SWPJs/md_merge/defaults/common_assets/tex_newpage.md -->
+<!-- source: D:/DOCS/SWPJs/new_md_merge/defaults/common_assets/tex_newpage.md -->
 
 
 
@@ -36,7 +36,7 @@ MEMO、TEMP の動作は同じです。
 ![](build/figures/memo_temp_guide_slide2_fig.png)
 
 
-<!-- source: D:/DOCS/SWPJs/md_merge/defaults/common_assets/tex_2line.md -->
+<!-- source: D:/DOCS/SWPJs/new_md_merge/defaults/common_assets/tex_2line.md -->
 
 
 

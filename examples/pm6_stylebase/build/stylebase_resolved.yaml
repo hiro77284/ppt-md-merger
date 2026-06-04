@@ -5,7 +5,7 @@ document:
   title: <DUMMY>
 generated:
   by: md-merge
-  at: '2026-06-04T17:34:31+09:00'
+  at: '2026-06-04T20:16:03+09:00'
 source:
   config_yaml: stylebase_pdf_recipe.yaml
   id_inventory_yaml: build/stylebase_collect.yaml

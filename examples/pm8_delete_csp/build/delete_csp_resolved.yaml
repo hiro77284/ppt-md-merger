@@ -5,7 +5,7 @@ document:
   title: <DUMMY>
 generated:
   by: md-merge
-  at: '2026-06-04T17:35:52+09:00'
+  at: '2026-06-04T20:17:46+09:00'
 source:
   config_yaml: delete_csp_pdf_recipe.yaml
   id_inventory_yaml: build/delete_csp_collect.yaml

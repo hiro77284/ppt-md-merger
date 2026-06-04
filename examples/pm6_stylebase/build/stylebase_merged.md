@@ -47,7 +47,7 @@ pptxをマージする際、基準とするスタイルをコンテンツとは�
 
 スタイルが合わないとレイアウト崩れ、配色崩れなどが起きるため、スタイル情報はコンテンツとは別に管理することが望ましいのです。
 
-<!-- source: D:/DOCS/SWPJs/md_merge/defaults/common_assets/tex_newpage.md -->
+<!-- source: D:/DOCS/SWPJs/new_md_merge/defaults/common_assets/tex_newpage.md -->
 
 \newpage
 
@@ -93,7 +93,7 @@ different_style_sample.pptx は simple_stylebase.pptx とは違うスタイル�
 \par\vspace{1\baselineskip}
 ```
 
-<!-- source: D:/DOCS/SWPJs/md_merge/defaults/common_assets/tex_newpage.md -->
+<!-- source: D:/DOCS/SWPJs/new_md_merge/defaults/common_assets/tex_newpage.md -->
 
 \newpage
 
