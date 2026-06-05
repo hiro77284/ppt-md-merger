@@ -1,5 +1,6 @@
 import argparse
 import sys
+from importlib.metadata import version, PackageNotFoundError
 
 from md_merge.condblockprocess import run as run_condblockprocess
 from md_merge.validate import run as run_validate
@@ -34,11 +35,19 @@ def _make_common_parser() -> argparse.ArgumentParser:
     return p
 
 
+def _get_version() -> str:
+    try:
+        return version("pptmdmerge")
+    except PackageNotFoundError:
+        return "unknown"
+
+
 def _make_parser() -> argparse.ArgumentParser:
     root = argparse.ArgumentParser(
         prog="md-merge",
         description="Merge multiple Markdown files from a YAML recipe.",
     )
+    root.add_argument("--version", action="version", version=f"%(prog)s {_get_version()}")
     common = _make_common_parser()
     sub = root.add_subparsers(dest="subcommand", required=True)
 
@@ -178,6 +187,7 @@ def _make_parser() -> argparse.ArgumentParser:
     p2p.add_argument("input", nargs="?", metavar="INPUT", help="Input YAML file")
     p2p.add_argument("--workdir", "-w", metavar="DIR", help="Base directory for relative paths")
     p2p.add_argument("--force", action="store_true", help="Overwrite existing output files")
+    p2p.add_argument("--keep-work", action="store_true", dest="keep_work", help="Retain work_ intermediate files after completion")
 
     # ── condblockprocess ──────────────────────────────────────────────────────
     cbp = sub.add_parser(

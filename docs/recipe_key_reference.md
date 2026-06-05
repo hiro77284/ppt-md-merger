@@ -45,17 +45,18 @@
 | ---- |:--:|:--:|:--:|:--:|:--:|:--:|:--:|:--:|:--:|:--:|:--:|:--:| ---- |
 | `output.outputdir` | W | R | R | R | R | R |  | W | | | | | 省略時は `workdir` と同じディレクトリ |
 | `output.force` | R | R | R | R | R | R | R | R | R | R | R | R | `true` で全コマンドに `--force` 相当 |
-| `output.mdfilename` | W | R |  | R |  |  |  |  |  |  |  |  | |
-| `output.idcollectfilename` |  | W | R |  |  |  |  |  |  |  |  |  | |
-| `output.idresolvedfilename` |  |  | W | R |  |  |  | R |  |  |  |  | pm は `{{num/title/label:}}` 参照置換にも使用 |
-| `output.renderedfilename` |  |  |  | W | R | R |  |  |  |  |  |  | |
-| `output.pdffilename` |  |  |  |  | W |  |  |  |  |  |  |  | `--tex`/`--html`/`--reveal` 未指定時 |
-| `output.texfilename` |  |  |  |  | W |  |  |  |  |  |  |  | `--tex` 指定時 |
-| `output.htmlfilename` |  |  |  |  | W |  |  |  |  |  |  |  | `--html` 指定時 |
-| `output.revealfilename` |  |  |  |  | W |  |  |  |  |  |  |  | `--reveal` 指定時 |
-| `output.resourcepathfilename` |  |  |  |  | W |  |  |  |  |  |  |  | `pandoc.resource-path` 指定時に生成 |
-| `output.puremdfilename` |  |  |  |  |  | W |  |  |  |  |  |  | |
-| `output.pptxfilename` |  |  |  |  |  |  |  | W |  |  |  |  | |
+| `output.targetbasefilename` | R | R | R | R | R | R |  | R |  |  |  |  | 出力ファイル名のベース部分。指定すると他の出力キーを省略時に自動生成。拡張子を含む場合は警告して除去 |
+| `output.mdfilename` | W | R |  | R |  |  |  |  |  |  |  |  | 省略時は `targetbasefilename` から自動生成 |
+| `output.idcollectfilename` |  | W | R |  |  |  |  |  |  |  |  |  | 省略時は `targetbasefilename` から自動生成 |
+| `output.idresolvedfilename` |  |  | W | R |  |  |  | R |  |  |  |  | pm は `{{num/title/label:}}` 参照置換にも使用。省略時は `targetbasefilename` から自動生成 |
+| `output.renderedfilename` |  |  |  | W | R | R |  |  |  |  |  |  | 省略時は `targetbasefilename` から自動生成 |
+| `output.pdffilename` |  |  |  |  | W |  |  |  |  |  |  |  | `--tex`/`--html`/`--reveal` 未指定時。省略時は `targetbasefilename` から自動生成 |
+| `output.texfilename` |  |  |  |  | W |  |  |  |  |  |  |  | `--tex` 指定時。省略時は `targetbasefilename` から自動生成 |
+| `output.htmlfilename` |  |  |  |  | W |  |  |  |  |  |  |  | `--html` 指定時。省略時は `targetbasefilename` から自動生成 |
+| `output.revealfilename` |  |  |  |  | W |  |  |  |  |  |  |  | `--reveal` 指定時。省略時は `targetbasefilename` から自動生成 |
+| `output.resourcepathfilename` |  |  |  |  | W |  |  |  |  |  |  |  | `pandoc.resource-path` 指定時に生成。省略時は `targetbasefilename` から自動生成 |
+| `output.puremdfilename` |  |  |  |  |  | W |  |  |  |  |  |  | 省略時は `targetbasefilename` から自動生成 |
+| `output.pptxfilename` |  |  |  |  |  |  |  | W |  |  |  |  | `targetbasefilename` 未指定時は必須。省略時は `targetbasefilename` から自動生成 |
 
 ---
 

@@ -107,9 +107,31 @@ output:
   force: true   # --force 相当（全サブコマンドに適用）
 ```
 
-### 出力ファイル名の自動生成規則（merge のみ）
+### 出力ファイル名の自動生成規則
 
-`output.mdfilename` が未指定の場合、入力 YAML のステム名をもとに自動生成する。
+#### targetbasefilename による一括自動生成
+
+`output.targetbasefilename` を指定すると、他の出力ファイルキーを省略した際にファイル名を自動生成する。`targetbasefilename` には拡張子を含めないベース名を指定する（拡張子を含む場合は警告を出力して除去する）。
+
+| 出力ファイルキー | 自動生成されるファイル名 | 例（`targetbasefilename: target`）|
+| -------------- | -------------------- | ---- |
+| `output.mdfilename` | `work_<base>_merged.md` | `work_target_merged.md` |
+| `output.idcollectfilename` | `work_<base>_idcollect.yaml` | `work_target_idcollect.yaml` |
+| `output.idresolvedfilename` | `work_<base>_idresolve.yaml` | `work_target_idresolve.yaml` |
+| `output.renderedfilename` | `<base>_rendered.md` | `target_rendered.md` |
+| `output.resourcepathfilename` | `work_<base>_resourcepath.tex` | `work_target_resourcepath.tex` |
+| `output.pdffilename` | `<base>.pdf` | `target.pdf` |
+| `output.texfilename` | `<base>.tex` | `target.tex` |
+| `output.htmlfilename` | `<base>.html` | `target.html` |
+| `output.revealfilename` | `<base>_reveal.html` | `target_reveal.html` |
+| `output.puremdfilename` | `<base>_puremd.md` | `target_puremd.md` |
+| `output.pptxfilename` | `<base>.pptx` | `target.pptx` |
+
+各キーを明示的に指定した場合は、`targetbasefilename` より指定値が優先される。`targetbasefilename` を指定しない場合は従来どおりで、各ファイルキーを個別に指定する必要がある。
+
+#### merge の後方互換フォールバック
+
+`output.targetbasefilename` も `output.mdfilename` も未指定の場合、`merge` コマンドのみ入力 YAML のステム名をもとに自動生成する。
 
 ```text
 <input_stem>_merge.md
@@ -168,7 +190,7 @@ md-merge merge sample.yaml
 | 入力解決 | 位置引数 `INPUT` で指定された YAML ファイルを読み込む |
 | `input.mddir` 解決 | `input` セクションまたは `input.mddir` 省略時は YAML ファイルと同じディレクトリを使用する。相対パスは `workdir`（省略時は YAML ファイルの親ディレクトリ）基準で解決する |
 | ファイル収集 | `procedure` を走査し、`operation: insertmd` はファイルパスを収集、`operation: chapter`/`section`/`subsection` はマーカーコメント行を生成する |
-| 出力先解決 | `output.mdfilename` + `output.outputdir` > 自動生成（`<stem>_merge.md`）の優先順で決定する |
+| 出力先解決 | `output.mdfilename` > `output.targetbasefilename`（`<base>_merged.md`）> 自動生成（`<yaml_stem>_merge.md`）の優先順で決定する。`output.outputdir` が指定されている場合はその下に配置する |
 | 上書きガード | `--force` なしで出力先に既存ファイルがある場合はエラー（終了コード 1）とする |
 | `--dry-run` | 上書きガードをスキップし、ファイルへの書き込みを行わず実行内容のみ表示する |
 | `--strict` | MD ファイルが見つからない場合を warning ではなく error として扱い、処理を中断する（終了コード 3）|
@@ -326,7 +348,7 @@ md-merge idcollect recipe.yaml
 
 | 項目 | 説明 |
 | ---- | ---- |
-| 入力 YAML | `output.mdfilename` で結合済み MD のファイル名を、`output.idcollectfilename` でインベントリ出力先ファイル名を指定する |
+| 入力 YAML | `output.mdfilename` で結合済み MD のファイル名を、`output.idcollectfilename` でインベントリ出力先ファイル名を指定する。どちらも省略した場合は `output.targetbasefilename` から自動生成する |
 | 結合済み MD | `output.outputdir / output.mdfilename` で解決されるファイル。事前に `merge` で生成しておく必要がある |
 
 ### 出力
@@ -335,8 +357,8 @@ md-merge idcollect recipe.yaml
 
 ### エラー条件
 
-* 入力 YAML に `output.mdfilename` が未定義
-* 入力 YAML に `output.idcollectfilename` が未定義
+* 入力 YAML に `output.mdfilename` も `output.targetbasefilename` も未定義
+* 入力 YAML に `output.idcollectfilename` も `output.targetbasefilename` も未定義
 * 結合済み MD ファイルが存在しない
 * 出力先に既存ファイルがあり、`--force` 未指定
 
@@ -399,7 +421,7 @@ md-merge idresolve recipe.yaml
 
 | 項目 | 説明 |
 | ---- | ---- |
-| 入力 YAML | `output.idcollectfilename` でインベントリ YAML のファイル名を、`output.idresolvedfilename` で出力先ファイル名を指定する |
+| 入力 YAML | `output.idcollectfilename` でインベントリ YAML のファイル名を、`output.idresolvedfilename` で出力先ファイル名を指定する。どちらも省略した場合は `output.targetbasefilename` から自動生成する |
 | インベントリ YAML | `output.outputdir / output.idcollectfilename` で解決されるファイル。事前に `idcollect` で生成しておく必要がある |
 
 ### 出力
@@ -408,8 +430,8 @@ md-merge idresolve recipe.yaml
 
 ### エラー条件
 
-* 入力 YAML に `output.idcollectfilename` が未定義
-* 入力 YAML に `output.idresolvedfilename` が未定義
+* 入力 YAML に `output.idcollectfilename` も `output.targetbasefilename` も未定義
+* 入力 YAML に `output.idresolvedfilename` も `output.targetbasefilename` も未定義
 * インベントリ YAML ファイルが存在しない
 * 出力先に既存ファイルがあり、`--force` 未指定
 
@@ -533,7 +555,7 @@ pandoc <rendered.md> -o <pdffilename|texfilename> -t <pdf|tex>
 
 ### エラー条件
 
-* 入力 YAML に `output.renderedfilename` / `output.pdffilename` が未定義
+* 入力 YAML に `output.renderedfilename` / `output.pdffilename`（または対応する出力キー）も `output.targetbasefilename` も未定義
 * レンダー済み MD が存在しない
 * `pandoc.defaults` / `pandoc.metadata-file` / `pandoc.template` / `pandoc.include-in-header` / `pandoc.include-before-body` に指定したファイルが存在しない
 * `pandoc` が PATH 上に見つからない
@@ -589,7 +611,7 @@ md-merge render recipe.yaml
 
 | 項目 | 説明 |
 | ---- | ---- |
-| 入力 YAML | `output.mdfilename`・`output.idresolvedfilename`・`output.renderedfilename` を参照する |
+| 入力 YAML | `output.mdfilename`・`output.idresolvedfilename`・`output.renderedfilename` を参照する。いずれも省略した場合は `output.targetbasefilename` から自動生成する |
 | 結合済み MD | `output.outputdir / output.mdfilename` で解決。事前に `merge` で生成しておく必要がある |
 | ID解決済み YAML | `output.outputdir / output.idresolvedfilename` で解決。事前に `idresolve` で生成しておく必要がある |
 
@@ -599,7 +621,7 @@ md-merge render recipe.yaml
 
 ### エラー条件
 
-* 入力 YAML に `output.mdfilename` / `output.idresolvedfilename` / `output.renderedfilename` のいずれかが未定義
+* 入力 YAML に `output.mdfilename` / `output.idresolvedfilename` / `output.renderedfilename` のいずれかも `output.targetbasefilename` も未定義
 * 結合済み MD または ID解決済み YAML が存在しない
 * 出力先に既存ファイルがあり、`--force` 未指定
 
@@ -733,8 +755,9 @@ input:                        # セクション全体省略可。省略時は各
 
 output:
   outputdir: out              # 出力先ディレクトリ（省略時: workdir と同じディレクトリ）
-  pptxfilename: merged.pptx  # 出力ファイル名（必須）
-  idresolvedfilename: resolved.yaml  # idresolve モード使用時は必須。outputdir 基準で解決する
+  targetbasefilename: target  # 出力ファイル名のベース部分（省略可）。指定すると他の出力キーを自動生成
+  pptxfilename: merged.pptx  # 出力ファイル名（targetbasefilename 未指定時は必須）
+  idresolvedfilename: resolved.yaml  # idresolve モード使用時に参照。省略時は targetbasefilename から自動生成
 
 pptmerge:                     # スタイルベース PPTX の指定（省略可）
   stylebase: style.pptx       # マージ先の雛形となる PPTX ファイル。一時ファイルにコピーしてから開く
@@ -786,7 +809,7 @@ log:
 
 ### エラー条件
 
-* 入力 YAML に `output.pptxfilename` が未定義
+* 入力 YAML に `output.pptxfilename` も `output.targetbasefilename` も未定義
 * `insertpptx` エントリに `pptxfilename` が未定義
 * 入力 PPTX ファイルが存在しない
 * `pptmerge.stylebase` に指定したファイルが存在しない

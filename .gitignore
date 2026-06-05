@@ -264,3 +264,7 @@ sandbox/
 
 # folder structure
 folder_structure.md
+
+# MS office のテンポラリファイル
+~$*.*
+

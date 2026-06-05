@@ -5,7 +5,7 @@ from pathlib import Path
 
 from md_merge._output import EXIT_BAD_INPUT, EXIT_FAILURE, EXIT_NOT_FOUND, EXIT_OK, emit, setup_logging
 from md_merge.merge._recipe import apply_recipe_force, load_yaml, resolve_input_path, resolve_out_file, resolve_workdir
-from md_merge.pptmerge._config import ConfigError, resolve_base, resolve_dir
+from md_merge.pptmerge._config import ConfigError
 from md_merge.pptmerge._merger import _apply_cli_indexer_opts, merge_pptx, resolve_merge_log_path
 from md_merge.pptmerge._slide_titles import postprocess_after_merge, postprocess_idresolve
 
@@ -29,19 +29,10 @@ def run(args: argparse.Namespace) -> int:
     force = getattr(args, "force", False)
 
     # Resolve output path for dry-run and guard
-    output = recipe.get("output", {})
-    outputdir = output.get("outputdir")
-    pptxfilename = output.get("pptxfilename")
-    if not pptxfilename:
-        logging.error("output.pptxfilename が指定されていません: %s", yaml_path)
+    out_path = resolve_out_file(recipe, "pptxfilename", yaml_path, workdir)
+    if out_path is None:
+        logging.error("output.pptxfilename または output.targetbasefilename が指定されていません: %s", yaml_path)
         return EXIT_BAD_INPUT
-
-    out_dir = (
-        resolve_dir(outputdir, yaml_path, workdir)
-        if outputdir
-        else resolve_base(yaml_path, workdir)
-    )
-    out_path = out_dir / pptxfilename
 
     logging.debug("yaml   : %s", yaml_path)
     logging.debug("output : %s", out_path)

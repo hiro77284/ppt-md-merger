@@ -4,18 +4,63 @@ import argparse
 import json
 import logging
 import sys
+from pathlib import Path
 
 from md_merge._output import EXIT_OK, setup_logging
 from md_merge.condblockprocess import run as run_condblockprocess
 from md_merge.idcollect import run as run_idcollect
 from md_merge.idresolve import run as run_idresolve
 from md_merge.merge import run as run_merge
-from md_merge.merge._recipe import load_yaml, resolve_input_path
+from md_merge.merge._recipe import (
+    load_yaml,
+    resolve_condblock_output,
+    resolve_input_path,
+    resolve_out_file,
+    resolve_workdir,
+)
 from md_merge.pandoc import run as run_pandoc
 from md_merge.pptimgexport import run as run_pptimgexport
 from md_merge.pptmdexport import run as run_pptmdexport
 from md_merge.pptpdfexport import run as run_pptpdfexport
 from md_merge.render import run as run_render
+
+_WORK_FILE_KEYS = (
+    "mdfilename",
+    "idcollectfilename",
+    "idresolvedfilename",
+    "resourcepathfilename",
+)
+
+
+def _cleanup_work_files(args: argparse.Namespace) -> None:
+    yaml_path = resolve_input_path(args)
+    if yaml_path is None or not yaml_path.exists():
+        return
+    recipe = load_yaml(yaml_path)
+    cli_workdir = Path(args.workdir).resolve() if getattr(args, "workdir", None) else None
+    workdir = resolve_workdir(recipe, yaml_path, cli_workdir)
+
+    candidates: list[Path] = []
+    for key in _WORK_FILE_KEYS:
+        p = resolve_out_file(recipe, key, yaml_path, workdir)
+        if p is not None:
+            candidates.append(p)
+    cond_out = resolve_condblock_output(recipe.get("pandoc") or {}, recipe, yaml_path, workdir)
+    if cond_out is not None:
+        candidates.append(cond_out)
+
+    logging.info("[ppt_to_pdf] deleting work-files")
+    deleted = 0
+    for p in candidates:
+        if p.exists():
+            try:
+                p.unlink()
+                logging.info("[ppt_to_pdf] deleted: %s", p.name)
+                deleted += 1
+            except OSError as e:
+                logging.warning("[ppt_to_pdf] work file 削除失敗: %s: %s", p, e)
+    if deleted >= 1:
+        logging.info("[ppt_to_pdf] use --keep-work option to preserve work-files")
 
 
 def _run_condblockprocess_if_configured(args: argparse.Namespace) -> int:
@@ -79,6 +124,8 @@ def run(args: argparse.Namespace) -> int:
             _step_print(args, name, "FAILED", exit_code=code)
             return code
         _step_print(args, name, "OK")
+    if not getattr(args, "keep_work", False):
+        _cleanup_work_files(args)
     if not getattr(args, "json", False):
         print("\n========================================")
         print("  ppt_to_pdf 完了")

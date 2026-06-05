@@ -34,18 +34,19 @@ pptmerge:
 output: 
   force: true          # 既存の出力ファイルを上書きする（既定: false）
   outputdir: build  # 出力ファイルを書き込むディレクトリ
+  targetbasefilename: overview_merged
 
-  mdfilename: overview_merged.md            # 結合後のmdファイルのファイル名
-  pptxfilename: overview_merged.pptx        # 結合後のpptxファイルのファイル名
-  idcollectfilename: overview_collect.yaml  # 結合後のmdファイルから{{#id:...}}マーカーを抽出して生成されるインベントリファイルのファイル名
-  idresolvedfilename: overview_resolved.yaml  # インベントリファイルを読み込んでnumberとlabelを付与したID解決済みマップファイルのファイル名
-  renderedfilename: overview_rendered.md    # 結合後のmdファイルに対してタイトル置換・参照置換を行ったレンダー済みmdファイルのファイル名
-  puremdfilename: overview_puremd.md        # rendered.mdファイルからlatex命令を削除した純粋なmdファイルのファイル名。MD自体でプレビューを見るときはこれを使う
-  pdffilename: overview_merged.pdf          # 結合後のmdファイルをPandocでレンダーして生成されるpdfファイルのファイル名
-  texfilename: overview_merged.tex          # 結合後のmdファイルをPandocでレンダーして生成されるtexファイルのファイル名
-  resourcepathfilename: resourcepath.tex  # 結合後のmdファイルで使用するリソースパスを書き込むtexファイルのファイル名
-  htmlfilename: overview_merged.html        # 結合後のmdファイルをPandocでレンダーして生成されるhtmlファイルのファイル名
-  revealfilename: overview_merged_reveal.html        # 結合後のmdファイルをPandocでレンダーして生成されるhtmlファイルのファイル名
+  mdfilename:             # 結合後のmdファイルのファイル名
+  pptxfilename:         # 結合後のpptxファイルのファイル名
+  idcollectfilename:   # 結合後のmdファイルから{{#id:...}}マーカーを抽出して生成されるインベントリファイルのファイル名
+  idresolvedfilename:   # インベントリファイルを読み込んでnumberとlabelを付与したID解決済みマップファイルのファイル名
+  renderedfilename:     # 結合後のmdファイルに対してタイトル置換・参照置換を行ったレンダー済みmdファイルのファイル名
+  puremdfilename:         # rendered.mdファイルからlatex命令を削除した純粋なmdファイルのファイル名。MD自体でプレビューを見るときはこれを使う
+  pdffilename:           # 結合後のmdファイルをPandocでレンダーして生成されるpdfファイルのファイル名
+  texfilename:           # 結合後のmdファイルをPandocでレンダーして生成されるtexファイルのファイル名
+  resourcepathfilename:  # 結合後のmdファイルで使用するリソースパスを書き込むtexファイルのファイル名
+  htmlfilename:         # 結合後のmdファイルをPandocでレンダーして生成されるhtmlファイルのファイル名
+  revealfilename:         # 結合後のmdファイルをPandocでレンダーして生成されるhtmlファイルのファイル名
 
 indexer:
   delimiter: '.'

@@ -8,6 +8,20 @@ import yaml
 _INCLUDE_RE = re.compile(r'^!include\s+(.+?)\s*$')
 _RANGE_RE = re.compile(r'\[([^\]]*)\]')
 
+_AUTO_FILENAMES: dict[str, str] = {
+    "mdfilename":           "work_{base}_merged.md",
+    "idcollectfilename":    "work_{base}_idcollect.yaml",
+    "idresolvedfilename":   "work_{base}_idresolve.yaml",
+    "renderedfilename":     "{base}_rendered.md",
+    "resourcepathfilename": "work_{base}_resourcepath.tex",
+    "pdffilename":          "{base}.pdf",
+    "texfilename":          "{base}.tex",
+    "htmlfilename":         "{base}.html",
+    "revealfilename":       "{base}_reveal.html",
+    "puremdfilename":       "{base}_puremd.md",
+    "pptxfilename":         "{base}.pptx",
+}
+
 
 # ── exceptions ─────────────────────────────────────────────────────────────
 
@@ -72,6 +86,52 @@ def _expand_mdfilename(val: str) -> list[str]:
 
 
 # ── public API ─────────────────────────────────────────────────────────────
+
+
+def resolve_condblock_output(
+    pandoc_section: dict,
+    recipe: dict,
+    yaml_path: Path,
+    workdir: Path | None,
+) -> Path | None:
+    """Resolve conditional-process-output path.
+
+    When conditional-process-output is absent/empty, auto-generates
+    outputdir/work_<basename(conditional-process-input)>.
+    Returns None when conditional-process-input is not set.
+    """
+    input_val = pandoc_section.get("conditional-process-input")
+    if not input_val:
+        return None
+    output_val = pandoc_section.get("conditional-process-output")
+    base = _base_dir(yaml_path, workdir)
+    if output_val:
+        p = Path(str(output_val))
+        return p if p.is_absolute() else base / p
+    out_section = recipe.get("output", {})
+    outdir_val = out_section.get("outputdir")
+    if outdir_val:
+        p = Path(str(outdir_val))
+        out_dir = p if p.is_absolute() else base / p
+    else:
+        out_dir = base
+    return out_dir / ("work_" + Path(str(input_val)).name)
+
+
+def get_targetbasefilename(out_section: dict) -> str | None:
+    """Return output.targetbasefilename with extension stripped (warns if extension present)."""
+    val = out_section.get("targetbasefilename")
+    if not val:
+        return None
+    val = str(val)
+    p = Path(val)
+    if p.suffix:
+        logging.warning(
+            "output.targetbasefilename に拡張子が含まれています。拡張子を除去します: '%s' → '%s'",
+            val, p.stem,
+        )
+        val = p.stem
+    return val
 
 
 def load_yaml(yaml_path: Path) -> dict:
@@ -214,12 +274,18 @@ def resolve_out_file(
 ) -> Path | None:
     """Resolve output.<filename_key> under output.outputdir from *recipe*.
 
-    Returns None when the key is absent from the output section.
+    When the key is absent/empty and output.targetbasefilename is set,
+    the filename is auto-generated from targetbasefilename.
+    Returns None when neither the key nor targetbasefilename is set.
     """
     out_section = recipe.get("output", {})
     filename = out_section.get(filename_key)
     if not filename:
-        return None
+        base_name = get_targetbasefilename(out_section)
+        if base_name and filename_key in _AUTO_FILENAMES:
+            filename = _AUTO_FILENAMES[filename_key].format(base=base_name)
+        else:
+            return None
     base = _base_dir(yaml_path, workdir)
     outdir_val = out_section.get("outputdir")
     out_dir = (Path(outdir_val) if Path(outdir_val).is_absolute() else base / outdir_val) if outdir_val else base
@@ -261,7 +327,10 @@ def resolve_output_path(
     outdir_val = out_section.get("outputdir")
     out_dir = (Path(outdir_val) if Path(outdir_val).is_absolute() else base / outdir_val) if outdir_val else base
 
-    filename = out_section.get("mdfilename") or (yaml_path.stem + "_merge.md")
+    filename = out_section.get("mdfilename")
+    if not filename:
+        base_name = get_targetbasefilename(out_section)
+        filename = _AUTO_FILENAMES["mdfilename"].format(base=base_name) if base_name else (yaml_path.stem + "_merge.md")
     return out_dir / filename
 
 

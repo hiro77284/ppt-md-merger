@@ -7,7 +7,9 @@ TEXTCONV_CONFIG=/d/DOCS/SWPJs/textconv/textconv_togithub.yaml
 TEXTCONV_OVERWRITE=--overwrite
 PPTMERGE_FORCE=--force
 
-DO_OVERVIEW=false
+KEEP_WORK=--keep-work
+
+DO_OVERVIEW=true
 
 DEBUG=--debug
 
@@ -15,8 +17,8 @@ DEBUG=--debug
 if [[ "$DO_OVERVIEW" == true ]]; then
     echo "===========building overview example... ==========="
     cd overview
-    pptmdmerge.exe ppt_to_pdf overview_recipe.yaml
-    textconv build/overview_rendered.md -o ../../README.md --config $TEXTCONV_CONFIG $TEXTCONV_OVERWRITE --from-base examples/overview/build/ --to-base .
+    pptmdmerge.exe ppt_to_pdf overview_recipe.yaml $KEEP_WORK
+    textconv build/overview_merged_rendered.md -o ../../README.md --config $TEXTCONV_CONFIG $TEXTCONV_OVERWRITE --from-base examples/overview/build/ --to-base .
     pptmdmerge.exe pptmerge overview_recipe.yaml
     cd ..
 fi
@@ -25,7 +27,7 @@ fi
 
 
 targets=(
-    pm1
+    # pm1
     # pm2
     # pm3
     # pm4
@@ -59,7 +61,7 @@ do
     echo cd ${target}_${samplenames[$target]}
     cd ${target}_${samplenames[$target]}
     echo "===========building ${samplenames[$target]} PDF ==========="
-    echo pptmdmerge.exe ppt_to_pdf ${samplenames[$target]}_pdf_recipe.yaml $PPTMERGE_FORCE
+    echo pptmdmerge.exe ppt_to_pdf ${samplenames[$target]}_pdf_recipe.yaml $PPTMERGE_FORCE $KEEP_WORK
     pptmdmerge.exe ppt_to_pdf ${samplenames[$target]}_pdf_recipe.yaml $PPTMERGE_FORCE
     echo "===========building ${samplenames[$target]} README ==========="
     echo textconv build/${samplenames[$target]}_rendered.md -o README.md --config $TEXTCONV_CONFIG $TEXTCONV_OVERWRITE --from-base build --to-base .

@@ -38,6 +38,7 @@ from ._config import (
     parse_slides,
     parse_log_duplicate,
 )
+from md_merge.merge._recipe import _AUTO_FILENAMES, get_targetbasefilename
 from ._slide_operation import SlideOperation, build_slide_insert_operations
 from ._slide_titles import (
     _get_indexer_value,
@@ -551,6 +552,10 @@ def merge_pptx(
     # Load resolved ID map for {{num/title/label:FULL_ID}} substitution
     resolved_map: dict[str, dict] = {}
     idresolved_filename = output.get("idresolvedfilename")
+    if not idresolved_filename:
+        _base = get_targetbasefilename(output)
+        if _base:
+            idresolved_filename = _AUTO_FILENAMES["idresolvedfilename"].format(base=_base)
     if idresolved_filename:
         resolved_path_obj = output_dir / str(idresolved_filename)
         if resolved_path_obj.exists():
@@ -577,7 +582,13 @@ def merge_pptx(
         else [resolve_base(config_path, workdir)]
     )
 
-    output_filename = output["pptxfilename"]
+    output_filename = output.get("pptxfilename")
+    if not output_filename:
+        _base = get_targetbasefilename(output)
+        if _base:
+            output_filename = f"{_base}.pptx"
+        else:
+            raise ConfigError("output.pptxfilename または output.targetbasefilename が必要です。")
     if Path(output_filename).name != output_filename:
         raise ConfigError("output.pptxfilename にはディレクトリを含めない単一ファイル名を指定してください。")
 

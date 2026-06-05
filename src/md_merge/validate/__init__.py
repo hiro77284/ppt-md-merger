@@ -27,6 +27,7 @@ _INPUT_KEYS = frozenset({
 
 _OUTPUT_KEYS = frozenset({
     "outputdir", "force",
+    "targetbasefilename",
     "mdfilename", "idcollectfilename", "idresolvedfilename",
     "renderedfilename", "pdffilename", "texfilename", "htmlfilename",
     "revealfilename", "puremdfilename", "pptxfilename",

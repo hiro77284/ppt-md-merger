@@ -6,7 +6,7 @@ import subprocess
 from pathlib import Path
 
 from md_merge._output import EXIT_BAD_INPUT, EXIT_FAILURE, EXIT_NOT_FOUND, EXIT_OK, emit, setup_logging
-from md_merge.merge._recipe import apply_recipe_force, load_yaml, resolve_input_path, resolve_out_file, resolve_workdir
+from md_merge.merge._recipe import apply_recipe_force, load_yaml, resolve_condblock_output, resolve_input_path, resolve_out_file, resolve_workdir
 
 # Built-in Lua filters shipped with this package
 _BUILTIN_FILTERS_DIR = Path(__file__).parent.parent / "filters"
@@ -89,6 +89,10 @@ def run(args: argparse.Namespace) -> int:
         include_before_body = _resolve_resource_paths(
             pandoc_section.get("include-before-body"), yaml_path, workdir
         )
+        cond_out = resolve_condblock_output(pandoc_section, recipe, yaml_path, workdir)
+        if cond_out is not None:
+            include_before_body = [cond_out] + include_before_body
+            logging.debug("conditional-process-output prepended to include-before-body: %s", cond_out)
 
     # resource-path: semicolon-separated string or YAML list
     # Resolved paths are written to output.resourcepathfilename as \graphicspath{...}

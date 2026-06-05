@@ -151,8 +151,8 @@ def validate_config(config: dict[str, Any]) -> None:
     if not isinstance(procedure, list):
         raise ConfigError("procedure は配列で指定してください。")
 
-    if "pptxfilename" not in output:
-        raise ConfigError("output.pptxfilename がありません。")
+    if not output.get("pptxfilename") and not output.get("targetbasefilename"):
+        raise ConfigError("output.pptxfilename または output.targetbasefilename が必要です。")
 
     log_cfg = config.get("log")
     if isinstance(log_cfg, dict):
