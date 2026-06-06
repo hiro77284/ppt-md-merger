@@ -7,7 +7,7 @@ from pathlib import Path
 
 from md_merge._filters import escape_backslash_smart
 from md_merge._output import EXIT_BAD_INPUT, EXIT_FAILURE, EXIT_NOT_FOUND, EXIT_OK, emit, setup_logging
-from md_merge.merge._recipe import apply_recipe_force, load_yaml, resolve_condblock_output, resolve_input_path, resolve_workdir
+from md_merge.merge._recipe import apply_recipe_force, load_yaml, resolve_condblock_output, resolve_input_path, resolve_workdir, setup_recipe_file_logging
 
 _RE_VAR = re.compile(r'\{\{v:([A-Za-z0-9_]+)\}\}')
 _RE_IF = re.compile(r'^\s*\{\{#if:([A-Za-z0-9_]+)\}\}\s*$')
@@ -117,6 +117,7 @@ def run(args: argparse.Namespace) -> int:
     recipe = load_yaml(yaml_path)
     cli_workdir = Path(args.workdir).resolve() if getattr(args, "workdir", None) else None
     workdir = resolve_workdir(recipe, yaml_path, cli_workdir)
+    setup_recipe_file_logging(recipe, yaml_path, workdir)
     apply_recipe_force(args, recipe)
 
     pandoc_section = recipe.get("pandoc") or {}
@@ -127,7 +128,20 @@ def run(args: argparse.Namespace) -> int:
         logging.error("pandoc.conditional-process-input が指定されていません: %s", yaml_path)
         return EXIT_BAD_INPUT
 
-    in_path = _resolve_path(str(input_val), yaml_path, workdir)
+    # Resolve conditional-process-input preferring pandoc.data-dir
+    _in_p = Path(str(input_val))
+    if _in_p.is_absolute():
+        in_path = _in_p.resolve()
+    else:
+        _data_dir_val = pandoc_section.get("data-dir")
+        _base = workdir if workdir else yaml_path.parent
+        if _data_dir_val:
+            _dd = Path(str(_data_dir_val))
+            _data_dir = _dd.resolve() if _dd.is_absolute() else (_base / _dd).resolve()
+            _candidate = (_data_dir / _in_p).resolve()
+            in_path = _candidate if _candidate.exists() else (_base / _in_p).resolve()
+        else:
+            in_path = (_base / _in_p).resolve()
     out_path = resolve_condblock_output(pandoc_section, recipe, yaml_path, workdir)
     if not pandoc_section.get("conditional-process-output"):
         logging.debug("conditional-process-output: 自動生成 %s", out_path)

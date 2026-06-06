@@ -19,10 +19,11 @@ _TOP_LEVEL_KEYS = frozenset({
 })
 
 _INPUT_KEYS = frozenset({
-    "mddir",      # merge
+    "dirs",       # merge / pptmerge (統合ファイル探索パス)
+    "mddir",      # merge (非推奨。input.dirs を推奨)
     "imagesdir",  # crop
     "cropsrc",    # pptimgexport / pptmdexport / pptpdfexport
-    "pptxdir",    # pptmerge
+    "pptxdir",    # pptmerge (非推奨。input.dirs を推奨)
 })
 
 _OUTPUT_KEYS = frozenset({

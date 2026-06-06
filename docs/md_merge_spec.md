@@ -85,6 +85,56 @@ md-merge <subcommand> INPUT
 
 ---
 
+## 5.1 レシピ YAML の !include
+
+レシピ YAML 内の任意の位置に `!include <path>` と記述すると、指定したファイルの内容をその位置にインクルードする。
+
+```yaml
+# main.yaml
+output: !include shared/output.yaml          # セクションごとインクルード
+pandoc:
+  defaults: defaults.yaml
+  metadata-file: !include shared/meta.yaml   # 行途中でも可
+vars: !include shared/vars.yaml
+```
+
+### 仕様
+
+| 項目 | 内容 |
+| ---- | ---- |
+| 記述位置 | 行頭・行途中を問わず YAML 値が書ける位置であればどこでも使用可 |
+| パス解決 | インクルード元ファイルのディレクトリ基準で解決する（絶対パスも可） |
+| 再帰インクルード | インクルードされたファイル内でもさらに `!include` が使える |
+| コメント | `!include path.yaml  # コメント` のようにコメントを付けてよい |
+
+---
+
+## 5.2 レシピ YAML の特殊定数
+
+`!include` 展開後・YAML パース前に、以下の `__NAME__` 形式の特殊定数をその時点の値に置換する。
+
+| 定数 | 置換される値 | 例 |
+| ---- | ------------ | -- |
+| `__DATE__` | 実行日（`YYYY-MM-DD`） | `2026-06-06` |
+| `__TIME__` | 実行時刻（`HH:MM:SS`） | `14:32:05` |
+| `__DATETIME__` | 実行日時（`YYYY-MM-DDThh:mm:ss`） | `2026-06-06T14:32:05` |
+
+```yaml
+log:
+  filename: pptmerge___DATE__.log       # → pptmerge_2026-06-06.log
+output:
+  pdffilename: doc___DATETIME__.pdf     # → doc_2026-06-06T14:32:05.pdf
+  outputdir: out___DATE__               # → out_2026-06-06
+```
+
+### 仕様
+
+- 同一プロセス実行内では全サブコマンドで同一のタイムスタンプを使用する（セッションキャッシュ）
+- YAML 値・キー・コメントを問わずテキスト全体に適用される
+- `!include` で読み込まれたファイル内の定数も同様に置換される
+
+---
+
 ## 6. 出力指定仕様
 
 出力先はすべてレシピ YAML の `output` セクションで指定する。
@@ -509,14 +559,26 @@ pandoc:
     - cross_ref.lua                     # ビルトイン filter（md-merge 同梱）
     - pandoc/my_filter.lua              # カスタム filter（yaml 基準の相対パス）
   metadata-file: pandoc/metadata.yaml   # --metadata-file に渡すパス（省略可）
-  template: pandoc/template.tex         # --template に渡すパス（省略可）
-  include-in-header: pandoc/header.tex  # --include-in-header に渡すパス（省略可）
+  template: pandoc/template.tex         # --template に渡すパス（省略可。data-dir 基準で解決）
+  include-in-header: pandoc/header.tex  # --include-in-header に渡すパス（省略可。data-dir 基準で解決）
   include-before-body: pandoc/before.tex  # --include-before-body に渡すパス（省略可。リスト可）
   syntax-highlighting: tango          # --syntax-highlighting に渡すスタイル名またはテーマファイルパス（省略可）
-  data-dir: D:\DOCS\SWPJs\md_merge\examples\medium\    # --data-dir に渡すパス（省略可）
+  data-dir: pandoc/                   # --data-dir に渡すパス（省略可）
+  resource-path: figures/             # 画像等のリソース検索パス（省略可。リスト・;区切り可）
 ```
 
-相対パスは YAML ファイルの場所（または `--workdir`）を基準に解決する。
+### パスの解決基準
+
+| キー | 解決基準 |
+| ---- | -------- |
+| `defaults` / `htmldefaults` / `revealdefaults` | `data-dir` → workdir の順にフォールバック |
+| `template` / `include-in-header` | `data-dir` → workdir の順にフォールバック |
+| `conditional-process-input` | `data-dir` → workdir の順にフォールバック |
+| `metadata-file` / `include-before-body` / `filters` | workdir（省略時は YAML の親ディレクトリ） |
+| `resource-path` | レシピ YAML のあるディレクトリ（workdir の影響を受けない） |
+| `data-dir` 自体 | workdir 基準で解決後、`..`・`.` を除去した正規パスで pandoc に渡す |
+
+`data-dir` を指定すると、テンプレート・defaults 等の検索が `data-dir` 内から先に行われる。相対パスで指定したファイルが `data-dir` に存在しない場合は workdir にフォールバックする。
 
 ### Lua filter の解決順
 
@@ -1556,11 +1618,11 @@ vars:
   COVERIMAGE: figures/cover.png   # 未定義または空文字で条件ブロックが削除される
 
 pandoc:
-  conditional-process-input: templates/cover.tex    # テンプレートファイル（必須）
-  conditional-process-output: out/cover_generated.tex  # 出力ファイル（必須）
+  conditional-process-input: templates/cover.tex       # テンプレートファイル（必須。data-dir 基準で解決）
+  conditional-process-output: out/cover_generated.tex  # 出力ファイル（省略時は output.outputdir に自動生成）
 ```
 
-相対パスは YAML ファイルの場所（または `--workdir`）を基準に解決する。
+`conditional-process-input` は `pandoc.data-dir` → workdir の順に解決する。`conditional-process-output` を省略すると `output.outputdir / work_<input_basename>` を自動生成し、pandoc の `include-before-body` 先頭にも自動追加する。
 
 ### 変数値のエスケープ処理
 
@@ -1571,7 +1633,6 @@ pandoc:
 ### エラー条件
 
 * `pandoc.conditional-process-input` が未定義
-* `pandoc.conditional-process-output` が未定義
 * 入力ファイルが存在しない
 * 出力先に既存ファイルがあり `--force` 未指定
 * `{{v:VAR}}` の `VAR` が `vars:` に未定義

@@ -4,7 +4,7 @@ import sys
 from pathlib import Path
 
 from md_merge._output import EXIT_BAD_INPUT, EXIT_FAILURE, EXIT_NOT_FOUND, EXIT_OK, emit, setup_logging
-from md_merge.merge._recipe import apply_recipe_force, load_yaml, resolve_input_path, resolve_out_file, resolve_workdir
+from md_merge.merge._recipe import apply_recipe_force, load_yaml, resolve_input_path, resolve_out_file, resolve_workdir, setup_recipe_file_logging
 from md_merge.pptmerge._config import ConfigError
 from md_merge.pptmerge._merger import _apply_cli_indexer_opts, merge_pptx, resolve_merge_log_path
 from md_merge.pptmerge._slide_titles import postprocess_after_merge, postprocess_idresolve
@@ -25,6 +25,7 @@ def run(args: argparse.Namespace) -> int:
     _apply_cli_indexer_opts(args, recipe)
     cli_workdir = Path(args.workdir).resolve() if getattr(args, "workdir", None) else None
     workdir = resolve_workdir(recipe, yaml_path, cli_workdir)
+    setup_recipe_file_logging(recipe, yaml_path, workdir)
     apply_recipe_force(args, recipe)
     force = getattr(args, "force", False)
 
@@ -47,7 +48,7 @@ def run(args: argparse.Namespace) -> int:
 
     try:
         output_path, operations = merge_pptx(
-            yaml_path, workdir=workdir, force=force, args=args,
+            yaml_path, workdir=workdir, force=force, config=recipe,
         )
     except ConfigError as e:
         logging.error("Config error: %s", e)

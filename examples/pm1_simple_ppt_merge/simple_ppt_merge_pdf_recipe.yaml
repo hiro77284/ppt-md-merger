@@ -5,16 +5,7 @@ version: 1
 # こちらはMDマージ→PDF生成を行うので、設定項目が非常に多い
 
 vars:
-  COVER_IMAGE: ppt_md_merger.png
-  COVER_TITLE: "pptmerge 単純マージ サンプル"
-  COVER_SUBTITLE: "pptmerge 機能の 「単純マージ」 用例"
-  COVER_DATE: "2026-05-21"
-  COVER_AUTHOR: "開米瑞浩"
-  COVER_AFFILIATION: "アイデアクラフト"
-  COVER_CONTACT: "https://ideacraft"
-  COVER_COPYRIGHT: "© 2026 M. Kaimai"
-  COVER_NOTE: "本書は、 PPT を 「流用できる文書部品」 として統合するツール PPT & MD merger の、 最もシンプルな用例「単純マージ」 の概要説明文書です。"
-  COVER_QRCODE: 
+  !include COVER_VARS.yaml    # 表紙用変数は別ファイルから読み込む
 
 log:
   level: debug
@@ -32,18 +23,19 @@ pptmerge:
 output: 
   force: true          # 既存の出力ファイルを上書きする（既定: false）
   outputdir: build  # 出力ファイルを書き込むディレクトリ
+  targetbasefilename: simple_ppt_merge_merged
 
-  mdfilename: simple_ppt_merge_merged.md            # 結合後のmdファイルのファイル名
-  pptxfilename: simple_ppt_merge_merged.pptx        # 結合後のpptxファイルのファイル名
-  idcollectfilename: simple_ppt_merge_collect.yaml  # 結合後のmdファイルから{{#id:...}}マーカーを抽出して生成されるインベントリファイルのファイル名
-  idresolvedfilename: simple_ppt_merge_resolved.yaml  # インベントリファイルを読み込んでnumberとlabelを付与したID解決済みマップファイルのファイル名
-  renderedfilename: simple_ppt_merge_rendered.md    # 結合後のmdファイルに対してタイトル置換・参照置換を行ったレンダー済みmdファイルのファイル名
-  puremdfilename: simple_ppt_merge_puremd.md        # rendered.mdファイルからlatex命令を削除した純粋なmdファイルのファイル名。MD自体でプレビューを見るときはこれを使う
-  pdffilename: simple_ppt_merge_merged.pdf          # 結合後のmdファイルをPandocでレンダーして生成されるpdfファイルのファイル名
-  texfilename: simple_ppt_merge_merged.tex          # 結合後のmdファイルをPandocでレンダーして生成されるtexファイルのファイル名
-  resourcepathfilename: resourcepath.tex  # 結合後のmdファイルで使用するリソースパスを書き込むtexファイルのファイル名
-  htmlfilename: simple_ppt_merge_merged.html        # 結合後のmdファイルをPandocでレンダーして生成されるhtmlファイルのファイル名
-  revealfilename: simple_ppt_merge_merged_reveal.html        # 結合後のmdファイルをPandocでレンダーして生成されるhtmlファイルのファイル名
+  mdfilename:            # 結合後のmdファイルのファイル名
+  pptxfilename:         # 結合後のpptxファイルのファイル名
+  idcollectfilename:   # 結合後のmdファイルから{{#id:...}}マーカーを抽出して生成されるインベントリファイルのファイル名
+  idresolvedfilename:   # インベントリファイルを読み込んでnumberとlabelを付与したID解決済みマップファイルのファイル名
+  renderedfilename:     # 結合後のmdファイルに対してタイトル置換・参照置換を行ったレンダー済みmdファイルのファイル名
+  puremdfilename:         # rendered.mdファイルからlatex命令を削除した純粋なmdファイルのファイル名。MD自体でプレビューを見るときはこれを使う
+  pdffilename:           # 結合後のmdファイルをPandocでレンダーして生成されるpdfファイルのファイル名
+  texfilename:           # 結合後のmdファイルをPandocでレンダーして生成されるtexファイルのファイル名
+  resourcepathfilename:  # 結合後のmdファイルで使用するリソースパスを書き込むtexファイルのファイル名
+  htmlfilename:         # 結合後のmdファイルをPandocでレンダーして生成されるhtmlファイルのファイル名
+  revealfilename:         # 結合後のmdファイルをPandocでレンダーして生成されるhtmlファイルのファイル名
 
 
 indexer:
@@ -57,45 +49,17 @@ merge:
   flatten-images: false # trueならすべての画像を<outputdir>/<image-dir>/ にフラット集約する。同名ファイルは _1, _2 … のサフィックスを付けて上書きを回避する（既定: false）
   strict: false         # 警告をエラーとして扱う（既定: false）
 
-pandoc:
-  defaults: ../../defaults/pandoc/defaults/report_pandoc_defaults.yaml   # Pandoc のデフォルト設定ファイルのパス
-  htmldefaults: ../../defaults/pandoc/defaults/html_pandoc_defaults.yaml   # Pandoc のHTMLデフォルト設定ファイルのパス
-  revealdefaults: ../../defaults/pandoc/defaults/reveal_pandoc_defaults.yaml   # Pandoc のRevealデフォルト設定ファイルのパス
-  # metadata-file: simple_ppt_merge_meta.yaml                   # Pandoc のメタデータファイルのパス。
-  template: ../../defaults/pandoc/templates/report_template.tex  # Pandoc のテンプレートファイルのパス
-  include-in-header: ../../defaults/pandoc/templates/report_header.tex # Pandoc のヘッダー用ファイルのパス
+pandoc: 
+  !include ../standard_pandocsettings.yaml
 
-  # ↓condblockprocessコマンドで処理する対象。実質、coverの処理。
-  # inputで参照する cover を選択し、それに変数置換を加えた一時ファイルを output に書く
-  conditional-process-input: ../../defaults/pandoc/standard_cover.tex
-  conditional-process-output: build/cover-processed.tex
-
-  # coverとして挿入するファイル。通常、conditional-process-outputと同じ。
-  include-before-body: # 本文の前に挿入するファイルのリスト。通常、表紙ページを挿入する。
-    - build/cover-processed.tex
-
-  # ↓「Pandoc がユーザー専用の資材（テンプレート、カスタムフィルタ、ユーザーデータなど）を探しに行く基準ディレクトリ」
-  # 主な対象はテンプレート、フィルタ、スタイルファイル。Pandoc の「設定ファイル群」の置き場所
-  # このディレクトリ及びその下の templates, filters, defaults ディレクトリも探しに行く。
-  # --template や --lua-filter で指定した名前
-  # 複数指定は不可（1つだけ指定する）
-  data-dir: ../../defaults/pandoc
-
-  # LaTeX処理時に画像、埋め込みファイルなどを探しに行く基準ディレクトリ。
-  # HTML では処理しない。YAMLリストで複数指定可能
-  # ↓↓↓↓↓↓
-  resource-path: 
-    - build
-    - ../../defaults/common_assets
-
-  syntax-highlighting: tango
-
+#  format: tex
 
 input:
-  mddir: 
+  dirs: 
+    - .
     - extracted
     - ../../defaults/common_assets
-  pptxdir: 
+
   imagesdir: 
     - extracted/figures
     - ../../defaults/common_assets
@@ -103,7 +67,7 @@ input:
   # pptxから画像を取得してくるための設定
   cropsrc:
     pptx: simple_ppt_merge_guide.pptx           # 画像のソースとなる pptx ファイル名
-    pdf: simple_ppt_merge_guide.pdf           # スライド全体画像取得用のPDF
+    pdf:            # スライド全体画像取得用のPDF
 
 
 # 結合手順： "operation: insertpptx" で、結合したいファイルを結合順に記載する

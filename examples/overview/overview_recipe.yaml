@@ -2,16 +2,7 @@
 version: 1
 
 vars: # mdファイルとpptxファイルの双方で変数置換に使用する変数の定義
-  COVER_IMAGE: ppt_md_merger.png
-  COVER_TITLE: "PPT & MD merge ツール Overview"
-  COVER_SUBTITLE: "PowerPoint ファイルを「流用できる文書部品」として統合するツール"
-  COVER_DATE: "2026-05-21"
-  COVER_AUTHOR: "開米瑞浩"
-  COVER_AFFILIATION: "アイデアクラフト"
-  COVER_CONTACT: "https://ideacraft"
-  COVER_COPYRIGHT: "© 2026 M. Kaimai"
-  COVER_NOTE: "本書は、PPTを「流用できる文書部品」として統合するツール PPT & MD merger の概要説明文書です。"
-  COVER_QRCODE: 
+  !include COVER_VARS.yaml    # 表紙用変数は別ファイルから読み込む
 
 log:
   level: debug
@@ -63,43 +54,17 @@ merge:
   strict: false         # 警告をエラーとして扱う（既定: false）
 
 
-pandoc:
-  defaults: ../../defaults/pandoc/defaults/report_pandoc_defaults.yaml   # Pandoc のデフォルト設定ファイルのパス
-  htmldefaults: ../../defaults/pandoc/defaults/html_pandoc_defaults.yaml   # Pandoc のHTMLデフォルト設定ファイルのパス
-  revealdefaults: ../../defaults/pandoc/defaults/reveal_pandoc_defaults.yaml   # Pandoc のRevealデフォルト設定ファイルのパス
-  # metadata-file: overview_meta.yaml                   # Pandoc のメタデータファイルのパス。
-  template: ../../defaults/pandoc/templates/report_template.tex  # Pandoc のテンプレートファイルのパス
-  include-in-header: ../../defaults/pandoc/templates/report_header.tex # Pandoc のヘッダー用ファイルのパス
-
-  # ↓condblockprocessコマンドで処理する対象。実質、coverの処理。
-  # inputで参照する cover を選択し、それに変数置換を加えた一時ファイルを output に書く
-  conditional-process-input: ../../defaults/pandoc/standard_cover.tex
-  conditional-process-output: build/cover-processed.tex
-
-  # coverとして挿入するファイル。通常、conditional-process-outputと同じ。
-  include-before-body: # 本文の前に挿入するファイルのリスト。通常、表紙ページを挿入する。
-    - build/cover-processed.tex
-
-  # ↓「Pandoc がユーザー専用の資材（テンプレート、カスタムフィルタ、ユーザーデータなど）を探しに行く基準ディレクトリ」
-  # 主な対象はテンプレート、フィルタ、スタイルファイル。Pandoc の「設定ファイル群」の置き場所
-  # --template や --lua-filter で指定した名前
-  # 複数指定は不可（1つだけ指定する）
-  data-dir: ../../defaults/pandoc
-
-  # LaTeX処理時に画像、埋め込みファイルなどを探しに行く基準ディレクトリ。
-  # HTML では処理しない。YAMLリストで複数指定可能
-  # ↓↓↓↓↓↓
-  resource-path: 
-    - build
-    - ../../defaults/common_assets
+pandoc: 
+  !include ../standard_pandocsettings.yaml
 
 #  format: tex
 
 input:
-  mddir: 
+  dirs: 
+    - .
     - extracted
     - ../../defaults/common_assets
-  # pptxdir: src
+
   imagesdir: 
     - extracted/figures
     - ../../defaults/common_assets

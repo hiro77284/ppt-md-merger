@@ -1,0 +1,13 @@
+# pandoc セッティングのサンプル
+
+  COVER_IMAGE: ppt_md_merger.png
+  COVER_TITLE: "PPT & MD merge ツール Overview"
+  COVER_SUBTITLE: "PowerPoint ファイルを「流用できる文書部品」として統合するツール"
+  COVER_DATE: __DATE__
+  COVER_AUTHOR: "開米瑞浩"
+  COVER_AFFILIATION: "アイデアクラフト"
+  COVER_CONTACT: "https://ideacraft"
+  COVER_COPYRIGHT: "© 2026 M. Kaimai"
+  COVER_NOTE: "本書は、PPTを「流用できる文書部品」として統合するツール PPT & MD merger の概要説明文書です。"
+  COVER_QRCODE: 
+

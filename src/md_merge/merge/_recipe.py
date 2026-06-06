@@ -1,4 +1,5 @@
 import argparse
+import datetime
 import logging
 import re
 from pathlib import Path
@@ -134,9 +135,128 @@ def get_targetbasefilename(out_section: dict) -> str | None:
     return val
 
 
+# ── YAML special constants ─────────────────────────────────────────────────
+
+_SESSION_CONSTANTS: dict[str, str] | None = None
+
+
+def _get_yaml_constants() -> dict[str, str]:
+    """Return __NAME__ → value mapping for recipe YAML substitution.
+
+    Evaluated once per session (cached). Add new constants here.
+    """
+    global _SESSION_CONSTANTS
+    if _SESSION_CONSTANTS is None:
+        now = datetime.datetime.now()
+        _SESSION_CONSTANTS = {
+            "__DATE__":     now.strftime("%Y-%m-%d"),
+            "__TIME__":     now.strftime("%H:%M:%S"),
+            "__DATETIME__": now.strftime("%Y-%m-%dT%H:%M:%S"),
+        }
+    return _SESSION_CONSTANTS
+
+
+def _apply_yaml_constants(text: str) -> str:
+    """Replace __CONSTANT__ placeholders in preprocessed YAML text."""
+    for placeholder, value in _get_yaml_constants().items():
+        text = text.replace(placeholder, value)
+    return text
+
+
+# ── !include preprocessing ─────────────────────────────────────────────────
+
+_STANDALONE_INCLUDE_RE = re.compile(r'^(\s*)!include[ \t]+(\S+?)[ \t]*(?:#.*)?$')
+_INLINE_INCLUDE_RE = re.compile(r'!include[ \t]+(\S+?)(?=[ \t]*(?:#.*)?$)')
+
+
+def _comment_start(s: str) -> int:
+    """Return the index of the first YAML comment '#' (preceded by whitespace), or len(s)."""
+    for i, c in enumerate(s):
+        if c == '#' and (i == 0 or s[i - 1] in (' ', '\t')):
+            return i
+    return len(s)
+
+
+def _preprocess_yaml(text: str, base_dir: Path, _seen: frozenset[Path] = frozenset()) -> str:
+    """Expand !include directives in YAML text before parsing.
+
+    Standalone lines (``indent!include path``) have their content replaced with
+    the included file's lines, each prefixed with the same indentation.
+    Inline occurrences (``key: !include path``) replace just the tag+path with
+    the included content; multi-line content is placed on the next line with
+    increased indentation.
+    Paths resolve relative to base_dir. Circular includes raise ValueError.
+    """
+    result: list[str] = []
+    for line in text.splitlines(keepends=True):
+        raw = line.rstrip('\r\n')
+
+        # Skip comment-only lines
+        if raw.lstrip().startswith('#'):
+            result.append(line)
+            continue
+
+        m = _STANDALONE_INCLUDE_RE.match(raw)
+        if m:
+            indent, filename = m.group(1), m.group(2)
+            filepath = (base_dir / filename).resolve()
+            if filepath in _seen:
+                raise ValueError(f"Circular !include: {filepath}")
+            inc = _preprocess_yaml(
+                filepath.read_text(encoding='utf-8'),
+                filepath.parent, _seen | {filepath},
+            )
+            for inc_line in inc.splitlines(keepends=True):
+                result.append(indent + inc_line)
+            if inc and not inc.endswith('\n'):
+                result.append('\n')
+            continue
+
+        # Inline: search only in the non-comment portion of the line
+        m = _INLINE_INCLUDE_RE.search(raw[:_comment_start(raw)])
+        if m:
+            filename = m.group(1)
+            filepath = (base_dir / filename).resolve()
+            if filepath in _seen:
+                raise ValueError(f"Circular !include: {filepath}")
+            inc = _preprocess_yaml(
+                filepath.read_text(encoding='utf-8'),
+                filepath.parent, _seen | {filepath},
+            ).rstrip('\n')
+            before = raw[:m.start()]
+            line_indent = ' ' * (len(raw) - len(raw.lstrip()))
+            if '\n' in inc:
+                inner = line_indent + '  '
+                indented = '\n'.join(inner + l for l in inc.splitlines())
+                result.append(before.rstrip() + '\n' + indented + '\n')
+            else:
+                result.append(before + inc + '\n')
+            continue
+
+        result.append(line)
+    return ''.join(result)
+
+
+class _DuplicateKeyLoader(yaml.SafeLoader):
+    """SafeLoader that emits a warning on duplicate mapping keys."""
+    def construct_mapping(self, node, deep=False):
+        seen: set = set()
+        for key_node, _ in node.value:
+            key = self.construct_object(key_node, deep=False)
+            if key in seen:
+                logging.warning(
+                    "YAML 重複キー: %r (行 %d) — 後の定義で上書きされます",
+                    key, key_node.start_mark.line + 1,
+                )
+            seen.add(key)
+        return super().construct_mapping(node, deep=deep)
+
+
 def load_yaml(yaml_path: Path) -> dict:
-    with yaml_path.open(encoding="utf-8") as f:
-        return yaml.safe_load(f)
+    text = yaml_path.read_text(encoding='utf-8')
+    text = _preprocess_yaml(text, yaml_path.parent)
+    text = _apply_yaml_constants(text)
+    return yaml.load(text, Loader=_DuplicateKeyLoader)
 
 
 def resolve_input_path(args: argparse.Namespace) -> Path | None:
@@ -146,13 +266,15 @@ def resolve_input_path(args: argparse.Namespace) -> Path | None:
 
 def _find_in_dirs(fname: str, in_dirs: list[Path]) -> Path | None:
     """Search *in_dirs* for *fname*; warn and return first if found in multiple."""
-    found = [(d / fname).resolve() for d in in_dirs if (d / fname).exists()]
-    if not found:
+    found_dirs = [d for d in in_dirs if (d / fname).exists()]
+    if not found_dirs:
         return None
-    if len(found) > 1:
+    found = [(d / fname).resolve() for d in found_dirs]
+    unique = list(dict.fromkeys(found))
+    if len(unique) > 1:
         logging.warning(
-            "insertmd: '%s' が複数のディレクトリに存在します。最初に見つかったものを使用します: %s",
-            fname, found[0],
+            "insertmd: '%s' が複数のディレクトリに存在します。最初に見つかったものを使用します: %s\n  発見: %s",
+            fname, found[0], ", ".join(str(d) for d in found_dirs),
         )
     return found[0]
 
@@ -292,27 +414,117 @@ def resolve_out_file(
     return out_dir / filename
 
 
+def setup_recipe_file_logging(recipe: dict, yaml_path: Path, workdir: Path | None) -> None:
+    """Add a FileHandler to the root logger when log.filename is set in recipe.
+
+    Directory resolution: log.dir > output.outputdir > base.
+    Level: log.level from recipe, else the root logger's current level.
+    Already-attached handlers for the same file are not duplicated (safe for pipelines).
+    """
+    log_cfg = recipe.get("log") or {}
+    filename = log_cfg.get("filename")
+    if not filename:
+        return
+
+    base = _base_dir(yaml_path, workdir)
+    log_dir_val = log_cfg.get("dir")
+    if log_dir_val:
+        p = Path(str(log_dir_val))
+        log_dir = p if p.is_absolute() else (base / p).resolve()
+    else:
+        out_section = recipe.get("output") or {}
+        outdir_val = out_section.get("outputdir")
+        if outdir_val:
+            p = Path(str(outdir_val))
+            log_dir = p if p.is_absolute() else (base / p).resolve()
+        else:
+            log_dir = base
+
+    log_dir.mkdir(parents=True, exist_ok=True)
+    log_path = (log_dir / str(filename)).resolve()
+
+    root = logging.getLogger()
+    for h in root.handlers:
+        if isinstance(h, logging.FileHandler) and Path(h.baseFilename).resolve() == log_path:
+            return  # already attached (pipeline re-entry guard)
+
+    level_val = log_cfg.get("level")
+    file_level = getattr(logging, str(level_val).upper(), logging.INFO) if level_val else (root.level or logging.INFO)
+
+    # If file level is more verbose than root logger, lower root logger's level
+    # and pin existing StreamHandlers to the current level so console output
+    # is not affected.
+    if file_level < root.level:
+        for h in root.handlers:
+            if isinstance(h, logging.StreamHandler) and not isinstance(h, logging.FileHandler):
+                if h.level == logging.NOTSET:
+                    h.setLevel(root.level)
+        root.setLevel(file_level)
+
+    handler = logging.FileHandler(log_path, encoding="utf-8")
+    handler.setLevel(file_level)
+    handler.setFormatter(logging.Formatter("%(asctime)s %(levelname)-8s %(message)s"))
+    root.addHandler(handler)
+    logging.debug("log file: %s", log_path)
+
+
 def apply_recipe_force(args: argparse.Namespace, recipe: dict) -> None:
     """Apply output.force from recipe when --force was not passed on the CLI."""
     if not getattr(args, "force", False):
         args.force = bool((recipe.get("output") or {}).get("force", False))
 
 
-def resolve_input_mddir(recipe: dict, yaml_path: Path, workdir: Path | None) -> list[Path]:
-    """Return the list of resolved input mddirs.
+def resolve_input_dirs(recipe: dict, yaml_path: Path, workdir: Path | None) -> list[Path]:
+    """Return the unified input file search path list from input.dirs.
 
-    When mddir is unset, returns [base] (recipe YAML directory by default).
+    Relative paths (including '.') are resolved relative to the YAML file's directory.
+    input.mddir / input.pptxdir are accepted but deprecated: a recommendation
+    is logged and their entries are appended after input.dirs entries.
+    Falls back to [workdir or yaml_path.parent] when nothing is specified.
     """
     section = recipe.get("input", {})
+    yaml_dir = yaml_path.parent
     base = _base_dir(yaml_path, workdir)
-    val = section.get("mddir")
-    if not val:
-        return [base]
-    entries = val if isinstance(val, list) else [val]
-    result = []
-    for entry in entries:
-        p = Path(entry)
-        result.append(p if p.is_absolute() else base / p)
+    result: list[Path] = []
+
+    dirs_val = section.get("dirs")
+    if dirs_val is None:
+        logging.warning(
+            "input.dirs が指定されていません。input.dirs の指定を推奨します。"
+        )
+    else:
+        entries = dirs_val if isinstance(dirs_val, list) else [dirs_val]
+        for entry in entries:
+            p = Path(str(entry))
+            result.append((yaml_dir / p).resolve() if not p.is_absolute() else p.resolve())
+        if not entries or str(entries[0]).strip() != ".":
+            logging.warning(
+                "input.dirs の先頭に '.' がありません。"
+                "通常は先頭に '.' (recipe YAML のあるディレクトリ) を指定します。"
+            )
+
+    mddir_val = section.get("mddir")
+    if mddir_val:
+        logging.warning(
+            "input.mddir は非推奨です。input.dirs の使用を推奨します。"
+            "mddir の内容を dirs の末尾に追加します。"
+        )
+        for entry in (mddir_val if isinstance(mddir_val, list) else [mddir_val]):
+            p = Path(str(entry))
+            result.append(p if p.is_absolute() else (base / p).resolve())
+
+    pptxdir_val = section.get("pptxdir")
+    if pptxdir_val:
+        logging.warning(
+            "input.pptxdir は非推奨です。input.dirs の使用を推奨します。"
+            "pptxdir の内容を dirs の末尾に追加します。"
+        )
+        for entry in (pptxdir_val if isinstance(pptxdir_val, list) else [pptxdir_val]):
+            p = Path(str(entry))
+            result.append(p if p.is_absolute() else (base / p).resolve())
+
+    if not result:
+        result = [base]
     return result
 
 

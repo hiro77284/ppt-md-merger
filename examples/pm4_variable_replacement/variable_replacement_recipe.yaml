@@ -11,6 +11,12 @@ vars:
   PRICE: 980円
   FEATURE: 熊本県産和栗の濃厚クリーム
 
+input:
+  dirs: 
+    - .
+    - extracted
+    - ../../defaults/common_assets
+
 procedure:
   - operation: chapter
     chapter: "+"

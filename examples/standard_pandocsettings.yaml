@@ -1,0 +1,37 @@
+# pandoc セッティングのサンプル
+
+# ↓「Pandoc がユーザー専用の資材（テンプレート、カスタムフィルタ、ユーザーデータなど）を探しに行く基準ディレクトリ」
+# 主な対象はテンプレート、フィルタ、スタイルファイル。Pandoc の「設定ファイル群」の置き場所
+# このディレクトリ及びその下の templates, filters, defaults ディレクトリも探しに行く。
+# --template や --lua-filter で指定した名前
+# 複数指定は不可（1つだけ指定する）
+data-dir: ../../defaults/pandoc
+
+#↓以下、pandoc の設定項目。 data-dir 以下のディレクトリを探しに行く。
+defaults:       defaults/report_pandoc_defaults.yaml   # Pandoc のデフォルト設定ファイルのパス
+htmldefaults:   defaults/html_pandoc_defaults.yaml   # Pandoc のHTMLデフォルト設定ファイルのパス
+revealdefaults: defaults/reveal_pandoc_defaults.yaml   # Pandoc のRevealデフォルト設定ファイルのパス
+# metadata-file: simple_ppt_merge_meta.yaml                   # Pandoc のメタデータファイルのパス。
+template:           templates/report_template.tex  # Pandoc のテンプレートファイルのパス
+include-in-header:  templates/report_header.tex # Pandoc のヘッダー用ファイルのパス
+
+# ↓condblockprocessコマンドで処理する対象。実質、coverの処理。
+# inputで参照する cover を選択し、それに変数置換を加えた一時ファイルを output に書く
+conditional-process-input: standard_cover.tex
+conditional-process-output:  # 変換後の表紙ページファイル名。空欄時は自動生成
+
+# coverとして挿入するファイル。通常、conditional-process-outputと同じ。
+# include-before-body: # 本文の前に挿入するファイルのリスト。通常、表紙ページを挿入する。
+# 省略時は conditional-process-output: があれば自動生成
+#   - build/cover-processed.tex
+
+
+# LaTeX処理時に画像、埋め込みファイルなどを探しに行く基準ディレクトリ。
+# HTML では処理しない。YAMLリストで複数指定可能
+# 相対パス指定時は recipe.yaml が基点になる。 data-dir ではないので注意。
+# ↓↓↓↓↓↓
+resource-path: 
+  - build
+  - ../../defaults/common_assets
+
+syntax-highlighting: tango

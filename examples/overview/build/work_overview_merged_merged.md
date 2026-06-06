@@ -12,7 +12,7 @@ PPT \& MD merger は、「pptxファイルを文書部品として扱い、多�
 \begin{center}
 ```
 
-![](figures/ppt_md_merger_overview_slide1_fig_23.png){ width=95% }
+![](figures/ppt_md_merger_overview_slide1_fig_30.png){ width=95% }
 
 ```{=latex}
 \end{center}
@@ -42,7 +42,7 @@ PPT \& MD merger は、「pptxファイルを文書部品として扱い、多�
 \begin{center}
 ```
 
-![](figures/ppt_md_merger_overview_slide2_fig_23.png){ width=95% }
+![](figures/ppt_md_merger_overview_slide2_fig_30.png){ width=95% }
 
 ```{=latex}
 \end{center}
@@ -74,7 +74,7 @@ PowerPoint で研修用のテキストを作るときは、こんな悩みがよ
 \begin{center}
 ```
 
-![](figures/ppt_md_merger_overview_slide3_fig_23.png){ width=90% }
+![](figures/ppt_md_merger_overview_slide3_fig_30.png){ width=90% }
 
 ```{=latex}
 \end{center}
@@ -106,7 +106,7 @@ PowerPoint で研修用のテキストを作るときは、こんな悩みがよ
 \begin{center}
 ```
 
-![](figures/ppt_md_merger_overview_slide4_fig_23.png){ width=95% }
+![](figures/ppt_md_merger_overview_slide4_fig_30.png){ width=95% }
 
 ```{=latex}
 \end{center}
@@ -135,7 +135,7 @@ PowerPoint で研修用のテキストを作るときは、こんな悩みがよ
 \begin{center}
 ```
 
-![](figures/ppt_md_merger_overview_slide5_fig_23.png){ width=80% }
+![](figures/ppt_md_merger_overview_slide5_fig_30.png){ width=80% }
 
 ```{=latex}
 \end{center}
@@ -159,7 +159,7 @@ PowerPoint 部品マージツール、 PPT \& MD merger を作りました！
 \begin{center}
 ```
 
-![](figures/ppt_md_merger_overview_slide6_fig_23.png){ width=80% }
+![](figures/ppt_md_merger_overview_slide6_fig_30.png){ width=80% }
 
 ```{=latex}
 \end{center}
@@ -179,7 +179,7 @@ pptx部品単位でマスターを管理し、更新は必ずマスターに対�
 \begin{center}
 ```
 
-![](figures/ppt_md_merger_overview_slide7_fig_23.png){ width=95% }
+![](figures/ppt_md_merger_overview_slide7_fig_30.png){ width=95% }
 
 ```{=latex}
 \end{center}
@@ -203,7 +203,7 @@ pptx部品単位でマスターを管理し、更新は必ずマスターに対�
 \begin{center}
 ```
 
-![](figures/ppt_md_merger_overview_slide8_fig_23.png){ width=95% }
+![](figures/ppt_md_merger_overview_slide8_fig_30.png){ width=95% }
 
 ```{=latex}
 \end{center}
@@ -227,7 +227,7 @@ pptx部品単位でマスターを管理し、更新は必ずマスターに対�
 \begin{center}
 ```
 
-![](figures/ppt_md_merger_overview_slide9_fig_23.png){ width=90% }
+![](figures/ppt_md_merger_overview_slide9_fig_30.png){ width=90% }
 
 ```{=latex}
 \end{center}
@@ -255,7 +255,7 @@ pptx部品単位でマスターを管理し、更新は必ずマスターに対�
 \begin{center}
 ```
 
-![](figures/ppt_md_merger_overview_slide10_fig_23.png){ width=95% }
+![](figures/ppt_md_merger_overview_slide10_fig_30.png){ width=95% }
 
 ```{=latex}
 \end{center}
@@ -283,7 +283,7 @@ pptx部品単位でマスターを管理し、更新は必ずマスターに対�
 \begin{center}
 ```
 
-![](figures/ppt_md_merger_overview_slide11_fig_23.png){ width=90% }
+![](figures/ppt_md_merger_overview_slide11_fig_30.png){ width=90% }
 
 ```{=latex}
 \end{center}
@@ -306,7 +306,7 @@ pptx部品単位でマスターを管理し、更新は必ずマスターに対�
 \begin{center}
 ```
 
-![](figures/ppt_md_merger_overview_slide12_fig_23.png){ width=95% }
+![](figures/ppt_md_merger_overview_slide12_fig_30.png){ width=95% }
 
 ```{=latex}
 \end{center}
@@ -472,7 +472,7 @@ merged.pptx
 
 サンプルフォルダ：　pm1_simple_ppt_merge
 
-[![サンプル：単純マージ](figures/simple_ppt_merge_guide_keyvisual_23.png){ width=60% }](../../pm1_simple_ppt_merge/README.md)
+[![サンプル：単純マージ](figures/simple_ppt_merge_guide_keyvisual_30.png){ width=60% }](../../pm1_simple_ppt_merge/README.md)
 
 ```{=latex}
 \par\vspace{5\baselineskip}
@@ -484,7 +484,7 @@ merged.pptx
 
 サンプルフォルダ：　pm2_simple_numbering
 
-[![サンプル：簡易ナンバリング](figures/simple_numbering_guide_keyvisual_23.png){ width=70% }](../../pm2_simple_numbering/README.md)
+[![サンプル：簡易ナンバリング](figures/simple_numbering_guide_keyvisual_30.png){ width=70% }](../../pm2_simple_numbering/README.md)
 
 
 ```{=latex}
@@ -498,7 +498,7 @@ merged.pptx
 
 サンプルフォルダ：　pm3_chapter_marker_numbering
 
-[![サンプル：chapter_marker によるナンバリング](figures/chapter_marker_numbering_guide_keyvisual_23.png){ width=90% }](../../pm3_chapter_marker_numbering/README.md)
+[![サンプル：chapter_marker によるナンバリング](figures/chapter_marker_numbering_guide_keyvisual_30.png){ width=90% }](../../pm3_chapter_marker_numbering/README.md)
 
 
 ```{=latex}
@@ -511,7 +511,7 @@ merged.pptx
 
 サンプルフォルダ：　pm_variable_replacement
 
-[![サンプル：スライド中の変数置換](figures/variable_replacement_guide_keyvisual_23.png){ width=90% }](../../pm4_variable_replacement/README.md)
+[![サンプル：スライド中の変数置換](figures/variable_replacement_guide_keyvisual_30.png){ width=90% }](../../pm4_variable_replacement/README.md)
 
 
 ```{=latex}
@@ -525,7 +525,7 @@ merged.pptx
 
 サンプルフォルダ：　pm5_chapter_cover_insertion
 
-[![サンプル：Chapter Cover 挿入運用](figures/chapter_cover_insertion_guide_keyvisual_23.png){ width=80% }](../../pm5_chapter_cover_insertion/README.md)
+[![サンプル：Chapter Cover 挿入運用](figures/chapter_cover_insertion_guide_keyvisual_30.png){ width=80% }](../../pm5_chapter_cover_insertion/README.md)
 
 
 ```{=latex}
@@ -538,7 +538,7 @@ pptxファイルを結合する際、コンテンツとは別にスタイル情�
 
 サンプルフォルダ：　pm6_stylebase
 
-[![サンプル：stylebaseを別に指定する機能](figures/stylebase_guide_keyvisual_23.png){ width=90% }](../../pm6_stylebase/README.md)
+[![サンプル：stylebaseを別に指定する機能](figures/stylebase_guide_keyvisual_30.png){ width=90% }](../../pm6_stylebase/README.md)
 
 
 ```{=latex}
@@ -552,7 +552,7 @@ pptxファイルを結合する際、コンテンツとは別にスタイル情�
 
 サンプルフォルダ：　pm7_splitted_insertion
 
-[![サンプル：ファイルの分割挿入機能](figures/splitted_insertion_guide_keyvisual_23.png){ width=60% }](../../pm7_splitted_insertion/README.md)
+[![サンプル：ファイルの分割挿入機能](figures/splitted_insertion_guide_keyvisual_30.png){ width=60% }](../../pm7_splitted_insertion/README.md)
 
 
 ```{=latex}
@@ -565,7 +565,7 @@ pptxファイルを結合する際、コンテンツとは別にスタイル情�
 
 サンプルフォルダ：　pm8_delete_csp
 
-[![サンプル：指定したシェイプを消去](figures/delete_csp_guide_keyvisual_23.png){ width=90% }](../../pm8_delete_csp/README.md)
+[![サンプル：指定したシェイプを消去](figures/delete_csp_guide_keyvisual_30.png){ width=90% }](../../pm8_delete_csp/README.md)
 
 
 ```{=latex}
@@ -579,7 +579,7 @@ pptxファイルを結合する際、コンテンツとは別にスタイル情�
 
 サンプルフォルダ：　pm9_delete_csl
 
-[![サンプル：指定したスライドを削除](figures/delete_csl_guide_keyvisual_23.png){ width=90% }](../../pm9_delete_csl/README.md)
+[![サンプル：指定したスライドを削除](figures/delete_csl_guide_keyvisual_30.png){ width=90% }](../../pm9_delete_csl/README.md)
 
 
 ```{=latex}
@@ -592,7 +592,7 @@ pptxファイルを結合する際、コンテンツとは別にスタイル情�
 
 サンプルフォルダ：　pm10_memo_temp
 
-[![サンプル：作業用のメモを書く](figures/memo_temp_guide_keyvisual_23.png){ width=90% }](../../pm10_memo_temp/README.md)
+[![サンプル：作業用のメモを書く](figures/memo_temp_guide_keyvisual_30.png){ width=90% }](../../pm10_memo_temp/README.md)
 
 
 ```{=latex}
@@ -606,4 +606,4 @@ pptxファイルを結合する際、コンテンツとは別にスタイル情�
 
 サンプルフォルダ：　pm11_title_filename
 
-[![サンプル：特殊定数を置換する](figures/title_filename_guide_keyvisual_23.png){ width=90% }](../../pm11_title_filename/README.md)
+[![サンプル：特殊定数を置換する](figures/title_filename_guide_keyvisual_30.png){ width=90% }](../../pm11_title_filename/README.md)

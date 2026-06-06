@@ -42,6 +42,10 @@ def emit(
             payload["dry_run"] = True
         print(json.dumps(payload, ensure_ascii=False))
     elif dry_run:
-        print(f"DRY-RUN: {input_path}\n-> {output_path}")
+        msg = f"DRY-RUN: {input_path}\n-> {output_path}"
+        print(msg)
+        logging.info("%s", msg)
     else:
-        print(f"OK: {input_path}\n-> {output_path}")
+        msg = f"OK: {input_path}\n-> {output_path}"
+        print(msg)
+        logging.info("%s", msg)

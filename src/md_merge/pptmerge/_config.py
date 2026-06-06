@@ -7,14 +7,18 @@ from typing import Any
 
 import yaml
 
+from md_merge.merge._recipe import _DuplicateKeyLoader, _apply_yaml_constants, _preprocess_yaml
+
 
 class ConfigError(Exception):
     pass
 
 
 def load_yaml(path: Path) -> dict[str, Any]:
-    with path.open("r", encoding="utf-8") as f:
-        data = yaml.safe_load(f)
+    text = path.read_text(encoding='utf-8')
+    text = _preprocess_yaml(text, path.parent)
+    text = _apply_yaml_constants(text)
+    data = yaml.load(text, Loader=_DuplicateKeyLoader)
     if not isinstance(data, dict):
         raise ConfigError("YAMLのトップレベルは辞書である必要があります。")
     return data
@@ -62,11 +66,13 @@ def resolve_file_in_dirs(file_value: str, input_dirs: list[Path]) -> Path:
     p = Path(file_value)
     if p.is_absolute():
         return p.resolve()
-    found = [(d / file_value).resolve() for d in input_dirs if (d / file_value).exists()]
-    if len(found) > 1:
+    found_dirs = [d for d in input_dirs if (d / file_value).exists()]
+    found = [(d / file_value).resolve() for d in found_dirs]
+    unique = list(dict.fromkeys(found))
+    if len(unique) > 1:
         logging.warning(
-            "insertpptx: '%s' が複数のディレクトリに存在します。最初に見つかったものを使用します: %s",
-            file_value, found[0],
+            "insertpptx: '%s' が複数のディレクトリに存在します。最初に見つかったものを使用します: %s\n  発見: %s",
+            file_value, found[0], ", ".join(str(d) for d in found_dirs),
         )
     return found[0] if found else (input_dirs[0] / file_value).resolve()
 

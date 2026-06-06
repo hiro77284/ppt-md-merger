@@ -27,17 +27,17 @@ fi
 
 
 targets=(
-    # pm1
-    # pm2
-    # pm3
-    # pm4
-    # pm5
-    # pm6
-    # pm7
-    # pm8
-    # pm9
-    # pm10
-    # pm11
+    pm1
+    pm2
+    pm3
+    pm4
+    pm5
+    pm6
+    pm7
+    pm8
+    pm9
+    pm10
+    pm11
 )
 
 declare -A samplenames

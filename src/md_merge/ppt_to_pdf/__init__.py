@@ -108,9 +108,13 @@ def _step_print(args: argparse.Namespace, name: str, status: str, exit_code: int
         print(json.dumps(payload, ensure_ascii=False))
     else:
         if exit_code is not None:
-            print(f"[ppt_to_pdf] {name} FAILED (exit {exit_code})")
+            msg = f"[ppt_to_pdf] {name} FAILED (exit {exit_code})"
+            print(msg)
+            logging.error("%s", msg)
         else:
-            print(f"[ppt_to_pdf] {name} {status}")
+            msg = f"[ppt_to_pdf] {name} {status}"
+            print(msg)
+            logging.info("%s", msg)
 
 
 def run(args: argparse.Namespace) -> int:

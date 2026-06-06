@@ -5,7 +5,7 @@ import logging
 from pathlib import Path
 
 from md_merge._output import EXIT_BAD_INPUT, EXIT_FAILURE, EXIT_NOT_FOUND, EXIT_OK, emit, setup_logging
-from md_merge.merge._recipe import load_yaml, resolve_input_path, resolve_workdir
+from md_merge.merge._recipe import load_yaml, resolve_input_path, resolve_workdir, setup_recipe_file_logging
 from md_merge.pptmerge._config import resolve_base
 
 # PowerPoint SaveAs format constant for PDF
@@ -53,6 +53,7 @@ def run(args: argparse.Namespace) -> int:
     output_section = recipe.get("output") or {}
     cli_workdir = Path(args.workdir).resolve() if getattr(args, "workdir", None) else None
     workdir = resolve_workdir(recipe, yaml_path, cli_workdir)
+    setup_recipe_file_logging(recipe, yaml_path, workdir)
     recipe_force = bool(output_section.get("force"))
     force = getattr(args, "force", False) or recipe_force
     dry_run = getattr(args, "dry_run", False)
@@ -71,12 +72,12 @@ def run(args: argparse.Namespace) -> int:
         if not pptx_val:
             logging.error("%s.pptx が指定されていません: %s", label, yaml_path)
             return EXIT_BAD_INPUT
-        if not pdf_val:
-            logging.error("%s.pdf が指定されていません: %s", label, yaml_path)
-            return EXIT_BAD_INPUT
-
         pptx_path = _resolve_cropsrc_path(str(pptx_val), yaml_path, workdir)
-        pdf_path = _resolve_cropsrc_path(str(pdf_val), yaml_path, workdir)
+        if pdf_val:
+            pdf_path = _resolve_cropsrc_path(str(pdf_val), yaml_path, workdir)
+        else:
+            pdf_path = _auto_pdf_path(str(pptx_val), output_section, yaml_path, workdir)
+            logging.debug("%s.pdf: 自動生成 %s", label, pdf_path)
 
         if not pptx_path.exists():
             logging.error("PPTX ファイルが見つかりません: %s", pptx_path)
@@ -145,3 +146,15 @@ def _resolve_cropsrc_path(val: str, yaml_path: Path, workdir: Path | None) -> Pa
     base = resolve_base(yaml_path, workdir)
     p = Path(val)
     return p if p.is_absolute() else (base / p).resolve()
+
+
+def _auto_pdf_path(pptx_val: str, output_section: dict, yaml_path: Path, workdir: Path | None) -> Path:
+    """Auto-generate PDF path as output.outputdir/<pptx_stem>.pdf."""
+    base = resolve_base(yaml_path, workdir)
+    outdir_val = output_section.get("outputdir")
+    if outdir_val:
+        p = Path(str(outdir_val))
+        out_dir = p if p.is_absolute() else (base / p).resolve()
+    else:
+        out_dir = base
+    return out_dir / (Path(pptx_val).stem + ".pdf")

@@ -10,7 +10,7 @@ from pptx import Presentation
 from md_merge._filters import escape_backslash_smart, replace_slide_placeholders
 from md_merge._note_parser import parse_note_md_blocks
 from md_merge._output import EXIT_BAD_INPUT, EXIT_FAILURE, EXIT_NOT_FOUND, EXIT_OK, emit, setup_logging
-from md_merge.merge._recipe import load_yaml, resolve_input_path, resolve_workdir
+from md_merge.merge._recipe import load_yaml, resolve_input_path, resolve_workdir, setup_recipe_file_logging
 from md_merge.pptmerge._config import resolve_base
 
 
@@ -46,6 +46,7 @@ def run(args: argparse.Namespace) -> int:
     output_section = recipe.get("output") or {}
     cli_workdir = Path(args.workdir).resolve() if getattr(args, "workdir", None) else None
     workdir = resolve_workdir(recipe, yaml_path, cli_workdir)
+    setup_recipe_file_logging(recipe, yaml_path, workdir)
     recipe_force = bool(output_section.get("force"))
     force = getattr(args, "force", False) or recipe_force
     dry_run = getattr(args, "dry_run", False)

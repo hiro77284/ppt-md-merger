@@ -11,10 +11,11 @@ from md_merge.merge._recipe import (
     collect_procedure_items,
     expand_md,
     load_yaml,
-    resolve_input_mddir,
+    resolve_input_dirs,
     resolve_input_path,
     resolve_output_path,
     resolve_workdir,
+    setup_recipe_file_logging,
 )
 
 
@@ -32,11 +33,12 @@ def run(args: argparse.Namespace) -> int:
     recipe = load_yaml(yaml_path)
     cli_workdir = Path(args.workdir).resolve() if getattr(args, "workdir", None) else None
     workdir = resolve_workdir(recipe, yaml_path, cli_workdir)
+    setup_recipe_file_logging(recipe, yaml_path, workdir)
 
     apply_recipe_force(args, recipe)
     _apply_recipe_merge_opts(args, recipe.get("merge", {}))
 
-    in_dirs = resolve_input_mddir(recipe, yaml_path, workdir)
+    in_dirs = resolve_input_dirs(recipe, yaml_path, workdir)
     procedure_items = collect_procedure_items(recipe, in_dirs, yaml_path)
 
     if not any(isinstance(i, Path) for i in procedure_items):

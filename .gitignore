@@ -251,6 +251,11 @@ sandbox/
 !examples/**/build/
 !examples/**/build/**
 
+# examples_work は管理対象にしない。こちらでサンプルファイルを作ってから、
+# 切りの良いところで examples フォルダにコピーしてコミットする
+examples_work/
+examples_old/
+
 # md-merge 生成物　生成サンプルとして公開するのでコメントアウト
 # *_merge.md
 # *_merge.log

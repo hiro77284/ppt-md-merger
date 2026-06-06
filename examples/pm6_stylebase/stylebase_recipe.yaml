@@ -9,6 +9,12 @@ output:
 pptmerge:
   stylebase: simple_stylebase.pptx           # stylebase として使用する pptx ファイルのパス
 
+input:
+  dirs: 
+    - .
+    - extracted
+    - ../../defaults/common_assets
+
 # 結合手順： "operation: insertpptx" で、結合したいファイルを結合順に記載する
 procedure:
   - operation: insertpptx

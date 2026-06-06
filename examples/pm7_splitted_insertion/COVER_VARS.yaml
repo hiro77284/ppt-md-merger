@@ -1,0 +1,12 @@
+# 表紙用変数
+
+  COVER_IMAGE: ppt_md_merger.png
+  COVER_TITLE: "pptmerge 分割挿入"
+  COVER_SUBTITLE: "pptmerge 機能の 「分割挿入」 用例"
+  COVER_DATE: __DATE__
+  COVER_AUTHOR: "開米瑞浩"
+  COVER_AFFILIATION: "アイデアクラフト"
+  COVER_CONTACT: "https://ideacraft"
+  COVER_COPYRIGHT: "© 2026 M. Kaimai"
+  COVER_NOTE: "本書は、 PPT を 「流用できる文書部品」 として統合するツール PPT & MD merger で、pptxファイルを分割して挿入する用例の概要説明文書です。"
+  COVER_QRCODE: 

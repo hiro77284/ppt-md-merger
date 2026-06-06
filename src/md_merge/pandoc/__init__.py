@@ -6,7 +6,7 @@ import subprocess
 from pathlib import Path
 
 from md_merge._output import EXIT_BAD_INPUT, EXIT_FAILURE, EXIT_NOT_FOUND, EXIT_OK, emit, setup_logging
-from md_merge.merge._recipe import apply_recipe_force, load_yaml, resolve_condblock_output, resolve_input_path, resolve_out_file, resolve_workdir
+from md_merge.merge._recipe import apply_recipe_force, load_yaml, resolve_condblock_output, resolve_input_path, resolve_out_file, resolve_workdir, setup_recipe_file_logging
 
 # Built-in Lua filters shipped with this package
 _BUILTIN_FILTERS_DIR = Path(__file__).parent.parent / "filters"
@@ -26,6 +26,7 @@ def run(args: argparse.Namespace) -> int:
     recipe = load_yaml(yaml_path)
     cli_workdir = Path(args.workdir).resolve() if getattr(args, "workdir", None) else None
     workdir = resolve_workdir(recipe, yaml_path, cli_workdir)
+    setup_recipe_file_logging(recipe, yaml_path, workdir)
     apply_recipe_force(args, recipe)
 
     pandoc_section = recipe.get("pandoc", {})
@@ -61,24 +62,35 @@ def run(args: argparse.Namespace) -> int:
         logging.error("output.%s is not specified in %s", out_key, yaml_path)
         return EXIT_BAD_INPUT
 
-    defaults_path = _resolve_path(pandoc_section.get(defaults_key), yaml_path, workdir)
+    # Resolve data-dir first — used as base for defaults / template / include-in-header
+    data_dir: Path | None = None
+    _data_dir_val = pandoc_section.get("data-dir")
+    if _data_dir_val:
+        _p = _resolve_path(_data_dir_val, yaml_path, workdir)
+        if _p is not None:
+            data_dir = _p.resolve()
+
+    # defaults / htmldefaults / revealdefaults: resolved from data-dir
+    defaults_path = _resolve_from_datadir(pandoc_section.get(defaults_key), data_dir, yaml_path, workdir)
 
     filter_paths, missing = _resolve_filters(
         pandoc_section.get("filters") or [], yaml_path, workdir
     )
 
-    # Path-type options passed directly to pandoc with the same option name
-    # simple_mode (--html / --reveal) skips template and include-in-header
-    _PATH_OPTS = (
-        ("metadata-file", "data-dir")
-        if simple_mode
-        else ("metadata-file", "template", "include-in-header", "data-dir")
-    )
+    # metadata-file: resolved from workdir (not data-dir)
+    # template / include-in-header: resolved from data-dir (PDF/LaTeX mode only)
+    # data-dir: already resolved above, appended last with canonical path
     path_opts: list[tuple[str, Path]] = []
-    for key in _PATH_OPTS:
-        resolved = _resolve_path(pandoc_section.get(key), yaml_path, workdir)
-        if resolved is not None:
-            path_opts.append((key, resolved))
+    _metadata = _resolve_path(pandoc_section.get("metadata-file"), yaml_path, workdir)
+    if _metadata is not None:
+        path_opts.append(("metadata-file", _metadata.resolve()))
+    if not simple_mode:
+        for key in ("template", "include-in-header"):
+            resolved = _resolve_from_datadir(pandoc_section.get(key), data_dir, yaml_path, workdir)
+            if resolved is not None:
+                path_opts.append((key, resolved))
+    if data_dir is not None:
+        path_opts.append(("data-dir", data_dir))
 
     highlight_style = pandoc_section.get("syntax-highlighting") or None
 
@@ -102,7 +114,7 @@ def run(args: argparse.Namespace) -> int:
         resource_paths = []
         graphicspath_tex = None
     else:
-        resource_paths = _resolve_resource_paths(pandoc_section.get("resource-path"), yaml_path, workdir)
+        resource_paths = _resolve_resource_paths(pandoc_section.get("resource-path"), yaml_path, None)
         graphicspath_tex = resolve_out_file(recipe, "resourcepathfilename", yaml_path, workdir)
 
     logging.debug("yaml     : %s", yaml_path)
@@ -185,7 +197,7 @@ def run(args: argparse.Namespace) -> int:
     resource_path_value = ";".join([".", *[str(p) for p in resource_paths]])
     cmd += ["--resource-path", resource_path_value]
 
-    logging.debug("cmd: %s", cmd)
+    logging.debug("cmd:\n%s", "\n".join(cmd))
     _orig_cwd = Path.cwd()
     os.chdir(pdf_path.parent)
     try:
@@ -241,10 +253,36 @@ def _resolve_path(val: str | None, yaml_path: Path, workdir: Path | None) -> Pat
     if not val:
         return None
     p = Path(val)
+    result = p if p.is_absolute() else (workdir if workdir else yaml_path.parent) / p
+    if ".." in result.parts:
+        return result.resolve()
+    return result
+
+
+def _resolve_from_datadir(
+    val: str | None,
+    data_dir: Path | None,
+    yaml_path: Path,
+    workdir: Path | None,
+) -> Path | None:
+    """Resolve *val* preferring data_dir as base; return canonical (resolved) path.
+
+    Resolution order:
+    1. Absolute path — resolved as-is.
+    2. Relative path under data_dir — if the file exists there.
+    3. Relative path under workdir / yaml_path.parent — fallback.
+    """
+    if not val:
+        return None
+    p = Path(val)
     if p.is_absolute():
-        return p
+        return p.resolve()
+    if data_dir is not None:
+        candidate = (data_dir / p).resolve()
+        if candidate.exists():
+            return candidate
     base = workdir if workdir else yaml_path.parent
-    return base / p
+    return (base / p).resolve()
 
 
 def _resolve_filters(

@@ -6,7 +6,7 @@ import yaml
 
 from md_merge._output import EXIT_BAD_INPUT, EXIT_FAILURE, EXIT_NOT_FOUND, EXIT_OK, emit, setup_logging
 from md_merge._render import build_resolved_map, render_content
-from md_merge.merge._recipe import apply_recipe_force, load_yaml, resolve_input_path, resolve_out_file, resolve_workdir
+from md_merge.merge._recipe import apply_recipe_force, load_yaml, resolve_input_path, resolve_out_file, resolve_workdir, setup_recipe_file_logging
 
 
 def run(args: argparse.Namespace) -> int:
@@ -23,6 +23,7 @@ def run(args: argparse.Namespace) -> int:
     recipe = load_yaml(yaml_path)
     cli_workdir = Path(args.workdir).resolve() if getattr(args, "workdir", None) else None
     workdir = resolve_workdir(recipe, yaml_path, cli_workdir)
+    setup_recipe_file_logging(recipe, yaml_path, workdir)
     apply_recipe_force(args, recipe)
 
     merged_path = resolve_out_file(recipe, "mdfilename", yaml_path, workdir)

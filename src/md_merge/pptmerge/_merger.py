@@ -32,13 +32,13 @@ from ._config import (
     validate_config,
     resolve_base,
     resolve_dir,
-    resolve_dirs,
+
     resolve_file,
     resolve_file_in_dirs,
     parse_slides,
     parse_log_duplicate,
 )
-from md_merge.merge._recipe import _AUTO_FILENAMES, get_targetbasefilename
+from md_merge.merge._recipe import _AUTO_FILENAMES, get_targetbasefilename, resolve_input_dirs
 from ._slide_operation import SlideOperation, build_slide_insert_operations
 from ._slide_titles import (
     _get_indexer_value,
@@ -124,6 +124,12 @@ def configure_merge_logging(
         stream_h = logging.StreamHandler(sys.stderr)
         stream_h.setFormatter(fmt)
         logger.addHandler(stream_h)
+
+    # Attach any general file handler from root logger so pptmerge internal
+    # logs also appear in the recipe-level log file (log.filename).
+    for h in logging.getLogger().handlers:
+        if isinstance(h, logging.FileHandler):
+            logger.addHandler(h)
 
     return logger
 
@@ -531,10 +537,12 @@ def merge_pptx(
     workdir: Path | None = None,
     force: bool = False,
     args: argparse.Namespace | None = None,
+    config: dict | None = None,
 ) -> tuple[Path, list[SlideOperation]]:
-    config = load_yaml(config_path)
-    if args is not None:
-        _apply_cli_indexer_opts(args, config)
+    if config is None:
+        config = load_yaml(config_path)
+        if args is not None:
+            _apply_cli_indexer_opts(args, config)
     validate_config(config)
 
     output = config["output"]
@@ -575,12 +583,7 @@ def merge_pptx(
                 "pptmerge: idresolvedfilename が見つかりません。参照置換をスキップします: %s",
                 resolved_path_obj,
             )
-    pptxdir = input_.get("pptxdir")
-    input_dirs = (
-        resolve_dirs(pptxdir, config_path, workdir)
-        if pptxdir is not None
-        else [resolve_base(config_path, workdir)]
-    )
+    input_dirs = resolve_input_dirs(config, config_path, workdir)
 
     output_filename = output.get("pptxfilename")
     if not output_filename:
