@@ -2,6 +2,7 @@ import argparse
 import datetime
 import logging
 import re
+import tomllib
 from pathlib import Path
 
 import yaml
@@ -138,13 +139,11 @@ def get_targetbasefilename(out_section: dict) -> str | None:
 # ── YAML special constants ─────────────────────────────────────────────────
 
 _SESSION_CONSTANTS: dict[str, str] | None = None
+_CLI_CONSTANTS: dict[str, str] = {}
 
 
 def _get_yaml_constants() -> dict[str, str]:
-    """Return __NAME__ → value mapping for recipe YAML substitution.
-
-    Evaluated once per session (cached). Add new constants here.
-    """
+    """Return built-in __NAME__ → value mapping (session-cached). Add new entries here."""
     global _SESSION_CONSTANTS
     if _SESSION_CONSTANTS is None:
         now = datetime.datetime.now()
@@ -156,15 +155,89 @@ def _get_yaml_constants() -> dict[str, str]:
     return _SESSION_CONSTANTS
 
 
-def _apply_yaml_constants(text: str) -> str:
-    """Replace __CONSTANT__ placeholders in preprocessed YAML text."""
-    for placeholder, value in _get_yaml_constants().items():
-        text = text.replace(placeholder, value)
+def init_cli_constants(paths: "list[str | Path]") -> None:
+    """Load TOML constant files specified via --constants CLI arguments (appends/overrides)."""
+    global _CLI_CONSTANTS
+    for p in paths:
+        filepath = Path(p).resolve()
+        try:
+            with filepath.open("rb") as f:
+                data = tomllib.load(f)
+            _CLI_CONSTANTS.update({k: str(v) for k, v in data.items()})
+            logging.debug("CLI constants loaded: %s (%d entries)", filepath, len(data))
+        except FileNotFoundError:
+            logging.error("--constants ファイルが見つかりません: %s", filepath)
+        except Exception as e:
+            logging.error("--constants ファイルの読み込みエラー: %s: %s", filepath, e)
+
+
+def _load_constants_files(collected: "list[tuple[Path, str]]") -> dict[str, str]:
+    """Load TOML files gathered from !constants directives."""
+    result: dict[str, str] = {}
+    for base_dir, filename in collected:
+        filepath = (base_dir / filename).resolve()
+        try:
+            with filepath.open("rb") as f:
+                data = tomllib.load(f)
+            result.update({k: str(v) for k, v in data.items()})
+            logging.debug("!constants loaded: %s (%d entries)", filepath, len(data))
+        except FileNotFoundError:
+            logging.error("!constants ファイルが見つかりません: %s", filepath)
+        except Exception as e:
+            logging.error("!constants ファイルの読み込みエラー: %s: %s", filepath, e)
+    return result
+
+
+def _apply_yaml_constants(text: str, file_constants: "dict[str, str] | None" = None) -> str:
+    """Replace __CONSTANT__ placeholders in preprocessed YAML text.
+
+    Priority (low → high): built-in → --constants CLI → !constants file.
+    Constants whose values contain newlines replace the entire line they appear on;
+    single-line constants are substituted inline anywhere they occur.
+    """
+    constants = dict(_get_yaml_constants())
+    constants.update(_CLI_CONSTANTS)
+    if file_constants:
+        constants.update(file_constants)
+
+    inline = {k: v for k, v in constants.items() if '\n' not in v}
+    block  = {k: v for k, v in constants.items() if '\n' in v}
+
+    if block:
+        result_lines: list[str] = []
+        for line in text.splitlines(keepends=True):
+            raw = line.rstrip('\r\n')
+            handled = False
+            for ph, val in block.items():
+                stripped = raw.lstrip()
+                after = stripped[len(ph):]
+                if stripped.startswith(ph) and (not after or after.lstrip().startswith('#')):
+                    indent = raw[: len(raw) - len(stripped)]
+                    for vl in val.strip('\n').splitlines():
+                        result_lines.append(indent + vl + '\n')
+                    handled = True
+                    break
+            if not handled:
+                result_lines.append(line)
+        text = ''.join(result_lines)
+
+    for ph, val in inline.items():
+        text = text.replace(ph, val)
+
     return text
 
 
-# ── !include preprocessing ─────────────────────────────────────────────────
+def _process_yaml_text(text: str, base_dir: Path) -> str:
+    """Expand !include, collect !constants, apply __CONSTANT__ substitution."""
+    constants_collect: list[tuple[Path, str]] = []
+    text = _preprocess_yaml(text, base_dir, _constants_collect=constants_collect)
+    file_constants = _load_constants_files(constants_collect)
+    return _apply_yaml_constants(text, file_constants)
 
+
+# ── !include / !constants preprocessing ────────────────────────────────────
+
+_CONSTANTS_RE = re.compile(r'^!constants[ \t]+(\S+?)[ \t]*(?:#.*)?$')
 _STANDALONE_INCLUDE_RE = re.compile(r'^(\s*)!include[ \t]+(\S+?)[ \t]*(?:#.*)?$')
 _INLINE_INCLUDE_RE = re.compile(r'!include[ \t]+(\S+?)(?=[ \t]*(?:#.*)?$)')
 
@@ -177,16 +250,15 @@ def _comment_start(s: str) -> int:
     return len(s)
 
 
-def _preprocess_yaml(text: str, base_dir: Path, _seen: frozenset[Path] = frozenset()) -> str:
-    """Expand !include directives in YAML text before parsing.
-
-    Standalone lines (``indent!include path``) have their content replaced with
-    the included file's lines, each prefixed with the same indentation.
-    Inline occurrences (``key: !include path``) replace just the tag+path with
-    the included content; multi-line content is placed on the next line with
-    increased indentation.
-    Paths resolve relative to base_dir. Circular includes raise ValueError.
-    """
+def _preprocess_yaml(
+    text: str,
+    base_dir: Path,
+    _seen: frozenset[Path] = frozenset(),
+    _constants_collect: "list[tuple[Path, str]] | None" = None,
+) -> str:
+    """Expand !include and collect !constants directives before YAML parsing."""
+    if _constants_collect is None:
+        _constants_collect = []
     result: list[str] = []
     for line in text.splitlines(keepends=True):
         raw = line.rstrip('\r\n')
@@ -196,6 +268,13 @@ def _preprocess_yaml(text: str, base_dir: Path, _seen: frozenset[Path] = frozens
             result.append(line)
             continue
 
+        # !constants directive — record path, remove line from text
+        m = _CONSTANTS_RE.match(raw)
+        if m:
+            _constants_collect.append((base_dir, m.group(1)))
+            continue
+
+        # Standalone !include
         m = _STANDALONE_INCLUDE_RE.match(raw)
         if m:
             indent, filename = m.group(1), m.group(2)
@@ -205,6 +284,7 @@ def _preprocess_yaml(text: str, base_dir: Path, _seen: frozenset[Path] = frozens
             inc = _preprocess_yaml(
                 filepath.read_text(encoding='utf-8'),
                 filepath.parent, _seen | {filepath},
+                _constants_collect,
             )
             for inc_line in inc.splitlines(keepends=True):
                 result.append(indent + inc_line)
@@ -222,6 +302,7 @@ def _preprocess_yaml(text: str, base_dir: Path, _seen: frozenset[Path] = frozens
             inc = _preprocess_yaml(
                 filepath.read_text(encoding='utf-8'),
                 filepath.parent, _seen | {filepath},
+                _constants_collect,
             ).rstrip('\n')
             before = raw[:m.start()]
             line_indent = ' ' * (len(raw) - len(raw.lstrip()))
@@ -254,8 +335,7 @@ class _DuplicateKeyLoader(yaml.SafeLoader):
 
 def load_yaml(yaml_path: Path) -> dict:
     text = yaml_path.read_text(encoding='utf-8')
-    text = _preprocess_yaml(text, yaml_path.parent)
-    text = _apply_yaml_constants(text)
+    text = _process_yaml_text(text, yaml_path.parent)
     return yaml.load(text, Loader=_DuplicateKeyLoader)
 
 

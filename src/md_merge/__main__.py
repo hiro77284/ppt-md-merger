@@ -32,6 +32,8 @@ def _make_common_parser() -> argparse.ArgumentParser:
     )
     p.add_argument("--dry-run", action="store_true", help="Show actions without writing files")
     p.add_argument("--json", action="store_true", help="Output results as JSON to stdout")
+    p.add_argument("--constants", metavar="FILE", action="append", default=None,
+                   help="TOML constants file for __NAME__ substitution (repeatable)")
     return p
 
 
@@ -227,6 +229,10 @@ def _make_parser() -> argparse.ArgumentParser:
 def main() -> None:
     parser = _make_parser()
     args = parser.parse_args()
+
+    if args.constants:
+        from md_merge.merge._recipe import init_cli_constants
+        init_cli_constants(args.constants)
 
     match args.subcommand:
         case "merge":

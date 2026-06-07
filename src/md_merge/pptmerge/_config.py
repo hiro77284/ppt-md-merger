@@ -7,7 +7,7 @@ from typing import Any
 
 import yaml
 
-from md_merge.merge._recipe import _DuplicateKeyLoader, _apply_yaml_constants, _preprocess_yaml
+from md_merge.merge._recipe import _DuplicateKeyLoader, _process_yaml_text
 
 
 class ConfigError(Exception):
@@ -16,8 +16,7 @@ class ConfigError(Exception):
 
 def load_yaml(path: Path) -> dict[str, Any]:
     text = path.read_text(encoding='utf-8')
-    text = _preprocess_yaml(text, path.parent)
-    text = _apply_yaml_constants(text)
+    text = _process_yaml_text(text, path.parent)
     data = yaml.load(text, Loader=_DuplicateKeyLoader)
     if not isinstance(data, dict):
         raise ConfigError("YAMLのトップレベルは辞書である必要があります。")

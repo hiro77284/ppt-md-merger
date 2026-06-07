@@ -132,6 +132,52 @@ output:
 - 同一プロセス実行内では全サブコマンドで同一のタイムスタンプを使用する（セッションキャッシュ）
 - YAML 値・キー・コメントを問わずテキスト全体に適用される
 - `!include` で読み込まれたファイル内の定数も同様に置換される
+- 値に改行を含む定数は、その定数だけが書かれた行全体を複数行に置換する
+
+### ユーザー定義定数ファイル（TOML）
+
+組み込み定数に加え、TOML ファイルでユーザー独自の定数を定義できる。
+
+#### 指定方法
+
+| 方法 | 記述 | 説明 |
+|------|------|------|
+| レシピ内ディレクティブ | `!constants path/to/file.toml` | 行全体として任意の位置に記述。`!include` 先にも書ける |
+| CLI 引数 | `--constants path/to/file.toml` | 繰り返し指定で複数ファイル |
+
+#### 優先順位（低 → 高）
+
+組み込み（`__DATE__` 等） → `--constants` CLI → `!constants` ディレクティブ
+
+同名定数は高優先度で上書きされる。
+
+#### TOML 書式
+
+```toml
+# インライン定数（改行なし）
+__AUTHOR__  = '山田太郎'
+__VERSION__ = '1.0.0'
+
+# 複数行定数（シングルクォートでバックスラッシュをそのまま保持）
+__LATEX_PACKAGES__ = '''
+\usepackage{luatexja}
+\usepackage{graphicx}
+\setmainfont{Noto Serif CJK JP}
+'''
+```
+
+複数行定数の使用例：
+
+```yaml
+!constants project/constants.toml
+
+output:
+  pdffilename: doc___DATE__.pdf
+
+pandoc:
+  include-in-header:
+    __LATEX_PACKAGES__   # この行全体が複数行に展開される
+```
 
 ---
 
