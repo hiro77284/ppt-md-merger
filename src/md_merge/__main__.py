@@ -124,8 +124,8 @@ def _make_parser() -> argparse.ArgumentParser:
     pptmerge.add_argument("input", nargs="?", metavar="INPUT", help="Input YAML file")
     pptmerge.add_argument("--workdir", "-w", metavar="DIR", help="Base directory for relative paths")
     pptmerge.add_argument("--force", action="store_true", help="Overwrite existing output file")
-    pptmerge.add_argument("--deletecsl", action="store_true", dest="delete_csl", help="Delete slides containing #CSL# marker (overrides recipe indexer.deletecsl)")
-    pptmerge.add_argument("--deletecsp", action="store_true", dest="delete_csp", help="Delete shapes containing #CSP# marker (overrides recipe indexer.deletecsp)")
+    pptmerge.add_argument("--deletecsl", choices=["on", "off"], dest="delete_csl", metavar="on|off", help="Delete slides containing #CSL# marker (overrides recipe indexer.deletecsl)")
+    pptmerge.add_argument("--deletecsp", choices=["on", "off"], dest="delete_csp", metavar="on|off", help="Delete shapes containing #CSP# marker (overrides recipe indexer.deletecsp)")
     pptmerge.add_argument("--pptxnumbering", choices=["no", "chapt_section", "idresolve"], dest="pptxnumbering", help="Numbering algorithm (overrides recipe indexer.pptxnumbering)")
 
     # ── crop ───────────────────────────────────────────────────────────────

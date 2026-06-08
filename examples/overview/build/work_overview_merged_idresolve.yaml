@@ -5,7 +5,7 @@ document:
   title: <DUMMY>
 generated:
   by: md-merge
-  at: '2026-06-06T21:38:58+09:00'
+  at: '2026-06-08T21:59:18+09:00'
 source:
   config_yaml: overview_recipe.yaml
   id_inventory_yaml: build/work_overview_merged_idcollect.yaml
@@ -90,7 +90,7 @@ entries:
     md: extracted/ppt_md_merger_overview_slide4_md.md
   location:
     file: build/work_overview_merged_merged.md
-    line: 100
+    line: 94
   number: '2.3'
   label: 2.3) 悩み２： 章・節番号をつけるのが面倒くさい
 - full_id: section:ppt_md_merger_overview:slide5
@@ -103,7 +103,7 @@ entries:
     md: extracted/ppt_md_merger_overview_slide5_md.md
   location:
     file: build/work_overview_merged_merged.md
-    line: 124
+    line: 118
   number: '2.4'
   label: 2.4) なんとかこの悩みを解決できないか？
 - full_id: chapter:AUTOCHAPTER:AUTOID_3
@@ -116,7 +116,7 @@ entries:
     md: extracted/ppt_md_merger_overview_slide5_md.md
   location:
     file: build/work_overview_merged_merged.md
-    line: 147
+    line: 141
   number: '3'
   label: 3) 問題構造の整理と解決策
 - full_id: section:ppt_md_merger_overview:slide6
@@ -129,7 +129,7 @@ entries:
     md: extracted/ppt_md_merger_overview_slide6_md.md
   location:
     file: build/work_overview_merged_merged.md
-    line: 151
+    line: 145
   number: '3.1'
   label: 3.1) まずは問題の構造を整理すると・・・
 - full_id: section:ppt_md_merger_overview:slide7
@@ -142,7 +142,7 @@ entries:
     md: extracted/ppt_md_merger_overview_slide7_md.md
   location:
     file: build/work_overview_merged_merged.md
-    line: 171
+    line: 165
   number: '3.2'
   label: 3.2) 部品を組み合わせて完成版を構成する仕組みを作る
 - full_id: section:ppt_md_merger_overview:slide8
@@ -155,7 +155,7 @@ entries:
     md: extracted/ppt_md_merger_overview_slide8_md.md
   location:
     file: build/work_overview_merged_merged.md
-    line: 197
+    line: 191
   number: '3.3'
   label: 3.3) 自動マージするときに章・節番号を付与する
 - full_id: section:ppt_md_merger_overview:slide9
@@ -168,7 +168,7 @@ entries:
     md: extracted/ppt_md_merger_overview_slide9_md.md
   location:
     file: build/work_overview_merged_merged.md
-    line: 221
+    line: 215
   number: '3.4'
   label: 3.4) 補助機能：変数置換
 - full_id: section:ppt_md_merger_overview:slide10
@@ -181,7 +181,7 @@ entries:
     md: extracted/ppt_md_merger_overview_slide10_md.md
   location:
     file: build/work_overview_merged_merged.md
-    line: 245
+    line: 239
   number: '3.5'
   label: 3.5) 補助機能： シェイプ/スライドの自動削除
 - full_id: section:ppt_md_merger_overview:slide11
@@ -194,7 +194,7 @@ entries:
     md: extracted/ppt_md_merger_overview_slide11_md.md
   location:
     file: build/work_overview_merged_merged.md
-    line: 273
+    line: 267
   number: '3.6'
   label: 3.6) 補助機能： 一時メモ用シェイプの自動削除
 - full_id: chapter:AUTOCHAPTER:AUTOID_4
@@ -207,7 +207,7 @@ entries:
     md: extracted/ppt_md_merger_overview_slide11_md.md
   location:
     file: build/work_overview_merged_merged.md
-    line: 295
+    line: 289
   number: '4'
   label: 4) 現時点の機能解説はPPTX生成機能のみ
 - full_id: section:ppt_md_merger_overview:slide12
@@ -220,7 +220,7 @@ entries:
     md: extracted/ppt_md_merger_overview_slide12_md.md
   location:
     file: build/work_overview_merged_merged.md
-    line: 299
+    line: 293
   number: '4.1'
   label: 4.1) PPTX生成機能と、その他の形式文書生成機能
 - full_id: chapter:AUTOCHAPTER:AUTOID_5
@@ -233,7 +233,7 @@ entries:
     md: extracted/ppt_md_merger_overview_slide12_md.md
   location:
     file: build/work_overview_merged_merged.md
-    line: 318
+    line: 312
   number: '5'
   label: 5) Requirements & Quick Start
 - full_id: section:ppt_md_merger_overview:slide13
@@ -246,7 +246,7 @@ entries:
     md: extracted/ppt_md_merger_overview_slide13_md.md
   location:
     file: build/work_overview_merged_merged.md
-    line: 322
+    line: 316
   number: '5.1'
   label: 5.1) システム要件
 - full_id: section:ppt_md_merger_overview:slide14
@@ -259,7 +259,7 @@ entries:
     md: extracted/ppt_md_merger_overview_slide14_md.md
   location:
     file: build/work_overview_merged_merged.md
-    line: 360
+    line: 354
   number: '5.2'
   label: 5.2) インストール方法
 - full_id: section:ppt_md_merger_overview:slide15
@@ -272,7 +272,7 @@ entries:
     md: extracted/ppt_md_merger_overview_slide15_md.md
   location:
     file: build/work_overview_merged_merged.md
-    line: 405
+    line: 398
   number: '5.3'
   label: 5.3) Quick Start
 - full_id: subsection:ppt_md_merger_overview:slide16_2
@@ -285,7 +285,7 @@ entries:
     md: extracted/ppt_md_merger_overview_slide16_md.md
   location:
     file: build/work_overview_merged_merged.md
-    line: 420
+    line: 413
   number: 5.3.1
   label: 5.3.1) 2. Create merge recipe YAML
 - full_id: subsection:ppt_md_merger_overview:slide17_3
@@ -298,7 +298,7 @@ entries:
     md: extracted/ppt_md_merger_overview_slide17_md.md
   location:
     file: build/work_overview_merged_merged.md
-    line: 439
+    line: 432
   number: 5.3.2
   label: 5.3.2) 3. Run merge
 - full_id: section:ppt_md_merger_overview:slide18
@@ -311,6 +311,6 @@ entries:
     md: extracted/ppt_md_merger_overview_slide18_md.md
   location:
     file: build/work_overview_merged_merged.md
-    line: 466
+    line: 458
   number: '5.4'
   label: 5.4) Examples

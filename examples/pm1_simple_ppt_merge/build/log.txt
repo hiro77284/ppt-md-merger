@@ -1,0 +1,278 @@
+2026-06-07 15:53:23,966 DEBUG    log file: D:\DOCS\SWPJs\new_md_merge\examples_work\pm1_simple_ppt_merge\build\log.txt
+2026-06-07 15:53:23,967 DEBUG    input.cropsrc.pdf: 自動生成 D:\DOCS\SWPJs\new_md_merge\examples_work\pm1_simple_ppt_merge\build\simple_ppt_merge_guide.pdf
+2026-06-07 15:53:23,980 DEBUG    Opening PPTX: D:\DOCS\SWPJs\new_md_merge\examples_work\pm1_simple_ppt_merge\simple_ppt_merge_guide.pptx
+2026-06-07 15:53:24,272 DEBUG    Exporting PDF: D:\DOCS\SWPJs\new_md_merge\examples_work\pm1_simple_ppt_merge\build\simple_ppt_merge_guide.pdf
+2026-06-07 15:53:25,295 DEBUG    PDF export complete
+2026-06-07 15:53:25,295 INFO     OK: D:\DOCS\SWPJs\new_md_merge\examples_work\pm1_simple_ppt_merge\simple_ppt_merge_guide.pptx
+-> D:\DOCS\SWPJs\new_md_merge\examples_work\pm1_simple_ppt_merge\build\simple_ppt_merge_guide.pdf
+2026-06-07 15:53:25,321 INFO     [ppt_to_pdf] pptpdfexport OK
+2026-06-07 15:53:25,321 INFO     [ppt_to_pdf] pptimgexport ...
+2026-06-07 15:53:25,325 DEBUG    !constants loaded: D:\DOCS\SWPJs\new_md_merge\examples_work\constants_settings.toml (9 entries)
+2026-06-07 15:53:25,336 DEBUG    input.cropsrc.pdf: 自動生成 D:\DOCS\SWPJs\new_md_merge\examples_work\pm1_simple_ppt_merge\build\simple_ppt_merge_guide.pdf
+2026-06-07 15:53:25,450 DEBUG    STREAM b'IHDR' 16 13
+2026-06-07 15:53:25,450 DEBUG    STREAM b'pHYs' 41 9
+2026-06-07 15:53:25,450 DEBUG    STREAM b'IDAT' 62 109178
+2026-06-07 15:53:25,468 INFO     OK: D:\DOCS\SWPJs\new_md_merge\examples_work\pm1_simple_ppt_merge\build\simple_ppt_merge_guide.pdf
+-> D:\DOCS\SWPJs\new_md_merge\examples_work\pm1_simple_ppt_merge\extracted\figures\simple_ppt_merge_guide_slide1_fig.png
+2026-06-07 15:53:25,548 DEBUG    STREAM b'IHDR' 16 13
+2026-06-07 15:53:25,548 DEBUG    STREAM b'pHYs' 41 9
+2026-06-07 15:53:25,549 DEBUG    STREAM b'IDAT' 62 109178
+2026-06-07 15:53:25,570 INFO     OK: D:\DOCS\SWPJs\new_md_merge\examples_work\pm1_simple_ppt_merge\build\simple_ppt_merge_guide.pdf
+-> D:\DOCS\SWPJs\new_md_merge\examples_work\pm1_simple_ppt_merge\extracted\figures\simple_ppt_merge_guide_keyvisual.png
+2026-06-07 15:53:25,662 DEBUG    STREAM b'IHDR' 16 13
+2026-06-07 15:53:25,662 DEBUG    STREAM b'pHYs' 41 9
+2026-06-07 15:53:25,662 DEBUG    STREAM b'IDAT' 62 441847
+2026-06-07 15:53:25,716 INFO     OK: D:\DOCS\SWPJs\new_md_merge\examples_work\pm1_simple_ppt_merge\build\simple_ppt_merge_guide.pdf
+-> D:\DOCS\SWPJs\new_md_merge\examples_work\pm1_simple_ppt_merge\extracted\figures\simple_ppt_merge_guide_slide3_fig.png
+2026-06-07 15:53:25,791 DEBUG    STREAM b'IHDR' 16 13
+2026-06-07 15:53:25,791 DEBUG    STREAM b'pHYs' 41 9
+2026-06-07 15:53:25,791 DEBUG    STREAM b'IDAT' 62 221687
+2026-06-07 15:53:25,832 INFO     OK: D:\DOCS\SWPJs\new_md_merge\examples_work\pm1_simple_ppt_merge\build\simple_ppt_merge_guide.pdf
+-> D:\DOCS\SWPJs\new_md_merge\examples_work\pm1_simple_ppt_merge\extracted\figures\simple_ppt_merge_guide_slide4_fig.png
+2026-06-07 15:53:25,834 INFO     [ppt_to_pdf] pptimgexport OK
+2026-06-07 15:53:25,834 INFO     [ppt_to_pdf] pptmdexport ...
+2026-06-07 15:53:25,837 DEBUG    !constants loaded: D:\DOCS\SWPJs\new_md_merge\examples_work\constants_settings.toml (9 entries)
+2026-06-07 15:53:25,861 INFO     OK: D:\DOCS\SWPJs\new_md_merge\examples_work\pm1_simple_ppt_merge\simple_ppt_merge_guide.pptx
+-> D:\DOCS\SWPJs\new_md_merge\examples_work\pm1_simple_ppt_merge\extracted\simple_ppt_merge_guide_slide1_md.md
+2026-06-07 15:53:25,864 INFO     OK: D:\DOCS\SWPJs\new_md_merge\examples_work\pm1_simple_ppt_merge\simple_ppt_merge_guide.pptx
+-> D:\DOCS\SWPJs\new_md_merge\examples_work\pm1_simple_ppt_merge\extracted\simple_ppt_merge_guide_slide2_md.md
+2026-06-07 15:53:25,866 INFO     OK: D:\DOCS\SWPJs\new_md_merge\examples_work\pm1_simple_ppt_merge\simple_ppt_merge_guide.pptx
+-> D:\DOCS\SWPJs\new_md_merge\examples_work\pm1_simple_ppt_merge\extracted\simple_ppt_merge_guide_slide3_md.md
+2026-06-07 15:53:25,868 INFO     OK: D:\DOCS\SWPJs\new_md_merge\examples_work\pm1_simple_ppt_merge\simple_ppt_merge_guide.pptx
+-> D:\DOCS\SWPJs\new_md_merge\examples_work\pm1_simple_ppt_merge\extracted\simple_ppt_merge_guide_slide4_md.md
+2026-06-07 15:53:25,868 INFO     [ppt_to_pdf] pptmdexport OK
+2026-06-07 15:53:25,868 INFO     [ppt_to_pdf] merge ...
+2026-06-07 15:53:25,871 DEBUG    !constants loaded: D:\DOCS\SWPJs\new_md_merge\examples_work\constants_settings.toml (9 entries)
+2026-06-07 15:53:25,879 DEBUG    collect_procedure_items: simple_ppt_merge_guide_slide1_md.md
+2026-06-07 15:53:25,879 DEBUG    collect_procedure_items: ..\..\defaults\common_assets\tex_newpage.md
+2026-06-07 15:53:25,880 DEBUG    collect_procedure_items: simple_ppt_merge_guide_slide2_md.md
+2026-06-07 15:53:25,880 DEBUG    collect_procedure_items: ..\..\defaults\common_assets\tex_newpage.md
+2026-06-07 15:53:25,881 DEBUG    collect_procedure_items: simple_ppt_merge_guide_slide3_md.md
+2026-06-07 15:53:25,881 DEBUG    collect_procedure_items: ..\..\defaults\common_assets\tex_newpage.md
+2026-06-07 15:53:25,882 DEBUG    collect_procedure_items: simple_ppt_merge_guide_slide4_md.md
+2026-06-07 15:53:25,883 DEBUG    yaml    : D:\DOCS\SWPJs\new_md_merge\examples_work\pm1_simple_ppt_merge\simple_ppt_merge_pdf_recipe.yaml
+2026-06-07 15:53:25,883 DEBUG    in_dirs : ['D:\\DOCS\\SWPJs\\new_md_merge\\examples_work\\pm1_simple_ppt_merge', 'D:\\DOCS\\SWPJs\\new_md_merge\\examples_work\\pm1_simple_ppt_merge\\extracted', 'D:\\DOCS\\SWPJs\\new_md_merge\\defaults\\common_assets']
+2026-06-07 15:53:25,884 DEBUG    files   : ['D:\\DOCS\\SWPJs\\new_md_merge\\examples_work\\pm1_simple_ppt_merge\\extracted\\simple_ppt_merge_guide_slide1_md.md', 'D:\\DOCS\\SWPJs\\new_md_merge\\defaults\\common_assets\\tex_newpage.md', 'D:\\DOCS\\SWPJs\\new_md_merge\\examples_work\\pm1_simple_ppt_merge\\extracted\\simple_ppt_merge_guide_slide2_md.md', 'D:\\DOCS\\SWPJs\\new_md_merge\\defaults\\common_assets\\tex_newpage.md', 'D:\\DOCS\\SWPJs\\new_md_merge\\examples_work\\pm1_simple_ppt_merge\\extracted\\simple_ppt_merge_guide_slide3_md.md', 'D:\\DOCS\\SWPJs\\new_md_merge\\defaults\\common_assets\\tex_newpage.md', 'D:\\DOCS\\SWPJs\\new_md_merge\\examples_work\\pm1_simple_ppt_merge\\extracted\\simple_ppt_merge_guide_slide4_md.md']
+2026-06-07 15:53:25,884 DEBUG    output  : D:\DOCS\SWPJs\new_md_merge\examples_work\pm1_simple_ppt_merge\build\work_simple_ppt_merge_merged_merged.md
+2026-06-07 15:53:25,903 INFO     OK: D:\DOCS\SWPJs\new_md_merge\examples_work\pm1_simple_ppt_merge\simple_ppt_merge_pdf_recipe.yaml
+-> D:\DOCS\SWPJs\new_md_merge\examples_work\pm1_simple_ppt_merge\build\work_simple_ppt_merge_merged_merged.md
+2026-06-07 15:53:25,903 INFO     [ppt_to_pdf] merge OK
+2026-06-07 15:53:25,903 INFO     [ppt_to_pdf] idcollect ...
+2026-06-07 15:53:25,905 DEBUG    !constants loaded: D:\DOCS\SWPJs\new_md_merge\examples_work\constants_settings.toml (9 entries)
+2026-06-07 15:53:25,911 DEBUG    yaml      : D:\DOCS\SWPJs\new_md_merge\examples_work\pm1_simple_ppt_merge\simple_ppt_merge_pdf_recipe.yaml
+2026-06-07 15:53:25,911 DEBUG    merged md : D:\DOCS\SWPJs\new_md_merge\examples_work\pm1_simple_ppt_merge\build\work_simple_ppt_merge_merged_merged.md
+2026-06-07 15:53:25,912 DEBUG    inventory : D:\DOCS\SWPJs\new_md_merge\examples_work\pm1_simple_ppt_merge\build\work_simple_ppt_merge_merged_idcollect.yaml
+2026-06-07 15:53:25,920 INFO     OK: D:\DOCS\SWPJs\new_md_merge\examples_work\pm1_simple_ppt_merge\simple_ppt_merge_pdf_recipe.yaml
+-> D:\DOCS\SWPJs\new_md_merge\examples_work\pm1_simple_ppt_merge\build\work_simple_ppt_merge_merged_idcollect.yaml
+2026-06-07 15:53:25,920 INFO     [ppt_to_pdf] idcollect OK
+2026-06-07 15:53:25,920 INFO     [ppt_to_pdf] idresolve ...
+2026-06-07 15:53:25,922 DEBUG    !constants loaded: D:\DOCS\SWPJs\new_md_merge\examples_work\constants_settings.toml (9 entries)
+2026-06-07 15:53:25,929 DEBUG    yaml      : D:\DOCS\SWPJs\new_md_merge\examples_work\pm1_simple_ppt_merge\simple_ppt_merge_pdf_recipe.yaml
+2026-06-07 15:53:25,929 DEBUG    inventory : D:\DOCS\SWPJs\new_md_merge\examples_work\pm1_simple_ppt_merge\build\work_simple_ppt_merge_merged_idcollect.yaml
+2026-06-07 15:53:25,929 DEBUG    resolved  : D:\DOCS\SWPJs\new_md_merge\examples_work\pm1_simple_ppt_merge\build\work_simple_ppt_merge_merged_idresolve.yaml
+2026-06-07 15:53:25,947 INFO     OK: D:\DOCS\SWPJs\new_md_merge\examples_work\pm1_simple_ppt_merge\simple_ppt_merge_pdf_recipe.yaml
+-> D:\DOCS\SWPJs\new_md_merge\examples_work\pm1_simple_ppt_merge\build\work_simple_ppt_merge_merged_idresolve.yaml
+2026-06-07 15:53:25,948 INFO     [ppt_to_pdf] idresolve OK
+2026-06-07 15:53:25,948 INFO     [ppt_to_pdf] render ...
+2026-06-07 15:53:25,950 DEBUG    !constants loaded: D:\DOCS\SWPJs\new_md_merge\examples_work\constants_settings.toml (9 entries)
+2026-06-07 15:53:25,959 DEBUG    yaml     : D:\DOCS\SWPJs\new_md_merge\examples_work\pm1_simple_ppt_merge\simple_ppt_merge_pdf_recipe.yaml
+2026-06-07 15:53:25,959 DEBUG    merged   : D:\DOCS\SWPJs\new_md_merge\examples_work\pm1_simple_ppt_merge\build\work_simple_ppt_merge_merged_merged.md
+2026-06-07 15:53:25,959 DEBUG    resolved : D:\DOCS\SWPJs\new_md_merge\examples_work\pm1_simple_ppt_merge\build\work_simple_ppt_merge_merged_idresolve.yaml
+2026-06-07 15:53:25,959 DEBUG    rendered : D:\DOCS\SWPJs\new_md_merge\examples_work\pm1_simple_ppt_merge\build\simple_ppt_merge_merged_rendered.md
+2026-06-07 15:53:25,980 INFO     OK: D:\DOCS\SWPJs\new_md_merge\examples_work\pm1_simple_ppt_merge\simple_ppt_merge_pdf_recipe.yaml
+-> D:\DOCS\SWPJs\new_md_merge\examples_work\pm1_simple_ppt_merge\build\simple_ppt_merge_merged_rendered.md
+2026-06-07 15:53:25,980 INFO     [ppt_to_pdf] render OK
+2026-06-07 15:53:25,980 INFO     [ppt_to_pdf] condblockprocess ...
+2026-06-07 15:53:25,982 DEBUG    !constants loaded: D:\DOCS\SWPJs\new_md_merge\examples_work\constants_settings.toml (9 entries)
+2026-06-07 15:53:25,989 DEBUG    !constants loaded: D:\DOCS\SWPJs\new_md_merge\examples_work\constants_settings.toml (9 entries)
+2026-06-07 15:53:25,996 DEBUG    conditional-process-output: 自動生成 D:\DOCS\SWPJs\new_md_merge\examples_work\pm1_simple_ppt_merge\build\work_standard_cover.tex
+2026-06-07 15:53:25,996 DEBUG    input  : D:\DOCS\SWPJs\new_md_merge\defaults\pandoc\standard_cover.tex
+2026-06-07 15:53:25,996 DEBUG    output : D:\DOCS\SWPJs\new_md_merge\examples_work\pm1_simple_ppt_merge\build\work_standard_cover.tex
+2026-06-07 15:53:25,996 DEBUG    vars   : {'COVER_IMAGE': 'ppt_md_merger.png', 'COVER_TITLE': 'pptmerge 単純マージ サンプル', 'COVER_SUBTITLE': 'pptmerge 機能の 「単純マージ」 用例', 'COVER_DATE': datetime.date(2026, 6, 7), 'COVER_AUTHOR': '開米瑞浩', 'COVER_AFFILIATION': 'アイデアクラフト', 'COVER_CONTACT': 'https://ideacraft', 'COVER_COPYRIGHT': '© 2026 M. Kaimai', 'COVER_NOTE': '本書は、 PPT を 「流用できる文書部品」 として統合するツール PPT & MD merger の、 最もシンプルな用例「単純マージ」 の概要説明文書です。', 'COVER_QRCODE': None}
+2026-06-07 15:53:25,998 INFO     OK: D:\DOCS\SWPJs\new_md_merge\defaults\pandoc\standard_cover.tex
+-> D:\DOCS\SWPJs\new_md_merge\examples_work\pm1_simple_ppt_merge\build\work_standard_cover.tex
+2026-06-07 15:53:25,998 INFO     [ppt_to_pdf] condblockprocess OK
+2026-06-07 15:53:25,998 INFO     [ppt_to_pdf] pandoc ...
+2026-06-07 15:53:26,000 DEBUG    !constants loaded: D:\DOCS\SWPJs\new_md_merge\examples_work\constants_settings.toml (9 entries)
+2026-06-07 15:53:26,007 DEBUG    conditional-process-output prepended to include-before-body: D:\DOCS\SWPJs\new_md_merge\examples_work\pm1_simple_ppt_merge\build\work_standard_cover.tex
+2026-06-07 15:53:26,007 DEBUG    yaml     : D:\DOCS\SWPJs\new_md_merge\examples_work\pm1_simple_ppt_merge\simple_ppt_merge_pdf_recipe.yaml
+2026-06-07 15:53:26,007 DEBUG    rendered : D:\DOCS\SWPJs\new_md_merge\examples_work\pm1_simple_ppt_merge\build\simple_ppt_merge_merged_rendered.md
+2026-06-07 15:53:26,007 DEBUG    output   : D:\DOCS\SWPJs\new_md_merge\examples_work\pm1_simple_ppt_merge\build\simple_ppt_merge_merged.pdf
+2026-06-07 15:53:26,007 DEBUG    defaults : D:\DOCS\SWPJs\new_md_merge\defaults\pandoc\defaults\report_pandoc_defaults.yaml
+2026-06-07 15:53:26,008 DEBUG    filters  : []
+2026-06-07 15:53:26,008 DEBUG    template        : D:\DOCS\SWPJs\new_md_merge\defaults\pandoc\templates\report_template.tex
+2026-06-07 15:53:26,008 DEBUG    include-in-header: D:\DOCS\SWPJs\new_md_merge\defaults\pandoc\templates\report_header.tex
+2026-06-07 15:53:26,008 DEBUG    data-dir        : D:\DOCS\SWPJs\new_md_merge\defaults\pandoc
+2026-06-07 15:53:26,008 DEBUG    syntax-highlighting : tango
+2026-06-07 15:53:26,008 DEBUG    include-before-body: [WindowsPath('D:/DOCS/SWPJs/new_md_merge/examples_work/pm1_simple_ppt_merge/build/work_standard_cover.tex')]
+2026-06-07 15:53:26,008 DEBUG    resource-path   : [WindowsPath('D:/DOCS/SWPJs/new_md_merge/examples_work/pm1_simple_ppt_merge/build'), WindowsPath('D:/DOCS/SWPJs/new_md_merge/defaults/common_assets')]
+2026-06-07 15:53:26,008 DEBUG    graphicspath-tex: D:\DOCS\SWPJs\new_md_merge\examples_work\pm1_simple_ppt_merge\build\work_simple_ppt_merge_merged_resourcepath.tex
+2026-06-07 15:53:26,014 DEBUG    cmd:
+pandoc
+D:\DOCS\SWPJs\new_md_merge\examples_work\pm1_simple_ppt_merge\build\simple_ppt_merge_merged_rendered.md
+-o
+D:\DOCS\SWPJs\new_md_merge\examples_work\pm1_simple_ppt_merge\build\simple_ppt_merge_merged.pdf
+-d
+D:\DOCS\SWPJs\new_md_merge\defaults\pandoc\defaults\report_pandoc_defaults.yaml
+-t
+pdf
+--template
+D:\DOCS\SWPJs\new_md_merge\defaults\pandoc\templates\report_template.tex
+--include-in-header
+D:\DOCS\SWPJs\new_md_merge\defaults\pandoc\templates\report_header.tex
+--data-dir
+D:\DOCS\SWPJs\new_md_merge\defaults\pandoc
+--syntax-highlighting=tango
+--include-before-body
+D:\DOCS\SWPJs\new_md_merge\examples_work\pm1_simple_ppt_merge\build\work_standard_cover.tex
+--include-in-header
+D:\DOCS\SWPJs\new_md_merge\examples_work\pm1_simple_ppt_merge\build\work_simple_ppt_merge_merged_resourcepath.tex
+--resource-path
+.;D:\DOCS\SWPJs\new_md_merge\examples_work\pm1_simple_ppt_merge\build;D:\DOCS\SWPJs\new_md_merge\defaults\common_assets
+2026-06-08 22:00:45,607 DEBUG    log file: D:\DOCS\SWPJs\new_md_merge\examples_work\pm1_simple_ppt_merge\build\log.txt
+2026-06-08 22:00:45,608 DEBUG    input.cropsrc.pdf: 自動生成 D:\DOCS\SWPJs\new_md_merge\examples_work\pm1_simple_ppt_merge\build\simple_ppt_merge_guide.pdf
+2026-06-08 22:00:45,624 DEBUG    Opening PPTX: D:\DOCS\SWPJs\new_md_merge\examples_work\pm1_simple_ppt_merge\simple_ppt_merge_guide.pptx
+2026-06-08 22:00:45,782 DEBUG    Exporting PDF: D:\DOCS\SWPJs\new_md_merge\examples_work\pm1_simple_ppt_merge\build\simple_ppt_merge_guide.pdf
+2026-06-08 22:00:46,964 DEBUG    PDF export complete
+2026-06-08 22:00:46,964 INFO     OK: D:\DOCS\SWPJs\new_md_merge\examples_work\pm1_simple_ppt_merge\simple_ppt_merge_guide.pptx
+-> D:\DOCS\SWPJs\new_md_merge\examples_work\pm1_simple_ppt_merge\build\simple_ppt_merge_guide.pdf
+2026-06-08 22:00:47,080 INFO     [ppt_to_pdf] pptpdfexport OK
+2026-06-08 22:00:47,080 INFO     [ppt_to_pdf] pptimgexport ...
+2026-06-08 22:00:47,083 DEBUG    !constants loaded: D:\DOCS\SWPJs\new_md_merge\examples_work\constants_settings.toml (9 entries)
+2026-06-08 22:00:47,101 DEBUG    input.cropsrc.pdf: 自動生成 D:\DOCS\SWPJs\new_md_merge\examples_work\pm1_simple_ppt_merge\build\simple_ppt_merge_guide.pdf
+2026-06-08 22:00:47,293 DEBUG    STREAM b'IHDR' 16 13
+2026-06-08 22:00:47,294 DEBUG    STREAM b'pHYs' 41 9
+2026-06-08 22:00:47,294 DEBUG    STREAM b'IDAT' 62 109178
+2026-06-08 22:00:47,315 INFO     OK: D:\DOCS\SWPJs\new_md_merge\examples_work\pm1_simple_ppt_merge\build\simple_ppt_merge_guide.pdf
+-> D:\DOCS\SWPJs\new_md_merge\examples_work\pm1_simple_ppt_merge\extracted\figures\simple_ppt_merge_guide_slide1_fig.png
+2026-06-08 22:00:47,391 DEBUG    STREAM b'IHDR' 16 13
+2026-06-08 22:00:47,391 DEBUG    STREAM b'pHYs' 41 9
+2026-06-08 22:00:47,391 DEBUG    STREAM b'IDAT' 62 109178
+2026-06-08 22:00:47,421 INFO     OK: D:\DOCS\SWPJs\new_md_merge\examples_work\pm1_simple_ppt_merge\build\simple_ppt_merge_guide.pdf
+-> D:\DOCS\SWPJs\new_md_merge\examples_work\pm1_simple_ppt_merge\extracted\figures\simple_ppt_merge_guide_keyvisual.png
+2026-06-08 22:00:47,527 DEBUG    STREAM b'IHDR' 16 13
+2026-06-08 22:00:47,527 DEBUG    STREAM b'pHYs' 41 9
+2026-06-08 22:00:47,527 DEBUG    STREAM b'IDAT' 62 441847
+2026-06-08 22:00:47,605 INFO     OK: D:\DOCS\SWPJs\new_md_merge\examples_work\pm1_simple_ppt_merge\build\simple_ppt_merge_guide.pdf
+-> D:\DOCS\SWPJs\new_md_merge\examples_work\pm1_simple_ppt_merge\extracted\figures\simple_ppt_merge_guide_slide3_fig.png
+2026-06-08 22:00:47,709 DEBUG    STREAM b'IHDR' 16 13
+2026-06-08 22:00:47,709 DEBUG    STREAM b'pHYs' 41 9
+2026-06-08 22:00:47,709 DEBUG    STREAM b'IDAT' 62 221687
+2026-06-08 22:00:47,760 INFO     OK: D:\DOCS\SWPJs\new_md_merge\examples_work\pm1_simple_ppt_merge\build\simple_ppt_merge_guide.pdf
+-> D:\DOCS\SWPJs\new_md_merge\examples_work\pm1_simple_ppt_merge\extracted\figures\simple_ppt_merge_guide_slide4_fig.png
+2026-06-08 22:00:47,761 INFO     [ppt_to_pdf] pptimgexport OK
+2026-06-08 22:00:47,762 INFO     [ppt_to_pdf] pptmdexport ...
+2026-06-08 22:00:47,764 DEBUG    !constants loaded: D:\DOCS\SWPJs\new_md_merge\examples_work\constants_settings.toml (9 entries)
+2026-06-08 22:00:47,804 INFO     OK: D:\DOCS\SWPJs\new_md_merge\examples_work\pm1_simple_ppt_merge\simple_ppt_merge_guide.pptx
+-> D:\DOCS\SWPJs\new_md_merge\examples_work\pm1_simple_ppt_merge\extracted\simple_ppt_merge_guide_slide1_md.md
+2026-06-08 22:00:47,806 INFO     OK: D:\DOCS\SWPJs\new_md_merge\examples_work\pm1_simple_ppt_merge\simple_ppt_merge_guide.pptx
+-> D:\DOCS\SWPJs\new_md_merge\examples_work\pm1_simple_ppt_merge\extracted\simple_ppt_merge_guide_slide2_md.md
+2026-06-08 22:00:47,808 INFO     OK: D:\DOCS\SWPJs\new_md_merge\examples_work\pm1_simple_ppt_merge\simple_ppt_merge_guide.pptx
+-> D:\DOCS\SWPJs\new_md_merge\examples_work\pm1_simple_ppt_merge\extracted\simple_ppt_merge_guide_slide3_md.md
+2026-06-08 22:00:47,811 INFO     OK: D:\DOCS\SWPJs\new_md_merge\examples_work\pm1_simple_ppt_merge\simple_ppt_merge_guide.pptx
+-> D:\DOCS\SWPJs\new_md_merge\examples_work\pm1_simple_ppt_merge\extracted\simple_ppt_merge_guide_slide4_md.md
+2026-06-08 22:00:47,811 INFO     [ppt_to_pdf] pptmdexport OK
+2026-06-08 22:00:47,811 INFO     [ppt_to_pdf] merge ...
+2026-06-08 22:00:47,814 DEBUG    !constants loaded: D:\DOCS\SWPJs\new_md_merge\examples_work\constants_settings.toml (9 entries)
+2026-06-08 22:00:47,828 DEBUG    collect_procedure_items: simple_ppt_merge_guide_slide1_md.md
+2026-06-08 22:00:47,828 DEBUG    collect_procedure_items: ..\..\defaults\common_assets\tex_newpage.md
+2026-06-08 22:00:47,829 DEBUG    collect_procedure_items: simple_ppt_merge_guide_slide2_md.md
+2026-06-08 22:00:47,830 DEBUG    collect_procedure_items: ..\..\defaults\common_assets\tex_newpage.md
+2026-06-08 22:00:47,830 DEBUG    collect_procedure_items: simple_ppt_merge_guide_slide3_md.md
+2026-06-08 22:00:47,831 DEBUG    collect_procedure_items: ..\..\defaults\common_assets\tex_newpage.md
+2026-06-08 22:00:47,832 DEBUG    collect_procedure_items: simple_ppt_merge_guide_slide4_md.md
+2026-06-08 22:00:47,833 DEBUG    yaml    : D:\DOCS\SWPJs\new_md_merge\examples_work\pm1_simple_ppt_merge\simple_ppt_merge_pdf_recipe.yaml
+2026-06-08 22:00:47,833 DEBUG    in_dirs : ['D:\\DOCS\\SWPJs\\new_md_merge\\examples_work\\pm1_simple_ppt_merge', 'D:\\DOCS\\SWPJs\\new_md_merge\\examples_work\\pm1_simple_ppt_merge\\extracted', 'D:\\DOCS\\SWPJs\\new_md_merge\\defaults\\common_assets']
+2026-06-08 22:00:47,833 DEBUG    files   : ['D:\\DOCS\\SWPJs\\new_md_merge\\examples_work\\pm1_simple_ppt_merge\\extracted\\simple_ppt_merge_guide_slide1_md.md', 'D:\\DOCS\\SWPJs\\new_md_merge\\defaults\\common_assets\\tex_newpage.md', 'D:\\DOCS\\SWPJs\\new_md_merge\\examples_work\\pm1_simple_ppt_merge\\extracted\\simple_ppt_merge_guide_slide2_md.md', 'D:\\DOCS\\SWPJs\\new_md_merge\\defaults\\common_assets\\tex_newpage.md', 'D:\\DOCS\\SWPJs\\new_md_merge\\examples_work\\pm1_simple_ppt_merge\\extracted\\simple_ppt_merge_guide_slide3_md.md', 'D:\\DOCS\\SWPJs\\new_md_merge\\defaults\\common_assets\\tex_newpage.md', 'D:\\DOCS\\SWPJs\\new_md_merge\\examples_work\\pm1_simple_ppt_merge\\extracted\\simple_ppt_merge_guide_slide4_md.md']
+2026-06-08 22:00:47,833 DEBUG    output  : D:\DOCS\SWPJs\new_md_merge\examples_work\pm1_simple_ppt_merge\build\work_simple_ppt_merge_merged_merged.md
+2026-06-08 22:00:47,860 INFO     OK: D:\DOCS\SWPJs\new_md_merge\examples_work\pm1_simple_ppt_merge\simple_ppt_merge_pdf_recipe.yaml
+-> D:\DOCS\SWPJs\new_md_merge\examples_work\pm1_simple_ppt_merge\build\work_simple_ppt_merge_merged_merged.md
+2026-06-08 22:00:47,860 INFO     [ppt_to_pdf] merge OK
+2026-06-08 22:00:47,860 INFO     [ppt_to_pdf] idcollect ...
+2026-06-08 22:00:47,863 DEBUG    !constants loaded: D:\DOCS\SWPJs\new_md_merge\examples_work\constants_settings.toml (9 entries)
+2026-06-08 22:00:47,875 DEBUG    yaml      : D:\DOCS\SWPJs\new_md_merge\examples_work\pm1_simple_ppt_merge\simple_ppt_merge_pdf_recipe.yaml
+2026-06-08 22:00:47,875 DEBUG    merged md : D:\DOCS\SWPJs\new_md_merge\examples_work\pm1_simple_ppt_merge\build\work_simple_ppt_merge_merged_merged.md
+2026-06-08 22:00:47,875 DEBUG    inventory : D:\DOCS\SWPJs\new_md_merge\examples_work\pm1_simple_ppt_merge\build\work_simple_ppt_merge_merged_idcollect.yaml
+2026-06-08 22:00:47,884 INFO     OK: D:\DOCS\SWPJs\new_md_merge\examples_work\pm1_simple_ppt_merge\simple_ppt_merge_pdf_recipe.yaml
+-> D:\DOCS\SWPJs\new_md_merge\examples_work\pm1_simple_ppt_merge\build\work_simple_ppt_merge_merged_idcollect.yaml
+2026-06-08 22:00:47,885 INFO     [ppt_to_pdf] idcollect OK
+2026-06-08 22:00:47,885 INFO     [ppt_to_pdf] idresolve ...
+2026-06-08 22:00:47,888 DEBUG    !constants loaded: D:\DOCS\SWPJs\new_md_merge\examples_work\constants_settings.toml (9 entries)
+2026-06-08 22:00:47,900 DEBUG    yaml      : D:\DOCS\SWPJs\new_md_merge\examples_work\pm1_simple_ppt_merge\simple_ppt_merge_pdf_recipe.yaml
+2026-06-08 22:00:47,900 DEBUG    inventory : D:\DOCS\SWPJs\new_md_merge\examples_work\pm1_simple_ppt_merge\build\work_simple_ppt_merge_merged_idcollect.yaml
+2026-06-08 22:00:47,900 DEBUG    resolved  : D:\DOCS\SWPJs\new_md_merge\examples_work\pm1_simple_ppt_merge\build\work_simple_ppt_merge_merged_idresolve.yaml
+2026-06-08 22:00:47,929 INFO     OK: D:\DOCS\SWPJs\new_md_merge\examples_work\pm1_simple_ppt_merge\simple_ppt_merge_pdf_recipe.yaml
+-> D:\DOCS\SWPJs\new_md_merge\examples_work\pm1_simple_ppt_merge\build\work_simple_ppt_merge_merged_idresolve.yaml
+2026-06-08 22:00:47,929 INFO     [ppt_to_pdf] idresolve OK
+2026-06-08 22:00:47,929 INFO     [ppt_to_pdf] render ...
+2026-06-08 22:00:47,933 DEBUG    !constants loaded: D:\DOCS\SWPJs\new_md_merge\examples_work\constants_settings.toml (9 entries)
+2026-06-08 22:00:47,944 DEBUG    yaml     : D:\DOCS\SWPJs\new_md_merge\examples_work\pm1_simple_ppt_merge\simple_ppt_merge_pdf_recipe.yaml
+2026-06-08 22:00:47,945 DEBUG    merged   : D:\DOCS\SWPJs\new_md_merge\examples_work\pm1_simple_ppt_merge\build\work_simple_ppt_merge_merged_merged.md
+2026-06-08 22:00:47,945 DEBUG    resolved : D:\DOCS\SWPJs\new_md_merge\examples_work\pm1_simple_ppt_merge\build\work_simple_ppt_merge_merged_idresolve.yaml
+2026-06-08 22:00:47,945 DEBUG    rendered : D:\DOCS\SWPJs\new_md_merge\examples_work\pm1_simple_ppt_merge\build\simple_ppt_merge_merged_rendered.md
+2026-06-08 22:00:47,963 INFO     OK: D:\DOCS\SWPJs\new_md_merge\examples_work\pm1_simple_ppt_merge\simple_ppt_merge_pdf_recipe.yaml
+-> D:\DOCS\SWPJs\new_md_merge\examples_work\pm1_simple_ppt_merge\build\simple_ppt_merge_merged_rendered.md
+2026-06-08 22:00:47,964 INFO     [ppt_to_pdf] render OK
+2026-06-08 22:00:47,964 INFO     [ppt_to_pdf] condblockprocess ...
+2026-06-08 22:00:47,967 DEBUG    !constants loaded: D:\DOCS\SWPJs\new_md_merge\examples_work\constants_settings.toml (9 entries)
+2026-06-08 22:00:47,977 DEBUG    !constants loaded: D:\DOCS\SWPJs\new_md_merge\examples_work\constants_settings.toml (9 entries)
+2026-06-08 22:00:47,986 DEBUG    conditional-process-output: 自動生成 D:\DOCS\SWPJs\new_md_merge\examples_work\pm1_simple_ppt_merge\build\work_standard_cover.tex
+2026-06-08 22:00:47,986 DEBUG    input  : D:\DOCS\SWPJs\new_md_merge\defaults\pandoc\standard_cover.tex
+2026-06-08 22:00:47,986 DEBUG    output : D:\DOCS\SWPJs\new_md_merge\examples_work\pm1_simple_ppt_merge\build\work_standard_cover.tex
+2026-06-08 22:00:47,987 DEBUG    vars   : {'COVER_IMAGE': 'ppt_md_merger.png', 'COVER_TITLE': 'pptmerge 単純マージ サンプル', 'COVER_SUBTITLE': 'pptmerge 機能の 「単純マージ」 用例', 'COVER_DATE': datetime.date(2026, 6, 8), 'COVER_AUTHOR': '開米瑞浩', 'COVER_AFFILIATION': 'アイデアクラフト', 'COVER_CONTACT': 'https://ideacraft', 'COVER_COPYRIGHT': '© 2026 M. Kaimai', 'COVER_NOTE': '本書は、 PPT を 「流用できる文書部品」 として統合するツール PPT & MD merger の、 最もシンプルな用例「単純マージ」 の概要説明文書です。', 'COVER_QRCODE': None}
+2026-06-08 22:00:47,989 INFO     OK: D:\DOCS\SWPJs\new_md_merge\defaults\pandoc\standard_cover.tex
+-> D:\DOCS\SWPJs\new_md_merge\examples_work\pm1_simple_ppt_merge\build\work_standard_cover.tex
+2026-06-08 22:00:47,990 INFO     [ppt_to_pdf] condblockprocess OK
+2026-06-08 22:00:47,990 INFO     [ppt_to_pdf] pandoc ...
+2026-06-08 22:00:47,993 DEBUG    !constants loaded: D:\DOCS\SWPJs\new_md_merge\examples_work\constants_settings.toml (9 entries)
+2026-06-08 22:00:48,002 DEBUG    conditional-process-output prepended to include-before-body: D:\DOCS\SWPJs\new_md_merge\examples_work\pm1_simple_ppt_merge\build\work_standard_cover.tex
+2026-06-08 22:00:48,002 DEBUG    yaml     : D:\DOCS\SWPJs\new_md_merge\examples_work\pm1_simple_ppt_merge\simple_ppt_merge_pdf_recipe.yaml
+2026-06-08 22:00:48,002 DEBUG    rendered : D:\DOCS\SWPJs\new_md_merge\examples_work\pm1_simple_ppt_merge\build\simple_ppt_merge_merged_rendered.md
+2026-06-08 22:00:48,002 DEBUG    output   : D:\DOCS\SWPJs\new_md_merge\examples_work\pm1_simple_ppt_merge\build\simple_ppt_merge_merged.pdf
+2026-06-08 22:00:48,002 DEBUG    defaults : D:\DOCS\SWPJs\new_md_merge\defaults\pandoc\defaults\report_pandoc_defaults.yaml
+2026-06-08 22:00:48,003 DEBUG    filters  : []
+2026-06-08 22:00:48,003 DEBUG    template        : D:\DOCS\SWPJs\new_md_merge\defaults\pandoc\templates\report_template.tex
+2026-06-08 22:00:48,003 DEBUG    include-in-header: D:\DOCS\SWPJs\new_md_merge\defaults\pandoc\templates\report_header.tex
+2026-06-08 22:00:48,003 DEBUG    data-dir        : D:\DOCS\SWPJs\new_md_merge\defaults\pandoc
+2026-06-08 22:00:48,003 DEBUG    syntax-highlighting : tango
+2026-06-08 22:00:48,003 DEBUG    include-before-body: [WindowsPath('D:/DOCS/SWPJs/new_md_merge/examples_work/pm1_simple_ppt_merge/build/work_standard_cover.tex')]
+2026-06-08 22:00:48,003 DEBUG    resource-path   : [WindowsPath('D:/DOCS/SWPJs/new_md_merge/examples_work/pm1_simple_ppt_merge/build'), WindowsPath('D:/DOCS/SWPJs/new_md_merge/defaults/common_assets')]
+2026-06-08 22:00:48,003 DEBUG    graphicspath-tex: D:\DOCS\SWPJs\new_md_merge\examples_work\pm1_simple_ppt_merge\build\work_simple_ppt_merge_merged_resourcepath.tex
+2026-06-08 22:00:48,010 DEBUG    cmd:
+pandoc
+D:\DOCS\SWPJs\new_md_merge\examples_work\pm1_simple_ppt_merge\build\simple_ppt_merge_merged_rendered.md
+-o
+D:\DOCS\SWPJs\new_md_merge\examples_work\pm1_simple_ppt_merge\build\simple_ppt_merge_merged.pdf
+-d
+D:\DOCS\SWPJs\new_md_merge\defaults\pandoc\defaults\report_pandoc_defaults.yaml
+-t
+pdf
+--template
+D:\DOCS\SWPJs\new_md_merge\defaults\pandoc\templates\report_template.tex
+--include-in-header
+D:\DOCS\SWPJs\new_md_merge\defaults\pandoc\templates\report_header.tex
+--data-dir
+D:\DOCS\SWPJs\new_md_merge\defaults\pandoc
+--syntax-highlighting=tango
+--include-before-body
+D:\DOCS\SWPJs\new_md_merge\examples_work\pm1_simple_ppt_merge\build\work_standard_cover.tex
+--include-in-header
+D:\DOCS\SWPJs\new_md_merge\examples_work\pm1_simple_ppt_merge\build\work_simple_ppt_merge_merged_resourcepath.tex
+--resource-path
+.;D:\DOCS\SWPJs\new_md_merge\examples_work\pm1_simple_ppt_merge\build;D:\DOCS\SWPJs\new_md_merge\defaults\common_assets
+2026-06-08 22:01:16,629 WARNING  ===JSON===
+[
+]
+===TSV===
+id	level	type	number	title
+2026-06-08 22:01:16,629 INFO     OK: D:\DOCS\SWPJs\new_md_merge\examples_work\pm1_simple_ppt_merge\simple_ppt_merge_pdf_recipe.yaml
+-> D:\DOCS\SWPJs\new_md_merge\examples_work\pm1_simple_ppt_merge\build\simple_ppt_merge_merged.pdf
+2026-06-08 22:01:16,629 INFO     [ppt_to_pdf] pandoc OK
+2026-06-08 22:01:16,632 DEBUG    !constants loaded: D:\DOCS\SWPJs\new_md_merge\examples_work\constants_settings.toml (9 entries)
+2026-06-08 22:01:16,641 INFO     [ppt_to_pdf] deleting work-files
+2026-06-08 22:01:16,643 INFO     [ppt_to_pdf] deleted: work_simple_ppt_merge_merged_merged.md
+2026-06-08 22:01:16,644 INFO     [ppt_to_pdf] deleted: work_simple_ppt_merge_merged_idcollect.yaml
+2026-06-08 22:01:16,645 INFO     [ppt_to_pdf] deleted: work_simple_ppt_merge_merged_idresolve.yaml
+2026-06-08 22:01:16,646 INFO     [ppt_to_pdf] deleted: work_simple_ppt_merge_merged_resourcepath.tex
+2026-06-08 22:01:16,648 INFO     [ppt_to_pdf] deleted: work_standard_cover.tex
+2026-06-08 22:01:16,648 INFO     [ppt_to_pdf] use --keep-work option to preserve work-files

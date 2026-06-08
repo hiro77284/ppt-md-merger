@@ -1,5 +1,7 @@
 # MD, PowerPointファイルの結合指示書のサンプル
 version: 1
+# yaml-language-server-disable
+!constants ../constants_settings.toml
 
 vars: # mdファイルとpptxファイルの双方で変数置換に使用する変数の定義
   !include COVER_VARS.yaml    # 表紙用変数は別ファイルから読み込む
@@ -102,18 +104,15 @@ procedure:
     title: 大きなPowerPointファイルを作る時の悩みとは？
   - operation: insertmd
     mdfilename: ppt_md_merger_overview_slide2_md.md
-  - operation: insertmd
-    mdfilename: ../../defaults/common_assets/tex_newpage.md
-    description: "ページ送り"
-
+  # yaml-language-server-disable
+  __TEX_NEWPAGE__
+  # yaml-language-server-disable
   - operation: insertmd
     mdfilename: ppt_md_merger_overview_slide3_md.md
-  - operation: insertmd
-    mdfilename: ../../defaults/common_assets/tex_newpage.md
-    description: "ページ送り"
+  # yaml-language-server-disable
+  __TEX_NEWPAGE__
 
-  - operation: insertmd
-    mdfilename: ../../defaults/common_assets/tex_newpage.md
+  # yaml-language-server-disable
   - operation: insertmd
     mdfilename: ppt_md_merger_overview_slide4_md.md
   - operation: insertmd
@@ -145,16 +144,16 @@ procedure:
     mdfilename: ../../defaults/common_assets/tex_2line.md
   - operation: insertmd
     mdfilename: ppt_md_merger_overview_slide9_md.md
-  - operation: insertmd
-    mdfilename: ../../defaults/common_assets/tex_newpage.md
-    description: "ページ送り"
+  # yaml-language-server-disable
+  __TEX_NEWPAGE__
 
+  # yaml-language-server-disable
   - operation: insertmd
     mdfilename: ppt_md_merger_overview_slide10_md.md
-  - operation: insertmd
-    mdfilename: ../../defaults/common_assets/tex_newpage.md
-    description: "ページ送り"
+  # yaml-language-server-disable
+  __TEX_NEWPAGE__
 
+  # yaml-language-server-disable
   - operation: insertmd
     mdfilename: ppt_md_merger_overview_slide11_md.md
 
@@ -186,17 +185,17 @@ procedure:
   - operation: insertmd
     mdfilename: ppt_md_merger_overview_slide13_md.md
     description: "システム要件"
-  - operation: insertmd
-    mdfilename: ../../defaults/common_assets/tex_newpage.md
-    description: "ページ送り"
+  # yaml-language-server-disable
+  __TEX_NEWPAGE__
 
+  # yaml-language-server-disable
   - operation: insertmd
     mdfilename: ppt_md_merger_overview_slide14_md.md
     description: "インストール方法"
 
-  - operation: insertmd
-    mdfilename: ../../defaults/common_assets/tex_vfill_newpage.md
-    description: "vfill とページ送り"
+  # yaml-language-server-disable
+  __TEX_NEWPAGE__
+  # yaml-language-server-disable
   - operation: insertmd
     mdfilename: ppt_md_merger_overview_slide15_md.md
     description: "Quick Start"
@@ -205,9 +204,9 @@ procedure:
   - operation: insertmd
     mdfilename: ppt_md_merger_overview_slide17_md.md
 
-  - operation: insertmd
-    mdfilename: ../../defaults/common_assets/tex_vfill_newpage.md
-    description: "vfill とページ送り"
+  # yaml-language-server-disable
+  __TEX_NEWPAGE__
+  # yaml-language-server-disable
   - operation: insertmd
     mdfilename: ppt_md_merger_overview_slide18_md.md
     description: "Examples"

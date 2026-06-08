@@ -1,0 +1,66 @@
+# constants_settings.toml
+# examples_work 共通の特殊定数定義ファイル
+#
+# 書式: TOML (https://toml.io/)
+# 使い方: recipe yaml の先頭付近に以下を記述する
+#   !constants ../constants_settings.toml
+#
+# 定数の種類:
+#   インライン定数 — 改行なし。行中の任意の位置で置換される
+#   複数行定数     — 改行あり。その定数だけが書かれた行全体を置換する
+#
+# 優先順位（低→高）: 組み込み(__DATE__等) < --constants CLI < !constants ファイル
+# 同名定数は高優先度で上書きされる。
+
+# ─── プロジェクト情報（インライン定数）────────────────────────────────────────
+
+__ORGANIZATION__ = '株式会社サンプル'
+__AUTHOR__       = '山田太郎'
+__VERSION__      = '1.0.0'
+__REVISION__     = 'Rev.A'
+
+# ─── 出力先・ビルド設定（インライン定数）─────────────────────────────────────
+
+
+# ─── LaTeX 複数行定数（行まるごと置換）───────────────────────────────────────
+# シングルクォート ''' ''' でバックスラッシュをそのまま書ける
+
+# 共通 LaTeX パッケージ群
+# 使用例（recipe yaml 内）:
+#   include-in-header:
+#     __LATEX_PACKAGES__
+
+# ページ送りをするlatexコード
+__TEX_NEWPAGE__ = '''
+- operation: insertmd
+  mdfilename: ../../defaults/common_assets/tex_newpage.md
+  description: "ページ送り"
+'''
+
+# 1行送りをするlatexコード
+__TEX_1LINE__ = '''
+- operation: insertmd
+  mdfilename: ../../defaults/common_assets/tex_1line.md
+  description: "2行送り"
+'''
+
+# 2行送りをするlatexコード
+__TEX_2LINE__ = '''
+- operation: insertmd
+  mdfilename: ../../defaults/common_assets/tex_2line.md
+  description: "2行送り"
+'''
+
+# 3行送りをするlatexコード
+__TEX_3LINE__ = '''
+- operation: insertmd
+  mdfilename: ../../defaults/common_assets/tex_3line.md
+  description: "2行送り"
+'''
+
+# vfillをするlatexコード
+__TEX_VFILL__ = '''
+- operation: insertmd
+  mdfilename: ../../defaults/common_assets/tex_vfill.md
+  description: "2行送り"
+'''

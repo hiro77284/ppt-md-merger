@@ -49,10 +49,12 @@ from ._slide_titles import (
 
 def _apply_cli_indexer_opts(args: argparse.Namespace, recipe: dict[str, Any]) -> None:
     """Override recipe indexer flags with CLI options when explicitly passed."""
-    if getattr(args, "delete_csl", False):
-        recipe.setdefault("indexer", {})["deletecsl"] = True
-    if getattr(args, "delete_csp", False):
-        recipe.setdefault("indexer", {})["deletecsp"] = True
+    delete_csl = getattr(args, "delete_csl", None)
+    if delete_csl is not None:
+        recipe.setdefault("indexer", {})["deletecsl"] = delete_csl == "on"
+    delete_csp = getattr(args, "delete_csp", None)
+    if delete_csp is not None:
+        recipe.setdefault("indexer", {})["deletecsp"] = delete_csp == "on"
     pptxnumbering = getattr(args, "pptxnumbering", None)
     if pptxnumbering is not None:
         recipe.setdefault("indexer", {})["pptxnumbering"] = pptxnumbering

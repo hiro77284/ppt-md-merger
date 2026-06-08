@@ -1,3 +1,5 @@
+version: 1
+!constants ../constants_settings.toml
 # MD, PowerPointファイルの結合指示書のサンプル
 
 output: 

@@ -1,3 +1,5 @@
+version: 1
+!constants ../constants_settings.toml
 # PowerPointファイル結合指示サンプル
 # 概要：単純に２つのファイルを結合し、ファイルごとに Chapter を構成するとしてナンバリングも行う
 

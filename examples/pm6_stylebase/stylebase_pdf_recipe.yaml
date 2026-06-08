@@ -1,3 +1,5 @@
+version: 1
+!constants ../constants_settings.toml
 # PowerPointファイル結合指示サンプル
 
 # 概要：単純に２つのファイルをナンバリングもせずに結合する、最もシンプルな例

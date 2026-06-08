@@ -1,3 +1,5 @@
+version: 1
+!constants ../constants_settings.toml
 # PowerPointファイル結合指示サンプル
 
 # 概要：stylebase を分離指定して結合する

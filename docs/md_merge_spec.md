@@ -43,21 +43,21 @@ md-merge merge input.yaml
 
 ## 3. サブコマンド一覧
 
-| サブコマンド | 概要           | 入力     | 出力          |
-| ------ | ------------ | ------ | ----------- |
-| `merge` | mdファイルを結合する | yamlファイル | mdファイル      |
-| `idcollect` | 結合済み MD から ID マーカーを抽出してインベントリ YAML を生成する | yamlファイル | インベントリ YAML |
-| `idresolve` | IDインベントリ YAML から number / label を付与した ID解決済み YAML を生成する | yamlファイル | ID解決済み YAML |
-| `render` | 結合済み MD のタイトル・参照を ID解決済みマップで置換してレンダー済み MD を生成する | yamlファイル | レンダー済み MD |
-| `pandoc` | レンダー済み MD を pandoc に渡して PDF・LaTeX 等を生成する | yamlファイル | PDF / LaTeX 等 |
-| `pptmerge` | 複数の PowerPoint ファイルをレシピに従って結合する | yamlファイル | pptxファイル |
-| `pptimgexport` | PPTX スライドのノートに記述された指示に従い PDF から画像を切り出して保存する | yamlファイル | PNG ファイル群 |
-| `pptmdexport` | PPTX スライドのノートのブロック構造から MD テキストを抽出してファイルに出力する | yamlファイル | MD ファイル群 |
-| `pptpdfexport` | PowerPoint COM 自動化を使って PPTX を PDF に変換する（Windows 専用） | yamlファイル | PDF ファイル |
-| `ppt_to_pdf` | pptpdfexport → pptimgexport → pptmdexport → merge → idcollect → idresolve → render → condblockprocess → pandoc を順に連続実行する | yamlファイル | PDF 等 |
-| `puremd` | レンダー済み MD から LaTeX 等の raw ブロックを除去して純粋な MD を生成する | yamlファイル | MD ファイル |
-| `condblockprocess` | テンプレートファイル内の条件ブロックと変数参照を展開して出力ファイルを生成する | yamlファイル | テキストファイル |
-| `crop_to_pdf` | crop → merge → idcollect → idresolve → render → pandoc を順に連続実行する | yamlファイル | PDF 等 |
+| サブコマンド             | 概要                                                                                                                       | 入力       | 出力            |
+| ------------------ | ------------------------------------------------------------------------------------------------------------------------ | -------- | ------------- |
+| `merge`            | mdファイルを結合する                                                                                                              | yamlファイル | mdファイル        |
+| `idcollect`        | 結合済み MD から ID マーカーを抽出してインベントリ YAML を生成する                                                                                 | yamlファイル | インベントリ YAML   |
+| `idresolve`        | IDインベントリ YAML から number / label を付与した ID解決済み YAML を生成する                                                                  | yamlファイル | ID解決済み YAML   |
+| `render`           | 結合済み MD のタイトル・参照を ID解決済みマップで置換してレンダー済み MD を生成する                                                                          | yamlファイル | レンダー済み MD     |
+| `pandoc`           | レンダー済み MD を pandoc に渡して PDF・LaTeX 等を生成する                                                                                 | yamlファイル | PDF / LaTeX 等 |
+| `pptmerge`         | 複数の PowerPoint ファイルをレシピに従って結合する                                                                                          | yamlファイル | pptxファイル      |
+| `pptimgexport`     | PPTX スライドのノートに記述された指示に従い PDF から画像を切り出して保存する                                                                              | yamlファイル | PNG ファイル群     |
+| `pptmdexport`      | PPTX スライドのノートのブロック構造から MD テキストを抽出してファイルに出力する                                                                             | yamlファイル | MD ファイル群      |
+| `pptpdfexport`     | PowerPoint COM 自動化を使って PPTX を PDF に変換する（Windows 専用）                                                                      | yamlファイル | PDF ファイル      |
+| `ppt_to_pdf`       | pptpdfexport → pptimgexport → pptmdexport → merge → idcollect → idresolve → render → condblockprocess → pandoc を順に連続実行する | yamlファイル | PDF 等         |
+| `puremd`           | レンダー済み MD から LaTeX 等の raw ブロックを除去して純粋な MD を生成する                                                                          | yamlファイル | MD ファイル       |
+| `condblockprocess` | テンプレートファイル内の条件ブロックと変数参照を展開して出力ファイルを生成する                                                                                  | yamlファイル | テキストファイル      |
+| `crop_to_pdf`      | crop → merge → idcollect → idresolve → render → pandoc を順に連続実行する                                                         | yamlファイル | PDF 等         |
 
 ---
 
@@ -838,7 +838,8 @@ vars:
 
 ```bash
 md-merge pptmerge recipe.yaml
-md-merge pptmerge recipe.yaml --force --deletecsl --deletecsp
+md-merge pptmerge recipe.yaml --force --deletecsl on --deletecsp on
+md-merge pptmerge recipe.yaml --deletecsl off --deletecsp off
 md-merge pptmerge recipe.yaml --pptxnumbering idresolve
 ```
 
@@ -848,8 +849,8 @@ md-merge pptmerge recipe.yaml --pptxnumbering idresolve
 | ---------- | ---- | ---- |
 | `--workdir` / `-w` DIR | input / output の相対パスをこのディレクトリ基準で解釈する | 任意 |
 | `--force` | 既存の出力ファイルを上書きする | 任意 |
-| `--deletecsl` | `#CSL#` マーカーを含むスライドを削除する（レシピ `indexer.deletecsl` を上書き） | 任意 |
-| `--deletecsp` | `#CSP#` マーカーを含むシェイプを削除する（レシピ `indexer.deletecsp` を上書き） | 任意 |
+| `--deletecsl` `on`\|`off` | `#CSL#` マーカーを含むスライドを削除するか指定する（レシピ `indexer.deletecsl` を上書き） | 任意 |
+| `--deletecsp` `on`\|`off` | `#CSP#` マーカーを含むシェイプを削除するか指定する（レシピ `indexer.deletecsp` を上書き） | 任意 |
 | `--pptxnumbering` `no`\|`chapt_section`\|`idresolve` | タイトル連番アルゴリズムを指定する（レシピ `indexer.pptxnumbering` を上書き） | 任意 |
 
 ### レシピ YAML スキーマ
@@ -930,7 +931,7 @@ log:
 
 | ステップ | 内容 |
 | -------- | ---- |
-| 設定読み込み | レシピ YAML を読み込み、CLI フラグ（`--deletecsl` / `--deletecsp` / `--pptxnumbering`）で `indexer` セクションを上書きする |
+| 設定読み込み | レシピ YAML を読み込み、CLI オプション（`--deletecsl on`\|`off` / `--deletecsp on`\|`off` / `--pptxnumbering`）で `indexer` セクションを上書きする |
 | 出力先解決 | `output.outputdir`（省略時: YAML と同じディレクトリ）/ `output.pptxfilename` を解決し、上書きガードを行う |
 | 作業ファイル準備 | `pptmerge.stylebase` が指定されている場合はそのファイルを一時ファイル（`._tmp_<pptxfilename>`）にコピーして開く。省略時は `procedure` 内の最初の `insertpptx` ファイルを代わりに使用する。どちらも未設定の場合は空のプレゼンテーションを新規作成する。いずれの場合も `clear_slides()` で全スライドを削除してからマージを開始する |
 | 結合処理 | `procedure` を順に処理し、`insertpptx` ごとに COM 経由でスライドを挿入する |

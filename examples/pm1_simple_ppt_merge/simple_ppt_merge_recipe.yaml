@@ -1,3 +1,5 @@
+version: 1
+!constants ../constants_settings.toml
 # PowerPointファイル結合指示サンプル
 # pptmerge だけを行う、極めて簡単な設定の例
 

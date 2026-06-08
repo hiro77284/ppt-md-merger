@@ -5,7 +5,7 @@ document:
   title: <DUMMY>
 generated:
   by: md-merge
-  at: '2026-06-06T21:38:58+09:00'
+  at: '2026-06-08T21:59:18+09:00'
 source:
   config_yaml: overview_recipe.yaml
 entries:
@@ -74,7 +74,7 @@ entries:
     md: extracted/ppt_md_merger_overview_slide4_md.md
   location:
     file: build/work_overview_merged_merged.md
-    line: 100
+    line: 94
 - full_id: section:ppt_md_merger_overview:slide5
   identifier_type: section
   part_id: ppt_md_merger_overview
@@ -85,7 +85,7 @@ entries:
     md: extracted/ppt_md_merger_overview_slide5_md.md
   location:
     file: build/work_overview_merged_merged.md
-    line: 124
+    line: 118
 - full_id: chapter:AUTOCHAPTER:AUTOID_3
   identifier_type: chapter
   part_id: AUTOCHAPTER
@@ -96,7 +96,7 @@ entries:
     md: extracted/ppt_md_merger_overview_slide5_md.md
   location:
     file: build/work_overview_merged_merged.md
-    line: 147
+    line: 141
 - full_id: section:ppt_md_merger_overview:slide6
   identifier_type: section
   part_id: ppt_md_merger_overview
@@ -107,7 +107,7 @@ entries:
     md: extracted/ppt_md_merger_overview_slide6_md.md
   location:
     file: build/work_overview_merged_merged.md
-    line: 151
+    line: 145
 - full_id: section:ppt_md_merger_overview:slide7
   identifier_type: section
   part_id: ppt_md_merger_overview
@@ -118,7 +118,7 @@ entries:
     md: extracted/ppt_md_merger_overview_slide7_md.md
   location:
     file: build/work_overview_merged_merged.md
-    line: 171
+    line: 165
 - full_id: section:ppt_md_merger_overview:slide8
   identifier_type: section
   part_id: ppt_md_merger_overview
@@ -129,7 +129,7 @@ entries:
     md: extracted/ppt_md_merger_overview_slide8_md.md
   location:
     file: build/work_overview_merged_merged.md
-    line: 197
+    line: 191
 - full_id: section:ppt_md_merger_overview:slide9
   identifier_type: section
   part_id: ppt_md_merger_overview
@@ -140,7 +140,7 @@ entries:
     md: extracted/ppt_md_merger_overview_slide9_md.md
   location:
     file: build/work_overview_merged_merged.md
-    line: 221
+    line: 215
 - full_id: section:ppt_md_merger_overview:slide10
   identifier_type: section
   part_id: ppt_md_merger_overview
@@ -151,7 +151,7 @@ entries:
     md: extracted/ppt_md_merger_overview_slide10_md.md
   location:
     file: build/work_overview_merged_merged.md
-    line: 245
+    line: 239
 - full_id: section:ppt_md_merger_overview:slide11
   identifier_type: section
   part_id: ppt_md_merger_overview
@@ -162,7 +162,7 @@ entries:
     md: extracted/ppt_md_merger_overview_slide11_md.md
   location:
     file: build/work_overview_merged_merged.md
-    line: 273
+    line: 267
 - full_id: chapter:AUTOCHAPTER:AUTOID_4
   identifier_type: chapter
   part_id: AUTOCHAPTER
@@ -173,7 +173,7 @@ entries:
     md: extracted/ppt_md_merger_overview_slide11_md.md
   location:
     file: build/work_overview_merged_merged.md
-    line: 295
+    line: 289
 - full_id: section:ppt_md_merger_overview:slide12
   identifier_type: section
   part_id: ppt_md_merger_overview
@@ -184,7 +184,7 @@ entries:
     md: extracted/ppt_md_merger_overview_slide12_md.md
   location:
     file: build/work_overview_merged_merged.md
-    line: 299
+    line: 293
 - full_id: chapter:AUTOCHAPTER:AUTOID_5
   identifier_type: chapter
   part_id: AUTOCHAPTER
@@ -195,7 +195,7 @@ entries:
     md: extracted/ppt_md_merger_overview_slide12_md.md
   location:
     file: build/work_overview_merged_merged.md
-    line: 318
+    line: 312
 - full_id: section:ppt_md_merger_overview:slide13
   identifier_type: section
   part_id: ppt_md_merger_overview
@@ -206,7 +206,7 @@ entries:
     md: extracted/ppt_md_merger_overview_slide13_md.md
   location:
     file: build/work_overview_merged_merged.md
-    line: 322
+    line: 316
 - full_id: section:ppt_md_merger_overview:slide14
   identifier_type: section
   part_id: ppt_md_merger_overview
@@ -217,7 +217,7 @@ entries:
     md: extracted/ppt_md_merger_overview_slide14_md.md
   location:
     file: build/work_overview_merged_merged.md
-    line: 360
+    line: 354
 - full_id: section:ppt_md_merger_overview:slide15
   identifier_type: section
   part_id: ppt_md_merger_overview
@@ -228,7 +228,7 @@ entries:
     md: extracted/ppt_md_merger_overview_slide15_md.md
   location:
     file: build/work_overview_merged_merged.md
-    line: 405
+    line: 398
 - full_id: subsection:ppt_md_merger_overview:slide16_2
   identifier_type: subsection
   part_id: ppt_md_merger_overview
@@ -239,7 +239,7 @@ entries:
     md: extracted/ppt_md_merger_overview_slide16_md.md
   location:
     file: build/work_overview_merged_merged.md
-    line: 420
+    line: 413
 - full_id: subsection:ppt_md_merger_overview:slide17_3
   identifier_type: subsection
   part_id: ppt_md_merger_overview
@@ -250,7 +250,7 @@ entries:
     md: extracted/ppt_md_merger_overview_slide17_md.md
   location:
     file: build/work_overview_merged_merged.md
-    line: 439
+    line: 432
 - full_id: section:ppt_md_merger_overview:slide18
   identifier_type: section
   part_id: ppt_md_merger_overview
@@ -261,4 +261,4 @@ entries:
     md: extracted/ppt_md_merger_overview_slide18_md.md
   location:
     file: build/work_overview_merged_merged.md
-    line: 466
+    line: 458
