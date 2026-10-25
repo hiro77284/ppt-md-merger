@@ -1,0 +1,19 @@
+version: 2
+_constants: ../constants_settings.toml
+# PowerPointファイル結合指示サンプル
+# pptmerge だけを行う、極めて簡単な設定の例
+
+# 出力ファイル名設定
+output: 
+  pptxfilename: simple_ppt_merge_merged.pptx        # 結合後のpptxファイルのファイル名
+
+input:
+  dirs: 
+    - .
+    - extracted
+    - ../../defaults/common_assets
+
+# 結合手順： "- insertpptx: ファイル名" で、結合したいファイルを結合順に記載する
+procedure:
+  - insertpptx: simple_ppt_merge_guide.pptx
+  - insertpptx: second.pptx

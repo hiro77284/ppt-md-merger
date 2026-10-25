@@ -1,0 +1,30 @@
+# typst_semantic_engine.yaml
+# engine: typst のときの pandoc 既定設定（パッケージ同梱）。pandoc.typstdefaults を
+# 省略したときに使う。文書ごとの上書きは、この後ろに続けて指定する defaults で行う
+# （-d は後勝ちでマージ）。
+#
+# LaTeX 用の report_semantic_engine.yaml と同じセマンティックフィルタを使う。
+# pandoc-crossref は使わない（図・表の番号は使っていない。docs/design_typst_migration.md §2.3）。
+# ページ設計（フォント・余白・見出し・柱・目次・表紙）は report_style.typ、
+# セマンティック記法の見た目は semantic_macros.typ（この順で読む）。
+standalone: true
+template: report_template.typst
+toc: true
+toc-depth: 3
+number-sections: false
+from: markdown-implicit_figures
+filters:
+  - include-files-resource-path.lua
+  - blockindent.lua
+  - largefontblock.lua
+  - keep-together.lua
+  - divboxes.lua
+  - center.lua
+  - semantic-spans.lua
+  - semantic-leaf.lua
+  - semantic-break.lua
+include-in-header:
+  - semantic_macros.typ
+  - report_style.typ
+metadata:
+  lang: ja

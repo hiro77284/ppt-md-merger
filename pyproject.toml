@@ -1,0 +1,28 @@
+[project]
+name = "pptmdmerge"
+version = "1.0.0"
+requires-python = ">=3.11"
+dependencies = [
+    "pyyaml>=6.0",
+    "Pillow>=10.0",
+    "pymupdf>=1.23",
+    "python-pptx>=0.6",
+    "pywin32>=306; sys_platform == 'win32'",
+]
+
+[project.optional-dependencies]
+# tools/notecom_autopilot.py（note.com 半自動投稿）用。本体には不要
+notecom = ["playwright>=1.40", "pyperclip>=1.8"]
+
+[project.scripts]
+pptmdmerge = "md_merge.__main__:main"
+
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.setuptools.package-data]
+md_merge = ["filters/*.lua", "templates/*.tex", "templates/*.html", "templates/*.typ", "templates/*.typst", "templates/*.md", "templates/*.yaml","semantics.yaml"]

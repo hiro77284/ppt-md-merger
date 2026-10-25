@@ -1,0 +1,96 @@
+version: 2
+_constants: ../constants_settings.toml
+# PowerPointファイル結合指示サンプル
+
+# 概要：単純に２つのファイルをナンバリングもせずに結合する、最もシンプルな例
+
+vars:
+  _include: COVER_VARS.yaml  # 表紙用変数は別ファイルから読み込む
+
+log:
+  level: debug
+  filename: log.txt
+  duplicate: stdout  # ログファイルと同じ内容を標準出力または標準エラーにも出す。未設定または空欄のときは重複出力しない。stdout は標準出力、stderr は標準エラー出力
+
+# puremd サブコマンドのオプション。削除対象とするパターンを指定するyamlファイルのパス
+puremd:
+  strip_config: ../../defaults/common_assets/puremd_strip.yaml
+
+# pptmergeコマンドの設定
+pptmerge:
+
+# 出力ファイル名設定
+output: 
+  force: true          # 既存の出力ファイルを上書きする（既定: false）
+  outputdir: build  # 出力ファイルを書き込むディレクトリ
+  targetbasefilename: stylebase_merged
+
+  mdfilename:            # 結合後のmdファイルのファイル名
+  pptxfilename:           # 結合後のpptxファイルのファイル名
+  idcollectfilename:     # 結合後のmdファイルから{{#id:...}}マーカーを抽出して生成されるインベントリファイルのファイル名
+  idresolvedfilename:     # インベントリファイルを読み込んでnumberとlabelを付与したID解決済みマップファイルのファイル名
+  renderedfilename:         # 結合後のmdファイルに対してタイトル置換・参照置換を行ったレンダー済みmdファイルのファイル名
+  puremdfilename:         # rendered.mdファイルからlatex命令を削除した純粋なmdファイルのファイル名。MD自体でプレビューを見るときはこれを使う
+  pdffilename:          
+  texfilename:          
+  resourcepathfilename: 
+  htmlfilename:        
+  revealfilename:        
+
+indexer:
+  pptxnumbering: "no"       # pptmerge での章節番号付番方法。chapt_section の場合、idresolve を使わずに pptx 単独で chapter, section 操作により 章・節番号を付番する
+
+
+# merge サブコマンドのオプション
+merge:
+  no-copy-images: false # trueなら画像ファイルのコピーおよびパス書き換えを行わない。（既定値 false は画像ファイルのコピーおよびパス書き換えを行う）
+  image-dir:          # 画像コピー先サブディレクトリ名（既定: 空値。結合後のmdファイルでもソースのmdファイルの相対パスを維持するように画像ファイルをコピーする）
+  flatten-images: false # trueならすべての画像を<outputdir>/<image-dir>/ にフラット集約する。同名ファイルは _1, _2 … のサフィックスを付けて上書きを回避する（既定: false）
+  strict: false         # 警告をエラーとして扱う（既定: false）
+
+pandoc:
+  _include: ../standard_pandocsettings.yaml
+
+input:
+  dirs: 
+    - .
+    - extracted
+    - ../../defaults/common_assets
+
+  imagesdir: 
+    - extracted/figures
+    - ../../defaults/common_assets
+
+  # pptxから画像を取得してくるための設定
+  cropsrc:
+    - pptx: stylebase_guide.pptx           # 画像のソースとなる pptx ファイル名
+      pdf:            # スライド全体画像取得用のPDF
+    - pptx: different_style_sample.pptx           # 画像のソースとなる pptx ファイル名
+      pdf:            # スライド全体画像取得用のPDF
+
+
+# 結合手順： "- insertpptx: ファイル名" で、結合したいファイルを結合順に記載する
+procedure:
+
+  - insertpptx: stylebase_guide.pptx
+
+  - insertpptx: different_style_sample.pptx
+
+  - insertmd: stylebase_guide_slide1_md.md
+
+  - insertmd: stylebase_guide_slide2_md.md
+
+  - insertmd: ../../defaults/common_assets/tex_newpage.md
+    description: "ページ送り"
+
+  - insertmd: stylebase_guide_slide3_md.md
+
+
+
+  - insertmd: stylebase_guide_slide4_md.md
+
+  - insertmd: ../../defaults/common_assets/tex_newpage.md
+    description: "ページ送り"
+
+  - insertmd: different_style_sample_slide1_md.md
+

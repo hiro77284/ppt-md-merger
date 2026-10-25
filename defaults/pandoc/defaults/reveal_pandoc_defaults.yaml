@@ -1,0 +1,12 @@
+from: markdown
+to: revealjs
+
+standalone: true
+
+slide-level: 2
+
+variables:
+  revealjs-url: https://unpkg.com/reveal.js
+
+metadata:
+  revealjs-plugins: []

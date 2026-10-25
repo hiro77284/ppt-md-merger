@@ -1,0 +1,23 @@
+<!-- HTML 表紙（シンプルなタイトルブロック）。
+     {{v:COVER_*}} は pandoc(--html) 実行時にレシピの vars で置換される。
+     未定義の変数は空文字に置換される。 -->
+<style>
+  .doc-cover { text-align: center; padding: 3.5em 1em 2.5em; margin-bottom: 2em;
+               border-bottom: 2px solid #d0d0d0; }
+  .doc-cover .cover-title { font-size: 2.2em; font-weight: 700; line-height: 1.25;
+                            margin: 0.2em 0; }
+  .doc-cover .cover-subtitle { font-size: 1.25em; color: #555; margin: 0.3em 0 0; }
+  .doc-cover .cover-meta { margin-top: 1.6em; color: #333; line-height: 1.7; }
+  .doc-cover .cover-note { margin-top: 1.6em; font-size: 0.85em; color: #777;
+                           max-width: 40em; margin-left: auto; margin-right: auto; }
+</style>
+<div class="doc-cover">
+  <div class="cover-title">{{v:COVER_TITLE}}</div>
+  <div class="cover-subtitle">{{v:COVER_SUBTITLE}}</div>
+  <div class="cover-meta">
+    {{v:COVER_AUTHOR}}<br>
+    {{v:COVER_AFFILIATION}}<br>
+    {{v:COVER_DATE}}
+  </div>
+  <div class="cover-note">{{v:COVER_NOTE}}</div>
+</div>

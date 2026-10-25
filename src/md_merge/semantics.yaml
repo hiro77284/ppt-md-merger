@@ -1,0 +1,114 @@
+# md_merge セマンティック構造レジストリ（単一の真実源）
+#
+# クラス × 出力形式 × lowering 規則を集約する。validate / puremd は Python で
+# 直接読み、pandoc(LaTeX/HTML) 側は Lua が YAML を読めないため、inlines / leaves の
+# 対応表を tools/gen_lua_semantics.py が Lua フィルタ内へコード生成する（手で同期しない。
+# semantics.yaml を編集したら再生成する）。詳細は docs/design_semantic_lowering.md を参照。
+#
+# 規約:
+#   - %{arg}   … リーフ記法 {{name:arg}} の引数を差し込むプレースホルダ
+#   - %{NAME}  … ブロック属性 NAME の値を差し込むプレースホルダ（例 %{lines}）
+#   - html を省略したクラスは pandoc ネイティブ出力（<div class>/<span class>）＋
+#     semantic.css に委ねる。gfm を省略したクラスは puremd で unwrap する。
+#   - typst は engine: typst（pandoc → .typ → typst compile）用。typst を省略したクラスは
+#     中身だけが残る（pandoc の Typst writer は Div / Span のクラスを無視する）。関数は
+#     templates/semantic_macros.typ。blocks の typst 列は記録用で、変換は各フィルタ
+#     （divboxes.lua / center.lua / blockindent.lua / largefontblock.lua / keep-together.lua）が行う。
+version: 1
+
+# ── ブロック構造（fenced div ::: {.class}）─────────────────────────────────
+blocks:
+  # note/warning/leadline/widequote は divboxes.lua が扱う tcolorbox 系（latex.box: true）。
+  # クラス→env 表は tools/gen_lua_semantics.py が divboxes.lua へ生成する。属性→tcolorbox
+  # オプション変換（build_options 等）は divboxes.lua 側で手維持。
+  note:
+    latex: { env: notebox, box: true }
+    typst: { box: true }   # #sem-box("note", ...)（divboxes.lua）
+    gfm:   { alert: NOTE }
+    attrs: [frame, fontsize, stretch, before_skip, after_skip, left, right, top, bottom, colback, colframe, boxrule, width, center]
+  warning:
+    latex: { env: warningbox, box: true }
+    typst: { box: true }   # #sem-box("warning", ...)（divboxes.lua）
+    gfm:   { alert: WARNING }
+    attrs: [frame, fontsize, stretch, before_skip, after_skip, left, right, top, bottom, colback, colframe, boxrule, width, center]
+  leadline:
+    latex: { env: leadlinebox, box: true }
+    typst: { box: true }   # #sem-box("leadline", ...)（divboxes.lua）
+    gfm:   { alert: IMPORTANT }
+    attrs: [frame, fontsize, stretch, before_skip, after_skip, left, right, top, bottom, colback, colframe, boxrule, width, center]
+  widequote:
+    latex: { env: widequotebox, box: true }
+    typst: { box: true }   # #sem-box("widequote", ...)（divboxes.lua）
+    gfm:   { blockquote: plain }
+    attrs: [frame, fontsize, stretch, before_skip, after_skip, left, right, top, bottom, colback, colframe, boxrule, width, center]
+  largefontblock:
+    latex: { env: largefontblock }
+    typst: { func: semlargefontblock }
+    gfm:   { blockquote: labelled }
+  blockindent:
+    latex: { env: blockindent }
+    typst: { func: semblockindent }
+    gfm:   { blockquote: labelled }
+    attrs: [indent]   # 字下げ量（例 indent=3em）。省略時 2em
+  keep-together:
+    latex: { wrap: minipage }   # \begin{minipage}{\linewidth}…\end{minipage}（分割抑制）
+    typst: { func: semkeeptogether }
+    html:  { style: 'break-inside:avoid' }
+    gfm:   { unwrap: true }
+  center:
+    latex: { env: center }
+    typst: { func: semcenter }
+    html:  { style: 'text-align:center' }
+    gfm:   { unwrap: true }
+
+# ── インライン構造（bracketed span [text]{.class}）─────────────────────────
+inlines:
+  # typst.func は templates/semantic_macros.typ の関数名（emph のみ Typst ネイティブ）。
+  term:    { latex: { macro: semterm },    typst: { func: semterm },    gfm: { wrap: '**' } }
+  keyword: { latex: { macro: semkeyword }, typst: { func: semkeyword }, gfm: { wrap: '**' } }
+  path:    { latex: { macro: sempath },    typst: { func: sempath },    html: { tag: code }, gfm: { wrap: '`' } }
+  kbd:     { latex: { macro: semkbd },     typst: { func: semkbd },     html: { tag: kbd },  gfm: { html: kbd } }
+  emph:    { latex: { macro: emph },       typst: { func: emph },       gfm: { wrap: '*' } }
+  # 行末ラベルの右寄せ（旧 \hfill 用途）。LaTeX=\hfill+内容、HTML=float:right(素の span+CSS)、MD=素通し
+  rightlabel: { latex: { macro: semrightlabel }, typst: { func: semrightlabel } }
+
+# ── リーフ記法（{{name}} / {{name:arg}}）──────────────────────────────────
+leaves:
+  vspace:
+    # 引数は「数値」または「単位付き長さ」。数値のみは既定単位の倍（LaTeX=\baselineskip、
+    # HTML=em）。単位付き（例 {{vspace:5mm}} / {{vspace:1.5cm}}）はその長さをそのまま使う。
+    # 例: {{vspace:2}}=2 行分 / {{vspace:.5}}=半行 / {{vspace:5mm}}=5mm。
+    arg: dimension
+    latex: { tmpl: '\par\vspace{%{arg}}', unit: '\baselineskip' }
+    # Typst は数値なら「行数 × 1 行の高さ（約 1.65em）」の式にする（例 2 → #v(2 * 1.65em)）。
+    typst: { tmpl: '#v(%{arg})', unit: ' * 1.65em' }
+    html:  { tag: div, class: vspace, style: 'height:%{arg}', unit: em }
+    gfm:   { drop: true }
+  pagebreak:
+    latex: '\newpage'
+    typst: '#pagebreak(weak: true)'   # weak=ページ先頭では空ページを作らない（\newpage と同様）
+    html:  { tag: div, class: pagebreak }
+    gfm:   { text: '---' }
+  vfill:
+    latex: '\vspace*{\fill}'   # * 付き=ページ先頭でも破棄されない（素の \vfill は捨てられる）
+    typst: '#v(1fr)'
+    html:  { tag: div, class: vfill }
+    gfm:   { drop: true }
+  br:
+    # 見出し内の強制改行マーカー。LaTeX/HTML はインライン（Str の途中に埋まる）ため
+    # filters/semantic-break.lua が処理する（LaTeX=\hdbreak / HTML=<br>）。latex/html キーは
+    # ここに置かない（置くと semantic-leaf.lua がブロックとして誤処理する）。GFM のみ定義。
+    # GFM（puremd → transfer / notecomexport の Web 系出力）では破棄する。改行位置の指定は
+    # PDF の固定幅組版向けで、表示幅が可変な Web では不要（日本語見出しなので空白も入れない）。
+    gfm:   { drop: true }
+
+# ── escape hatch（raw passthrough）────────────────────────────────────────
+raw:
+  allowed_formats: [latex, html, typst]   # ```{=latex} / ```{=html} / ```{=typst} のみ許可
+  nontarget: warn_drop             # 非対象形式では警告して破棄
+  # puremd（GFM 生成）での生ブロックの扱い。drop に挙げた形式の ```{=FORMAT} ブロックは
+  # 破棄する（GitHub で無意味な latex 等）。allowed_formats のうち drop に無いもの（html 等）は
+  # GFM がそのまま解釈するので残す。これが「生 latex 破棄」の単一の真実源で、puremd は
+  # strip_config の有無に依らず常にこれを適用する（strip_config はプロジェクト独自の追加除去専用）。
+  gfm:
+    drop: [latex, typst]

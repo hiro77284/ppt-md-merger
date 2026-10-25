@@ -1,0 +1,60 @@
+// report_template.typst
+// engine: typst 用の pandoc テンプレート（report_template.tex の Typst 版）。
+// pandoc の既定 Typst テンプレートから、Typst writer が前提にする定義（horizontalrule・
+// terms・table・figure・ハイライト）だけを残し、ページ設計は include-in-header の
+// semantic_macros.typ / report_style.typ に任せる（既定テンプレートの conf() は使わない）。
+
+#let horizontalrule = line(start: (25%,0%), end: (75%,0%))
+
+#show terms.item: it => block(breakable: false)[
+  #text(weight: "bold")[#it.term]
+  #block(inset: (left: 1.5em, top: -0.4em))[#it.description]
+]
+
+#set table(
+  inset: 6pt,
+  stroke: none
+)
+
+#show figure.where(
+  kind: table
+): set figure.caption(position: $if(table-caption-position)$$table-caption-position$$else$top$endif$)
+
+#show figure.where(
+  kind: image
+): set figure.caption(position: $if(figure-caption-position)$$figure-caption-position$$else$bottom$endif$)
+
+$if(highlighting-definitions)$
+// syntax highlighting functions from skylighting:
+$highlighting-definitions$
+
+$endif$
+$if(smart)$
+$else$
+#set smartquote(enabled: false)
+
+$endif$
+$for(header-includes)$
+$header-includes$
+
+$endfor$
+$if(title)$
+#set document(title: [$title$])
+$endif$
+$if(include-before)$
+#sem-cover[
+$for(include-before)$
+$include-before$
+
+$endfor$
+]
+$endif$
+$if(toc)$
+#sem-toc(depth: $toc-depth$)
+$endif$
+
+$body$
+$for(include-after)$
+
+$include-after$
+$endfor$

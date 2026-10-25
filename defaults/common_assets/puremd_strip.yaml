@@ -1,0 +1,13 @@
+# puremd.strip_config — プロジェクト独自の追加除去パターンを書く任意ファイル。
+#
+# 生 LaTeX/HTML の raw ブロック（```{=latex} 等）の破棄は semantics.yaml の
+# raw.gfm.drop で制御される組み込み処理になったため、ここに書く必要はない
+# （書いても「組み込み化済み・冗長」と警告される）。strip_config はあくまで
+# 本文に紛れた特定コマンドの除去など、プロジェクト固有の追加除去のためのもの。
+strip: []
+  # 例: 本文に紛れた特定コマンドを除去したい場合
+  # - name: my_inline_command
+  #   type: regex
+  #   pattern: '\\someCommand\{[^}]*\}'
+  #   dotall: false      # 省略時 false（true で . が改行にもマッチ）
+  #   ignorecase: false  # 省略時 false

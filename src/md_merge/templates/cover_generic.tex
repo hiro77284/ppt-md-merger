@@ -1,0 +1,45 @@
+% =======================
+% 表紙
+% =======================
+\begin{titlepage}
+    \thispagestyle{empty}
+    \vspace*{0mm}
+  
+    $if(coverimage)$
+    \vspace{10mm}
+    \begin{flushleft}
+      \includegraphics[width=0.15\linewidth]{ $coverimage$ }
+    \end{flushleft}
+    $endif$
+  
+    \begin{center}
+    {\Huge\bfseries $title$ \par}
+    $if(subtitle)$
+    \vspace{3mm}
+    {\LARGE $subtitle$ \par}
+    $endif$
+  
+    \vspace{10mm}
+    {\large 作成日時：$date$ \par}
+  
+    \vspace{6mm}
+    {\large 著者：$author$ \par}
+    $if(affiliation)$
+    {\large 所属：$affiliation$ \par}
+    $endif$
+  
+    $if(contact)$
+    \vspace{6mm}
+    {\large 連絡先：$contact$ \par}
+    $endif$
+    \end{center}
+  
+    $if(note)$
+    \vspace{10mm}
+    \normalsize
+    $note$
+    $endif$
+    
+  \end{titlepage}
+  \clearpage
+  

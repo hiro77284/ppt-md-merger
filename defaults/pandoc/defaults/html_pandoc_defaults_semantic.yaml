@@ -1,0 +1,40 @@
+standalone: true
+
+# 基本スタイル + セマンティッククラス用スタイル。standalone なので <link> が生成される。
+# 単一ファイルに埋め込みたい場合は embed-resources: true を有効化。
+# embed-resources: true
+css:
+  - ${.}/../html_style.css
+  - ${.}/../semantic.css
+
+# 目次
+toc: true
+toc-depth: 3
+# toc-title: 目次
+
+# HTML では latex 用の box フィルタ（divboxes / largefontblock / keep-together）は
+# 使わない。note/warning/largefontblock 等はクラスが残れば semantic.css が装飾するため。
+# （keep-together.lua は HTML でクラスを除去してしまうので特に除外）
+# 必要なのは center（text-align 付与）/ blockindent（indent の inline margin）/
+# span（kbd・path の要素化）/ leaf（{{vspace}} 等）。
+filters:
+  - back-to-top.lua
+  - pandoc-crossref
+  - include-files-resource-path.lua
+  - center.lua
+  - blockindent.lua
+  - semantic-spans.lua
+  - semantic-leaf.lua
+  - semantic-break.lua
+
+# resource-path はレシピの pandoc セクション（resource-path）で指定する
+
+metadata:
+  secPrefix:
+    - ""
+    - ""
+  figureTitle: "図"
+  titleDelim: "："
+  figPrefix: ["図", "図"]
+  tblPrefix: ["表", "表"]
+  eqnPrefix: ["式", "式"]

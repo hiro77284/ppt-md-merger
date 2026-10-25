@@ -1,0 +1,46 @@
+version: 2
+_constants: ../constants_settings.toml
+
+# セマンティック記法 用例集（PDF 編）
+# 概要：pptx を使わず、MD 原稿だけを結合して PDF（engine: typst）にする例。
+#       各記法の「書き方」と「表示結果」を並べた解説書そのものをビルドする。
+# ビルド：pptmdmerge crop_to_pdf semantic_notation_recipe.yaml --force
+
+vars:
+  _include: COVER_VARS.yaml  # 表紙用変数は別ファイルから読み込む
+
+log:
+  level: info
+  filename: log.txt
+
+output:
+  force: true
+  outputdir: build
+  targetbasefilename: semantic_notation_guide
+
+pandoc:
+  engine: typst                          # 既定だが明示しておく（A4・BIZ UDGothic）
+  typst-cover-md: cover_standard_typst.md  # 同梱の標準表紙（COVER_* を使う）
+  resource-path:
+    - build
+    - ../../defaults/common_assets
+
+input:
+  dirs:
+    - .
+    - src
+    - ../../defaults/common_assets
+
+# 結合手順。章の区切りは章見出し（#）が自動で改ページするので、
+# ここでは insertpagebreak 等の procedure 操作そのものの用例を兼ねて使う。
+procedure:
+  - insertmd: sn01_intro.md
+  - insertmd: sn02_blocks.md
+  - insertmd: sn03_box_attrs.md
+  - insertmd: sn04_inlines.md
+  - insertmd: sn05_leaves.md
+  - insertmd: sn06_procedure.md
+  - insertvspace: 2          # {{vspace:2}} を挿入（第 6 章の実演）
+  - insertmd: sn06_procedure_after.md
+  - insertmd: sn07_raw.md
+  - insertmd: sn08_reference.md

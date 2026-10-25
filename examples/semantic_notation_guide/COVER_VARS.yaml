@@ -1,0 +1,12 @@
+# 表紙用変数
+
+  COVER_IMAGE: ppt_md_merger.png
+  COVER_TITLE: "セマンティック記法 用例集（PDF 編）"
+  COVER_SUBTITLE: "原稿 MD に書ける記法と、PDF（Typst）での表示結果"
+  COVER_DATE: __DATE__
+  COVER_AUTHOR: "山田 太郎"
+  COVER_AFFILIATION: "サンプル株式会社"
+  COVER_CONTACT: "https://example.com"
+  COVER_COPYRIGHT: "© 2026 Sample Author"
+  COVER_NOTE: "本書は、 PPT & MD merger の原稿 MD に書けるセマンティック記法（ブロック・インライン・リーフ・escape hatch）を一つずつ取り上げ、 書き方と PDF での表示結果を並べて解説する用例集です。"
+  COVER_QRCODE: 

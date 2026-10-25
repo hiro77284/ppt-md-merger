@@ -1,0 +1,41 @@
+% semantic_macros.tex
+% インライン意味クラス（[text]{.term} 等）の LaTeX マクロ定義。
+% pandoc の include-in-header で取り込む（PDF/LaTeX 専用）。
+% [x]{.term} -> \semterm{x} 等の変換は filters/semantic-spans.lua が行い、本ファイルは
+% 見た目だけを定義する（見た目は調整前提）。
+%
+% 設計メモ:
+%   - マクロ名は sem 接頭辞で名前空間化。素の \term / \path / \kbd 等は他パッケージや
+%     文書クラスと衝突する（"Command \term already defined" の原因）。
+%   - \def で定義するため、include-in-header が二重に効いても（recipe と defaults の
+%     両方で指定した等）"already defined" エラーにならない（冪等）。
+%   - xcolor は未読込のときのみ自動ロード。
+\makeatletter
+\@ifpackageloaded{xcolor}{}{\usepackage{xcolor}}
+\makeatother
+
+\definecolor{TermColor}{HTML}{1A5FB4}     % 用語: 落ち着いた青
+\definecolor{KeywordBG}{HTML}{FFF3B0}     % キーワード: 淡い黄ハイライト
+
+% .term     専門用語・定義語 -> 青＋太字
+\def\semterm#1{\textcolor{TermColor}{\textbf{#1}}}
+% .keyword  キーワード・重要語 -> 太字＋淡色ハイライト（term と視覚的に区別）
+\def\semkeyword#1{\colorbox{KeywordBG}{\textbf{#1}}}
+% .path     ファイル名・パス -> 等幅
+\def\sempath#1{\texttt{#1}}
+% .kbd      キー入力 -> キーキャップ風（枠＋小さめ等幅。依存最小）
+\def\semkbd#1{\fbox{\small\ttfamily #1}}
+% .emph は LaTeX ネイティブ \emph を使用（本ファイルでは定義しない）
+% .rightlabel  行末ラベルの右寄せ（旧 \hfill 用途）-> \hfill + 内容
+\def\semrightlabel#1{\hfill #1}
+
+% {{br}}  見出し内の強制改行マーカー。filters/semantic-break.lua が \hdbreak に lower する。
+% 既定は空白。\protected でロバスト化するため、目次・柱（running head）・PDF しおり等の
+% moving 引数に書き出される際は展開されず、そこでは空白として振る舞う（\\ による
+% "There's no line here to end" エラーを回避）。見出しの組版時のみ report_header.tex の
+% \titleformat が局所的に \def\hdbreak{\\} で上書きし、その場だけ改行になる。
+\protected\def\hdbreak{\space}
+
+% （任意・tikz 角丸キーキャップ版。要 \usepackage{tikz}）
+% \def\semkbd#1{\tikz[baseline=(k.base)]\node[draw, rounded corners=2pt,
+%   inner sep=2pt, font=\small\ttfamily, fill=gray!8] (k) {#1};}

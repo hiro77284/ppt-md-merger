@@ -1,0 +1,34 @@
+#IDインベントリyamlの仕様
+schema_version: integer
+kind: id_inventory
+
+document:
+  document_id: string
+  title: string
+
+generated:
+  by: string
+  at: string  # ISO 8601 datetime
+
+source:
+  config_yaml: string
+
+entries:
+  - full_id: string
+    identifier_type: string  # chapter | section | subsection | image
+    part_id: string
+    local_id: string
+    title: string
+    rawtitle: string  # 生のタイトル。pptmdexport がスライドのタイトル枠から取得し
+                      # <!-- md_merge_rawtitle: ... --> ディレクティブ経由で持ち越した原文。
+                      # 参照展開・エスケープで加工されない。ディレクティブが無い場合は見出しテキスト
+    numbering_op: string  # optional. 番号リセット値（整数文字列）。"+"（加算）の場合は省略
+
+    source:
+      pptx: string
+      md: string
+      image: string  # optional
+
+    location:
+      file: string
+      line: integer

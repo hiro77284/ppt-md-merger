@@ -1,0 +1,46 @@
+% =======================
+% 表紙
+% =======================
+\begin{titlepage}
+    \thispagestyle{empty}
+    \vspace*{0mm}
+  
+    {{#if:COVER_IMAGE}}
+    \vspace{10mm}
+    \begin{flushleft}
+      \includegraphics[width=0.40\linewidth]{ {{v:COVER_IMAGE}} }
+    \end{flushleft}
+    \vspace{20mm}
+    {{#endif:COVER_IMAGE}}
+  
+    \begin{center}
+    {\Huge\bfseries {{v:COVER_TITLE}} \par}
+    {{#if:COVER_SUBTITLE}}
+    \vspace{3mm}
+    {\LARGE {{v:COVER_SUBTITLE}} \par}
+    {{#endif:COVER_SUBTITLE}}
+  
+    \vspace{10mm}
+    {\large 作成日：{{v:COVER_DATE}} \par}
+  
+    \vspace{6mm}
+    {\large 著者：{{v:COVER_AUTHOR}} \par}
+    {{#if:COVER_AFFILIATION}}
+    {\large 所属：{{v:COVER_AFFILIATION}} \par}
+    {{#endif:COVER_AFFILIATION}}
+  
+    {{#if:COVER_CONTACT}}
+    \vspace{6mm}
+    {\large {{v:COVER_CONTACT}} \par}
+    {{#endif:COVER_CONTACT}}
+    \end{center}
+  
+    {{#if:COVER_NOTE}}
+    \vspace{10mm}
+    \normalsize
+    {{v:COVER_NOTE}}
+    {{#endif:COVER_NOTE}}
+    
+  \end{titlepage}
+  \clearpage
+  
