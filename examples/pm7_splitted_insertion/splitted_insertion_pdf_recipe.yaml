@@ -77,7 +77,7 @@ procedure:
 
   - insertmd: splitted_insertion_guide_slide2_md.md
 
-  - insertmd: ../../defaults/common_assets/tex_newpage.md
+  - insertpagebreak:
     description: "ページ送り"
 
   - insertmd: splitted_insertion_guide_slide3_md.md

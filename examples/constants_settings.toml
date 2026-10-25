@@ -30,32 +30,32 @@ __REVISION__     = 'Rev.A'
 #   include-in-header:
 #     __LATEX_PACKAGES__
 
-# ページ送りをするlatexコード
+# ページ送り（{{pagebreak}}。LaTeX/Typst 両対応）
 __TEX_NEWPAGE__ = '''
-- insertmd: ../../defaults/common_assets/tex_newpage.md
+- insertpagebreak:
   description: "ページ送り"
 '''
 
-# 1行送りをするlatexコード
+# 1行送り（{{vspace:1}}）
 __TEX_1LINE__ = '''
-- insertmd: ../../defaults/common_assets/tex_1line.md
-  description: "2行送り"
+- insertvspace: 1
+  description: "1行送り"
 '''
 
-# 2行送りをするlatexコード
+# 2行送り（{{vspace:2}}）
 __TEX_2LINE__ = '''
-- insertmd: ../../defaults/common_assets/tex_2line.md
+- insertvspace: 2
   description: "2行送り"
 '''
 
-# 3行送りをするlatexコード
+# 3行送り（{{vspace:3}}）
 __TEX_3LINE__ = '''
-- insertmd: ../../defaults/common_assets/tex_3line.md
-  description: "2行送り"
+- insertvspace: 3
+  description: "3行送り"
 '''
 
-# vfillをするlatexコード
+# 残り高を埋める（{{vfill}}）
 __TEX_VFILL__ = '''
-- insertmd: ../../defaults/common_assets/tex_vfill.md
-  description: "2行送り"
+- insertvfill:
+  description: "残り高を埋める"
 '''

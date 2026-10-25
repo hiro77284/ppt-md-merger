@@ -104,7 +104,7 @@ procedure:
 
   # yaml-language-server-disable
   - insertmd: ppt_md_merger_overview_slide4_md.md
-  - insertmd: ../../defaults/common_assets/tex_2line.md
+  - insertvspace: 2
   - insertmd: ppt_md_merger_overview_slide5_md.md
 
 
@@ -118,9 +118,9 @@ procedure:
     title: 問題構造の整理と解決策
   - insertmd: ppt_md_merger_overview_slide6_md.md
   - insertmd: ppt_md_merger_overview_slide7_md.md
-  - insertmd: ../../defaults/common_assets/tex_2line.md
+  - insertvspace: 2
   - insertmd: ppt_md_merger_overview_slide8_md.md
-  - insertmd: ../../defaults/common_assets/tex_2line.md
+  - insertvspace: 2
   - insertmd: ppt_md_merger_overview_slide9_md.md
   # yaml-language-server-disable
   __TEX_NEWPAGE__

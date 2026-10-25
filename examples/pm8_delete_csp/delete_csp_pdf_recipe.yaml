@@ -76,22 +76,22 @@ procedure:
 
   - insertmd: delete_csp_guide_slide1_md.md
 
-  - insertmd: ../../defaults/common_assets/tex_newpage.md
+  - insertpagebreak:
     description: "ページ送り"
 
   - insertmd: delete_csp_guide_slide2_md.md
 
-  - insertmd: ../../defaults/common_assets/tex_newpage.md
+  - insertpagebreak:
     description: "ページ送り"
 
   - insertmd: delete_csp_guide_slide4_md.md
 
-  - insertmd: ../../defaults/common_assets/tex_newpage.md
+  - insertpagebreak:
     description: "ページ送り"
 
   - insertmd: delete_csp_guide_slide6_md.md
 
-  - insertmd: ../../defaults/common_assets/tex_newpage.md
+  - insertpagebreak:
     description: "ページ送り"
 
   - insertmd: delete_csp_guide_slide7_md.md

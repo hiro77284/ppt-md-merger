@@ -12,7 +12,10 @@ template: report_template.typst
 toc: true
 toc-depth: 3
 number-sections: false
-from: markdown-implicit_figures
+# gfm_auto_identifiers: 見出し ID を GitHub と同じ規則で付ける（先頭の章番号「5) 」も ID に残る）。
+# ノートや README の [..](#5-requirements--quick-start) 形式のリンクがそのまま解決する。
+# pandoc 既定の規則だと番号が落ちて typst が「label does not exist」で止まる。
+from: markdown-implicit_figures+gfm_auto_identifiers
 filters:
   - include-files-resource-path.lua
   - blockindent.lua

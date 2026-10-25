@@ -77,12 +77,12 @@ procedure:
 
   - insertmd: delete_csl_guide_slide2_md.md
 
-  - insertmd: ../../defaults/common_assets/tex_newpage.md
+  - insertpagebreak:
     description: "ページ送り"
 
   - insertmd: delete_csl_guide_slide3_md.md
 
-  - insertmd: ../../defaults/common_assets/tex_newpage.md
+  - insertpagebreak:
     description: "ページ送り"
 
   - insertmd: delete_csl_guide_slide5_md.md

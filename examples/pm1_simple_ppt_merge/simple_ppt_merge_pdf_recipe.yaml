@@ -78,17 +78,17 @@ procedure:
 
   - insertmd: simple_ppt_merge_guide_slide1_md.md
 
-  - insertmd: ../../defaults/common_assets/tex_newpage.md
+  - insertpagebreak:
     description: "ページ送り"
 
   - insertmd: simple_ppt_merge_guide_slide2_md.md
 
-  - insertmd: ../../defaults/common_assets/tex_newpage.md
+  - insertpagebreak:
     description: "ページ送り"
 
   - insertmd: simple_ppt_merge_guide_slide3_md.md
 
-  - insertmd: ../../defaults/common_assets/tex_newpage.md
+  - insertpagebreak:
     description: "ページ送り"
 
   - insertmd: simple_ppt_merge_guide_slide4_md.md

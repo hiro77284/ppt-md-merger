@@ -18,6 +18,7 @@ filters:
   - largefontblock.lua
   - keep-together.lua
   - divboxes.lua
+  - semantic-leaf.lua   # insertpagebreak / insertvspace / insertvfill のリーフ記法を lower
   - dump-sections.lua
 
 

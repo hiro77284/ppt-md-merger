@@ -76,12 +76,12 @@ procedure:
 
   - insertmd: memo_temp_guide_slide1_md.md
 
-  - insertmd: ../../defaults/common_assets/tex_newpage.md
+  - insertpagebreak:
     description: "ページ送り"
 
   - insertmd: memo_temp_guide_slide2_md.md
 
-  - insertmd: ../../defaults/common_assets/tex_2line.md
+  - insertvspace: 2
     description: "ページ送り"
 
   - insertmd: memo_temp_guide_slide3_md.md

@@ -1,5 +1,9 @@
 standalone: true
 
+# 見出し ID を GitHub と同じ規則で付ける（先頭の章番号「5) 」も ID に残る）。
+# ノートや README の [..](#5-requirements--quick-start) 形式のリンクがそのまま解決する。
+from: markdown+gfm_auto_identifiers
+
 # 基本スタイル + セマンティッククラス用スタイル。standalone なので <link> が生成される。
 # 単一ファイルに埋め込みたい場合は embed-resources: true を有効化。
 # embed-resources: true

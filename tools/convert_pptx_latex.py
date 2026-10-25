@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""原稿 pptx のノート内 ```{=latex}...``` を semantic コードへ変換する（手動起動ツール）。
+r"""原稿 pptx のノート内 ```{=latex}...``` を semantic コードへ変換する（手動起動ツール）。
 
 対応パターン（これらだけを含むブロックのみ変換。未対応を含むブロックは温存）:
     \begin{center} / \end{center}              -> ::: {.center} / :::
@@ -84,13 +84,31 @@ def conv_block(body: str):
         if c is None:
             return None
         out.append(c)
-    return '\n'.join(out) if out else None
+    # 1 行ずつ独立段落にする（リーフ記法は段落全体がマーカー 1 個のときだけ lower され、
+    # div フェンスも直前が段落だと段落の続きとして読まれる）
+    return '\n\n'.join(out) if out else None
+
+
+# PowerPoint ノートの段落内改行（Shift+Enter）は \v。直後のフェンスは行頭にないので
+# BLOCK_RE に当たらず、pandoc もフェンスとして読まない。段落区切りに直してから変換する。
+SOFTBREAK_FENCE_RE = re.compile(r'\v(?=```)')
 
 
 def transform(text: str) -> str:
+    text = SOFTBREAK_FENCE_RE.sub('\n', text)
+
     def repl(m):
         c = conv_block(m.group(1))
-        return c if c is not None else m.group(0)
+        if c is None:
+            return m.group(0)
+        # 前後の段落とくっつかないよう空行で分離する
+        before = text[:m.start()]
+        after = text[m.end():]
+        if before and not before.endswith('\n\n'):
+            c = '\n' + c
+        if after.startswith('\n') and not after.startswith('\n\n'):
+            c = c + '\n'
+        return c
     return BLOCK_RE.sub(repl, text)
 
 

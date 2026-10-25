@@ -79,7 +79,7 @@ procedure:
   - chapter: "+"        # 前の章番号に 1 を加える。結果、0+1 で1になる
   - insertmd: variable_replacement_guide_slide1_md.md
 
-  - insertmd: ../../defaults/common_assets/tex_newpage.md
+  - insertpagebreak:
     description: "ページ送り"
 
   - insertmd: variable_replacement_guide_slide2_md.md

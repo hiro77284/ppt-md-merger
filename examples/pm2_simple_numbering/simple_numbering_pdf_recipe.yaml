@@ -83,22 +83,22 @@ procedure:
 
   - insertmd: simple_numbering_guide_slide1_md.md
 
-  - insertmd: ../common_assets/tex_newpage.md
+  - insertpagebreak:
     description: "ページ送り"
 
   - insertmd: simple_numbering_guide_slide2_md.md
 
-  - insertmd: ../common_assets/tex_newpage.md
+  - insertpagebreak:
     description: "ページ送り"
 
   - insertmd: simple_numbering_guide_slide3_md.md
 
-  - insertmd: ../common_assets/tex_newpage.md
+  - insertpagebreak:
     description: "ページ送り"
 
   - insertmd: simple_numbering_guide_slide4_md.md
 
-  - insertmd: ../common_assets/tex_newpage.md
+  - insertpagebreak:
     description: "ページ送り"
 
   - insertmd: simple_numbering_guide_slide5_md.md
