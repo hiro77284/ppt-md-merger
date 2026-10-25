@@ -3,7 +3,6 @@ from __future__ import annotations
 import logging
 import re
 import os
-import win32com.client
 from pathlib import Path
 from typing import Any, TextIO
 
@@ -14,6 +13,7 @@ from pptx import Presentation
 from pptx.enum.shapes import MSO_SHAPE_TYPE
 from pptx.oxml.ns import qn
 
+from ._com import dispatch_powerpoint
 from ._csl import (
     CSL_MARKER,
     delete_slides as _csl_delete_slides,
@@ -522,7 +522,7 @@ def modify_slide_shapes(pptx_path: Path, prs: Any, csl_mode: str, deletecsp: boo
         return False, deleted_csl_slides
 
     newpptx_path_abs = os.path.abspath(pptx_path)
-    win32pptapp = win32com.client.Dispatch("PowerPoint.Application")
+    win32pptapp = dispatch_powerpoint()
     try:
         win32prs = win32pptapp.Presentations.Open(str(newpptx_path_abs), WithWindow=False)
     except Exception as e:  # noqa: BLE001  原因を分かりやすく伝えて再送出

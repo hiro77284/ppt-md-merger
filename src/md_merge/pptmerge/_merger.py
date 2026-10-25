@@ -9,9 +9,7 @@ import sys
 from pathlib import Path
 from typing import Any
 
-import pythoncom
 import time
-import win32com.client
 import yaml
 from lxml import etree
 from pptx import Presentation as _PptxPresentation
@@ -27,6 +25,7 @@ def _sanitize_note_text(text: str) -> str:
     text = _SOFT_RETURN_RE.sub('\n', text)
     return _INVALID_XML_RE.sub('', text)
 
+from ._com import dispatch_powerpoint
 from ._config import (
     ConfigError,
     load_yaml,
@@ -687,7 +686,7 @@ def merge_pptx(
 
     _t_total = time.perf_counter()
     _t = time.perf_counter()
-    ppt_app = win32com.client.Dispatch("PowerPoint.Application")
+    ppt_app = dispatch_powerpoint()
     ppt_app.Visible = True
     logger.info("[timing] COM Dispatch: %.3fs", time.perf_counter() - _t)
 

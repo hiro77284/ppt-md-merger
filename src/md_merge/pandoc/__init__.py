@@ -340,8 +340,7 @@ def run(args: argparse.Namespace) -> int:
     if resource_paths and graphicspath_tex:
         cmd += ["--include-in-header", str(graphicspath_tex)]
 
-    resource_path_value = ";".join([".", *[str(p) for p in resource_paths]])
-    cmd += ["--resource-path", resource_path_value]
+    cmd += ["--resource-path", _resource_path_arg(resource_paths)]
 
     logging.debug("cmd:\n%s", "\n".join(cmd))
     _orig_cwd = Path.cwd()
@@ -502,7 +501,7 @@ def _build_cover_from_md(
             cmd += ["-L", str(fp)]
     if to_fmt == "typst":
         cmd += ["-L", str(_BUILTIN_FILTERS_DIR / _TYPST_IMAGES_FILTER)]
-        cmd += ["--resource-path", ";".join([".", *[str(p) for p in resource_paths or []]])]
+        cmd += ["--resource-path", _resource_path_arg(resource_paths or [])]
 
     result = subprocess.run(cmd, capture_output=True, text=True, cwd=out_dir)
     if result.stderr:
@@ -521,6 +520,15 @@ def _write_graphicspath(paths: list[Path], out_path: Path) -> None:
     content = f"{comment}\n\\graphicspath{{\n{entries}\n}}\n"
     out_path.parent.mkdir(parents=True, exist_ok=True)
     out_path.write_text(content, encoding="utf-8")
+
+
+def _resource_path_arg(paths: "list[Path]") -> str:
+    """pandoc の --resource-path に渡す値（先頭に "."）を作る。
+
+    pandoc はこの値を OS のパス区切り（Windows は ";"、それ以外は ":"）で分割するため
+    os.pathsep で連結する。レシピ側の resource-path 記法（";" 区切り）とは別物。
+    """
+    return os.pathsep.join([".", *[str(p) for p in paths]])
 
 
 def _resolve_resource_paths(
