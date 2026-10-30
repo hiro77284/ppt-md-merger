@@ -59,6 +59,12 @@ class ImageCopier:
     def _copy(self, src: Path) -> Path:
         if src in self._registry:
             return self._registry[src]
+        if self.img_dir.resolve() in src.parents:
+            # 既に image-dir 内にある画像（pptimgexport の書き出し先が image-dir と
+            # 同じ構成など）はコピーせずその場で参照する。自分自身へのコピーや
+            # image-dir/images/... の入れ子を作らないため。
+            self._registry[src] = src
+            return src
         dst = self._dst_path(src)
         dst.parent.mkdir(parents=True, exist_ok=True)
         shutil.copy2(src, dst)
@@ -78,6 +84,27 @@ class ImageCopier:
         return pick_destination(
             candidate, collision=self.collision, taken=set(self._registry.values())
         )
+
+
+@dataclass
+class ImageSourceCollector:
+    """Records the resolved local image sources referenced by the merge inputs.
+
+    ``expand_md`` に image_copier の代わりに渡すと、行は書き換えずに参照先の
+    実パスだけを集める。clear-dir-before-merge が merge 自身のコピー元を
+    消さないかの判定に使う。
+    """
+
+    sources: set[Path] = field(default_factory=set)
+
+    def rewrite_line(self, line: str, source_md: Path, *, in_frontmatter: bool) -> str:
+        def record(ref: Ref) -> None:
+            if not should_skip(ref.ref):
+                self.sources.add((source_md.parent / ref.ref).resolve())
+            return None
+
+        rewrite_line(line, in_frontmatter=in_frontmatter, resolve=record)
+        return line
 
 
 def make_image_copier(args, out_path: Path, in_dir: Path | None) -> "ImageCopier | None":

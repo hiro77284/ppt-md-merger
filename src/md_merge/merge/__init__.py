@@ -7,7 +7,7 @@ from pathlib import Path
 from md_merge._fingerprint import load_check_map, verify_against_check
 from md_merge._output import EXIT_BAD_INPUT, EXIT_FAILURE, EXIT_NOT_FOUND, EXIT_OK, emit, setup_logging
 from md_merge._imagerefs import COLLISION_MODES, NAMING_MODES
-from md_merge.merge._images import DEFAULT_IMAGE_DIR, make_image_copier
+from md_merge.merge._images import DEFAULT_IMAGE_DIR, ImageSourceCollector, make_image_copier
 from md_merge.merge._recipe import (
     CircularIncludeError,
     IncludeNotFoundError,
@@ -85,7 +85,8 @@ def run(args: argparse.Namespace) -> int:
     # and an image-dir name is set. 削除前にフルパスを提示して確認する（中止なら merge 全体を止める）。
     image_dir_name = getattr(args, "image_dir", None)
     if getattr(args, "clear_dir_before_merge", False) and image_dir_name:
-        if not _clear_image_dir(out_path.parent, image_dir_name, args):
+        sources = _collect_image_sources(procedure_items, yaml_path.parent)
+        if not _clear_image_dir(out_path.parent, image_dir_name, args, sources=sources):
             logging.error("clear-dir-before-merge: 確認が得られなかったため merge を中止しました。")
             return EXIT_FAILURE
 
@@ -154,12 +155,38 @@ def _confirm_clear(target: Path, count: int, args: argparse.Namespace, *, ignore
     return ans in ("y", "yes")
 
 
-def _clear_image_dir(out_dir: Path, image_dir_name: str, args: argparse.Namespace) -> bool:
+def _collect_image_sources(procedure_items: list, yaml_dir: Path) -> set[Path]:
+    """Return the resolved image paths referenced by the merge inputs (includes too).
+
+    読み込みや include の不備はここでは無視し、後段の本処理のエラー処理に任せる。
+    """
+    collector = ImageSourceCollector()
+    for item in procedure_items:
+        if not isinstance(item, Path) or not item.exists():
+            continue
+        try:
+            expand_md(item, yaml_dir=yaml_dir, image_copier=collector)
+        except (CircularIncludeError, IncludeNotFoundError, OSError, UnicodeDecodeError):
+            continue
+    return collector.sources
+
+
+def _clear_image_dir(
+    out_dir: Path,
+    image_dir_name: str,
+    args: argparse.Namespace,
+    *,
+    sources: "set[Path] | None" = None,
+) -> bool:
     """Delete the contents of ``out_dir/image_dir_name`` before merging.
 
     Refuses to act unless the target is a proper subdirectory of *out_dir*, so a
     stray image-dir value (``.``, ``..``, an absolute path, …) cannot wipe the
     output directory or escape it. 削除対象があるときはフルパスを提示して確認する。
+
+    *sources* (merge 入力が参照する画像の実パス) のどれかが image-dir 内にある場合は、
+    merge 自身のコピー元を消してしまうため削除せず警告だけ出す（pptimgexport の
+    書き出し先が image-dir と同じ構成など）。
 
     戻り値: True=処理続行可（削除実行 or 削除対象なし）/ False=ユーザーが中止。
     """
@@ -179,6 +206,18 @@ def _clear_image_dir(out_dir: Path, image_dir_name: str, args: argparse.Namespac
     entries = list(target.iterdir())
     if not entries:
         return True  # 空なので削除対象なし・確認不要
+    inside = sorted(s for s in (sources or ()) if target in s.parents and s.exists())
+    if inside:
+        logging.warning(
+            "clear-dir-before-merge: merge 入力が参照する画像 %d 件が image-dir 内にあるため"
+            "削除をスキップします（例: %s）。image-dir: %s",
+            len(inside), inside[0], target,
+        )
+        logging.warning(
+            "clear-dir-before-merge: 画像の書き出し先（export-image）と merge の image-dir を"
+            "分けるには output.outputdir（例: build）を指定してください。",
+        )
+        return True
     if not _confirm_clear(target, len(entries), args):
         return False
     for entry in entries:

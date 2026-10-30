@@ -107,6 +107,7 @@ output:
 - `--dry-run` 時は削除しない。
 - 安全のため、image-dir が出力ディレクトリ配下の真のサブディレクトリでない場合（`.` / `..` / 絶対パス等）は削除を中止しエラーを出す（merge は続行）。
 - `image-dir` が空、または削除対象が無い場合は何もしない（確認も出さない）。
+- merge 入力（include 先を含む）が参照する画像が image-dir 内にある場合は、merge 自身のコピー元を消してしまうため**削除をスキップして警告する**（確認も出さない）。`output.outputdir` を指定せず、ノートの `export-image: ../images/...` で書き出した画像を merge がそのまま参照する構成がこれに当たる。このとき image-dir 内の画像はコピーせずその場で参照する（`images/images/...` の入れ子は作らない）。抽出先と image-dir を分けたい場合は `output.outputdir`（例: `build`）を指定する。
 
 ---
 

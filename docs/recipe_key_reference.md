@@ -118,7 +118,7 @@
 | `merge.image-naming` | R | コピー画像の命名。`preserve`（既定・元名のまま）/ `sanitize`（ASCII スラグ化）。`transfer.image_naming` と同じ意味 |
 | `merge.image-collision` | R | **同一実行内で別のソース画像が同じコピー先になったとき**の扱い。`rename`（既定・`_1`/`_2` を付けて回避）/ `overwrite`（警告して上書き）。前回実行の同名ファイルの上書きは衝突とみなさない（再実行は冪等） |
 | `merge.overwrite-images` | R | **非推奨**: `image-collision: overwrite` のエイリアス |
-| `merge.clear-dir-before-merge` | R | **既定 `true`**。`image-dir` が空でないとき merge 前に image-dir 内を全削除（削除前にフルパスを提示して確認。単体 merge は `--force` で確認省略、パイプラインは `--force` に関係なく必ず確認、`false` で無効化） |
+| `merge.clear-dir-before-merge` | R | **既定 `true`**。`image-dir` が空でないとき merge 前に image-dir 内を全削除（削除前にフルパスを提示して確認。単体 merge は `--force` で確認省略、パイプラインは `--force` に関係なく必ず確認、`false` で無効化）。merge 入力が参照する画像が image-dir 内にあるときは削除をスキップして警告 |
 | `merge.strict` | R | `--strict` 相当 |
 
 ---
