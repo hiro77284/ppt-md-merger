@@ -4,6 +4,14 @@
   ``operation`` 省略時は insertpptx とみなす。
 - version 2: ``- insertpptx: somefile.pptx`` の操作キー記法。操作キーの値が主引数。
   引数のない操作は ``- beginstay`` / ``- beginstay:`` と書ける。
+- version 3: procedure 記法は version 2 と同じ。PDF（typst）の表紙を ``typst-cover-md`` を
+  明示したときだけ付ける（暗黙の標準表紙をやめた。_typst_cover.py）。
+- version 4: procedure 記法は version 2 と同じ。LaTeX 撤去に合わせて pandoc のキーを整理した
+  （PDF の表紙 ``cover-md``・defaults ``defaults``。_pandoc_keys.py）。
+
+v2 以降では ``- group: [...]`` で複数の項目を束ね、``when:`` をまとめて付けられる。
+グループは正規化時に平らに展開し、グループの ``when:`` は子の内部キー
+``_group_when`` に (位置, when) の組として引き継ぐ（判定は _conditions.py）。
 
 記法の混在（v1 に操作キー記法、v2 に operation 記法）はエラー。読み込み後の内部表現は
 常に operation 記法（v1 形式）なので、下流のコードは version を意識しない。
@@ -14,12 +22,12 @@ from __future__ import annotations
 import logging
 from pathlib import Path
 
-LATEST_VERSION = 2
-SUPPORTED_VERSIONS = frozenset({1, 2})
+LATEST_VERSION = 4
+SUPPORTED_VERSIONS = frozenset({1, 2, 3, 4})
 
 # procedure.operation の有効値と、各 operation で使えるキー（内部表現 = v1 記法）
 PROCEDURE_OPS = frozenset({
-    "insertmd", "insertpptx",
+    "insertmd", "insertpptx", "insertvar",
     "chapter", "section", "subsection",
     "beginstay", "endstay",
     "insertvspace", "insertpagebreak", "insertvfill",
@@ -28,6 +36,7 @@ PROCEDURE_OPS = frozenset({
 PROCEDURE_ITEM_KEYS: dict[str, frozenset] = {
     "insertmd":    frozenset({"operation", "mdfilename"}),
     "insertpptx":  frozenset({"operation", "pptxfilename", "slides", "separator_before", "vars"}),
+    "insertvar":   frozenset({"operation", "varname"}),
     "chapter":     frozenset({"operation", "chapter", "section", "title", "note", "id"}),
     "section":     frozenset({"operation", "section", "chapter", "title", "note", "id"}),
     "subsection":  frozenset({"operation", "subsection", "title", "id"}),
@@ -38,6 +47,12 @@ PROCEDURE_ITEM_KEYS: dict[str, frozenset] = {
     "insertvfill":     frozenset({"operation"}),
 }
 
+# v2: 複数項目を束ねる要素（内部表現には残らない）。値は子の procedure リスト。
+GROUP_KEY = "group"
+GROUP_ITEM_KEYS = frozenset({GROUP_KEY, "when", "description"})
+# グループから引き継いだ when: の一覧（[(位置ラベル, when), ...]、外側が先）
+INHERITED_WHEN_KEY = "_group_when"
+
 # v1 で operation キーがない場合の既定値 (pptmerge レシピの慣習)
 DEFAULT_OP_V1 = "insertpptx"
 
@@ -45,6 +60,7 @@ DEFAULT_OP_V1 = "insertpptx"
 PRIMARY_ARG: dict[str, str | None] = {
     "insertmd": "mdfilename",
     "insertpptx": "pptxfilename",
+    "insertvar": "varname",
     "chapter": "chapter",
     "section": "section",
     "subsection": "subsection",
@@ -76,8 +92,10 @@ def recipe_version(recipe: dict) -> int:
 def _check_v1_item(i: int, item: object) -> list[str]:
     if not isinstance(item, dict):
         if isinstance(item, str) and item in PROCEDURE_OPS:
-            return [f"procedure[{i}]: {item!r} は version 2 の記法です（version 1 では operation: {item} と書きます）"]
+            return [f"procedure[{i}]: {item!r} は version 2 以降の記法です（version 1 では operation: {item} と書きます）"]
         return []  # 非辞書の一般エラーは validate / 各サブコマンドに任せる
+    if GROUP_KEY in item:
+        return [f"procedure[{i}]: group は version 2 以降でのみ使えます（version: {LATEST_VERSION} にしてください）"]
     op = item.get("operation")
     if op is None:
         allowed: frozenset = frozenset()
@@ -86,49 +104,52 @@ def _check_v1_item(i: int, item: object) -> list[str]:
     stray = sorted(k for k in item if k in PROCEDURE_OPS and k not in allowed)
     if stray:
         return [
-            f"procedure[{i}]: 操作キー {', '.join(repr(k) for k in stray)} は version 2 の記法です"
-            "（version 1 では operation: で操作を指定します。新記法を使うには version: 2 にしてください）"
+            f"procedure[{i}]: 操作キー {', '.join(repr(k) for k in stray)} は version 2 以降の記法です"
+            f"（version 1 では operation: で操作を指定します。新記法を使うには version: {LATEST_VERSION} にしてください）"
         ]
     return []
 
 
-def _normalize_v2_item(i: int, item: object) -> tuple[dict | None, list[str]]:
-    """v2 の 1 要素を内部表現へ変換する。戻り値は (変換結果, エラー一覧)。"""
+def _normalize_v2_item(label: str, item: object) -> tuple[dict | None, list[str]]:
+    """v2 の 1 要素（group 以外）を内部表現へ変換する。戻り値は (変換結果, エラー一覧)。
+
+    *label* はエラー表示用の位置（例: ``procedure[3]`` / ``procedure[3].group[0]``）。
+    """
     if isinstance(item, str):
         if item not in PROCEDURE_OPS:
-            return None, [f"procedure[{i}]: 未知の操作です: {item!r} (有効値: {', '.join(sorted(PROCEDURE_OPS))})"]
+            return None, [f"{label}: 未知の操作です: {item!r} (有効値: {', '.join(sorted(PROCEDURE_OPS))})"]
         if PRIMARY_ARG[item] is not None:
-            return None, [f"procedure[{i}]: {item} には値が必要です（例: - {item}: ...）"]
+            return None, [f"{label}: {item} には値が必要です（例: - {item}: ...）"]
         return {"operation": item}, []
     if not isinstance(item, dict):
         return None, []  # 非辞書の一般エラーは validate / 各サブコマンドに任せる
     if "operation" in item:
         return None, [
-            f"procedure[{i}]: operation 記法は version 2 では使えません"
+            f"{label}: operation 記法は version 2 以降では使えません"
             f"（例: - {item.get('operation') or 'insertpptx'}: ...）"
         ]
     ops = [k for k in item if k in PROCEDURE_OPS]
     if not ops:
         return None, [
-            f"procedure[{i}]: 操作キーがありません（有効な操作: {', '.join(sorted(PROCEDURE_OPS))}）"
+            f"{label}: 操作キーがありません（有効な操作: {', '.join(sorted(PROCEDURE_OPS))}）"
         ]
     if len(ops) > 1:
         return None, [
-            f"procedure[{i}]: 1 要素に操作キーが複数あります: {', '.join(repr(k) for k in ops)}"
-            "（version 2 では 1 要素に 1 操作です）"
+            f"{label}: 1 要素に操作キーが複数あります: {', '.join(repr(k) for k in ops)}"
+            "（version 2 以降では 1 要素に 1 操作です）"
         ]
     op = ops[0]
     primary = PRIMARY_ARG[op]
     value = item[op]
     if primary is None:
         if value is not None:
-            return None, [f"procedure[{i}]: {op} は値を取りません（- {op} と書きます）: {value!r}"]
+            return None, [f"{label}: {op} は値を取りません（- {op} と書きます）: {value!r}"]
     elif primary != op and primary in item:
         return None, [
-            f"procedure[{i}]: version 2 では {primary} キーは使えません（- {op}: <値> に書きます）"
+            f"{label}: version 2 以降では {primary} キーは使えません（- {op}: <値> に書きます）"
         ]
-    if op in ("insertpptx", "insertmd") and value is not None and not isinstance(value, str):
-        return None, [f"procedure[{i}]: {op} の値が文字列ではありません（引用符で囲んでください）: {value!r}"]
+    if op in ("insertpptx", "insertmd", "insertvar") and value is not None and not isinstance(value, str):
+        return None, [f"{label}: {op} の値が文字列ではありません（引用符で囲んでください）: {value!r}"]
     result: dict = {"operation": op}
     for k, v in item.items():
         if k == op:
@@ -140,6 +161,58 @@ def _normalize_v2_item(i: int, item: object) -> tuple[dict | None, list[str]]:
     return result, []
 
 
+def _check_group(label: str, item: dict) -> list[str]:
+    """group 要素そのもの（子は除く）の書式エラーを列挙する。"""
+    errors: list[str] = []
+    ops = [k for k in item if k in PROCEDURE_OPS]
+    if ops:
+        errors.append(
+            f"{label}: group と操作キー {', '.join(repr(k) for k in ops)} は同じ要素に書けません"
+            "（操作は group: の下のリストに書きます）"
+        )
+    stray = sorted(str(k) for k in item if k not in GROUP_ITEM_KEYS and k not in PROCEDURE_OPS)
+    if stray:
+        errors.append(
+            f"{label}: group に書けないキー: {', '.join(repr(k) for k in stray)}"
+            f"（有効: {', '.join(sorted(GROUP_ITEM_KEYS))}）"
+        )
+    children = item[GROUP_KEY]
+    if not isinstance(children, list) or not children:
+        errors.append(f"{label}: group の値は項目のリストで指定してください（子の項目を group: の下にリストで書きます）")
+    return errors
+
+
+def _check_v2_list(items: list, prefix: str) -> list[str]:
+    errors: list[str] = []
+    for j, item in enumerate(items):
+        label = f"{prefix}[{j}]"
+        if isinstance(item, dict) and GROUP_KEY in item:
+            errors.extend(_check_group(label, item))
+            if isinstance(item[GROUP_KEY], list):
+                errors.extend(_check_v2_list(item[GROUP_KEY], f"{label}.{GROUP_KEY}"))
+        else:
+            errors.extend(_normalize_v2_item(label, item)[1])
+    return errors
+
+
+def _flatten_v2_list(items: list, prefix: str, inherited: tuple) -> list:
+    """v2 の項目リストを内部表現へ変換し、group を展開して平らなリストにする。"""
+    result: list = []
+    for j, item in enumerate(items):
+        label = f"{prefix}[{j}]"
+        if isinstance(item, dict) and GROUP_KEY in item:
+            inner = inherited
+            if "when" in item:
+                inner = inherited + ((label, item["when"]),)
+            result.extend(_flatten_v2_list(item[GROUP_KEY], f"{label}.{GROUP_KEY}", inner))
+            continue
+        normalized = _normalize_v2_item(label, item)[0] if isinstance(item, (dict, str)) else item
+        if inherited and isinstance(normalized, dict):
+            normalized[INHERITED_WHEN_KEY] = list(inherited)
+        result.append(normalized)
+    return result
+
+
 def check_procedure_notation(recipe: dict) -> list[str]:
     """version と procedure 記法の不整合を列挙する（validate 用。例外は投げない）。"""
     try:
@@ -149,12 +222,11 @@ def check_procedure_notation(recipe: dict) -> list[str]:
     procedure = recipe.get("procedure")
     if not isinstance(procedure, list):
         return []
+    if version != 1:
+        return _check_v2_list(procedure, "procedure")
     errors: list[str] = []
     for i, item in enumerate(procedure):
-        if version == 1:
-            errors.extend(_check_v1_item(i, item))
-        else:
-            errors.extend(_normalize_v2_item(i, item)[1])
+        errors.extend(_check_v1_item(i, item))
     return errors
 
 
@@ -185,8 +257,8 @@ def normalize_recipe(
             if key not in _warned_v1:
                 _warned_v1.add(key)
                 logging.warning(
-                    "version 1 の operation 記法は非推奨です。version: 2 の記法"
-                    "（例: - insertpptx: a.pptx）へ移行してください%s", where,
+                    "version 1 の operation 記法は非推奨です。version: %d の記法"
+                    "（例: - insertpptx: a.pptx）へ移行してください%s", LATEST_VERSION, where,
                 )
         if not isinstance(procedure, list):
             return recipe
@@ -199,11 +271,7 @@ def normalize_recipe(
         return {**recipe, "procedure": filled}
     if not isinstance(procedure, list):
         return recipe
-    normalized = [
-        _normalize_v2_item(i, item)[0] if isinstance(item, (dict, str)) else item
-        for i, item in enumerate(procedure)
-    ]
-    return {**recipe, "procedure": normalized}
+    return {**recipe, "procedure": _flatten_v2_list(procedure, "procedure", ())}
 
 
 def to_notation(item: dict, version: int) -> dict:
@@ -214,7 +282,7 @@ def to_notation(item: dict, version: int) -> dict:
     primary = PRIMARY_ARG.get(op)
     result: dict = {op: item.get(primary) if primary else None}
     for k, v in item.items():
-        if k in ("operation", primary):
+        if k in ("operation", primary, INHERITED_WHEN_KEY):
             continue
         result[k] = v
     return result

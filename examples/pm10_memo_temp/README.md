@@ -20,7 +20,6 @@ MEMO、TEMP の動作は同じです。
 
 
 
-<!-- source: defaults/common_assets/tex_newpage.md -->
 
 
 
@@ -36,7 +35,6 @@ MEMO、TEMP の動作は同じです。
 ![](build/figures/memo_temp_guide_slide2_fig.png)
 
 
-<!-- source: defaults/common_assets/tex_2line.md -->
 
 
 

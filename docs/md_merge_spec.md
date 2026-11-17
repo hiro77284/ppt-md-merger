@@ -34,7 +34,7 @@ pptmdmerge merge input.yaml
 * `idcollect`: 結合済み MD から `{{#id:...}}` マーカーを抽出し、IDインベントリ YAML を生成する
 * `idresolve`: IDインベントリ YAML を読み込み、number と label を付与した ID解決済み YAML を生成する
 * `render`: 結合済み MD に対してタイトル置換・参照置換を行い、レンダー済み MD を生成する
-* `pandoc`: レンダー済み MD を pandoc に渡して PDF・LaTeX 等を生成する
+* `pandoc`: レンダー済み MD を pandoc に渡して PDF（typst）・HTML 等を生成する
 
 ### 含めない機能
 
@@ -53,23 +53,23 @@ pptmdmerge merge input.yaml
 | `idcollect`        | 結合済み MD から ID マーカーを抽出してインベントリ YAML を生成する                                                                                            | yamlファイル | インベントリ YAML   |
 | `idresolve`        | IDインベントリ YAML から number / label を付与した ID解決済み YAML を生成する                                                                             | yamlファイル | ID解決済み YAML   |
 | `render`           | 結合済み MD のタイトル・参照を ID解決済みマップで置換してレンダー済み MD を生成する                                                                                     | yamlファイル | レンダー済み MD     |
-| `pandoc`           | レンダー済み MD を pandoc に渡して PDF・LaTeX 等を生成する                                                                                            | yamlファイル | PDF / LaTeX 等 |
+| `pandoc`           | レンダー済み MD を pandoc に渡して PDF（typst）・HTML 等を生成する                                                                                            | yamlファイル | PDF / HTML 等 |
 | `pptmerge`         | 複数の PowerPoint ファイルをレシピに従って結合する                                                                                                     | yamlファイル | pptxファイル      |
 | `pptimgexport`     | PPTX スライドのノートに記述された指示に従い PDF から画像を切り出して保存する                                                                                         | yamlファイル | PNG ファイル群     |
 | `pptmdexport`      | PPTX スライドのノートのブロック構造から MD テキストを抽出してファイルに出力する                                                                                        | yamlファイル | MD ファイル群      |
 | `pptyamlexport`    | PPTX スライドのノートの YAML ブロックから図版定義 YAML を出力する（slot / region 座標の `auto` を名前付きシェイプから算出）                                                   | yamlファイル | YAML ファイル群    |
 | `pptpdfexport`     | PowerPoint COM 自動化を使って PPTX を PDF に変換する（Windows 専用）                                                                                 | yamlファイル | PDF ファイル      |
 | `pptdeletecsl`     | 既存 pptx（マージ後ファイル）に対して `#CSL#` の処理だけを単独で行う。入力のみ **pptx を CLI で直接指定** する                                                              | pptxファイル | pptxファイル      |
-| `ppt_to_pdf`       | pptpdfexport → pptimgexport → pptmdexport → merge → idcollect → idresolve → render → condblockprocess → pandoc を順に連続実行する            | yamlファイル | PDF 等         |
+| `ppt_to_pdf`       | pptpdfexport → pptimgexport → pptmdexport → merge → idcollect → idresolve → render → pandoc を順に連続実行する                             | yamlファイル | PDF 等         |
 | `puremd`           | レンダー済み MD から LaTeX 等の raw ブロックを除去して純粋な MD を生成する                                                                                     | yamlファイル | MD ファイル       |
-| `condblockprocess` | テンプレートファイル内の条件ブロックと変数参照を展開して出力ファイルを生成する                                                                                             | yamlファイル | テキストファイル      |
 | `transfer`         | render 済み MD と画像を静的サイト生成用の dataentry 入力ディレクトリにコピーする                                                                                 | yamlファイル | MD・画像ファイル     |
 | `notecomexport`    | puremd 処理済み MD（frontmatter ＋ GFM）を note.com 投稿用 YAML（ブロック列）に変換する。投入は `tools/notecom_autopilot.py`                                   | yamlファイル | YAML ファイル     |
 | `crop_to_pdf`      | crop → merge → idcollect → idresolve → render → pandoc を順に連続実行する                                                                    | yamlファイル | PDF 等         |
 | `ppt_to_transfer`  | pptpdfexport → pptimgexport → pptmdexport → merge → idcollect → idresolve → render → puremd → transfer を順に連続実行する                    | yamlファイル | MD・画像ファイル     |
 | `ppt_to_puremd`    | `ppt_to_transfer` から末尾の transfer を除いた版。pptpdfexport → … → render → puremd まで実行し、puremd 処理済み MD を成果物として残す                            | yamlファイル | MD・画像ファイル     |
 | `ppt_to_notecom`   | `ppt_to_transfer` の末尾 transfer を notecomexport に差し替えた版。pptpdfexport → … → puremd → notecomexport を連続実行し、note.com 投稿用 YAML を成果物として残す | yamlファイル | YAML・画像ファイル   |
-| `validate`         | レシピ YAML の整合性（未知キー・vars 値の生 LaTeX）を検査し、cropsrc と procedure の対応（未使用 pptx / cropsrc 未登録）を info 表示する                                   | yamlファイル | （検査結果のみ）      |
+| `validate`         | レシピ YAML の整合性（未知キー・vars 値の生 LaTeX・params: と変数/条件/番号マーカー）を検査し、cropsrc と procedure の対応を info 表示する                                   | yamlファイル | （検査結果のみ）      |
+| `explain`          | `--var` のもとで procedure のどの項目が採用／除外されるかを理由つきで表示（`--matrix` で値ごとの差分、`--blocks` で `{{#if}}` の判定） | yamlファイル | （表示のみ）      |
 
 ---
 
@@ -80,7 +80,7 @@ pptmdmerge merge input.yaml
 | `--log-level` | `-l` | ログレベル（`debug`\|`info`\|`warn`\|`error`） | `info` |
 | `--dry-run` | なし   | 実際には処理せず実行内容だけ表示 | false       |
 | `--json`    | なし   | 結果を JSON 形式で標準出力へ出力する | false |
-| `--tag NAME` | なし | `procedure` 項目の条件付き適用（`when.tag` / `when.not_tag`）に使うタグ。繰り返し指定可。詳細は `docs/spec/md_pipeline.md` の「procedure の条件付き適用」 | なし |
+| `--var NAME=VALUE` | なし | レシピ `vars:` を上書きする（`NAME` だけなら値は `true`、`NAME=` なら空文字）。繰り返し指定可。`{{v:NAME}}` の置換、条件ブロック `{{#if:NAME}}`、`procedure` の `when.var` に効く。詳細は `docs/conditional_block_process.md` | なし |
 
 ---
 
@@ -108,7 +108,7 @@ output:
   _include: shared/output.yaml           # セクションごと読み込む
 pandoc:
   _include: ../pandocsettings.yaml       # 共通設定を読み込み、
-  typst-cover-md: ../assets/cover.md     # 兄弟キーで追加・上書きする
+  cover-md: ../assets/cover.md           # 兄弟キーで追加・上書きする
 vars:
   _include:                              # 複数ファイルはリストで（後のものが勝つ）
     - shared/vars.yaml
@@ -212,19 +212,50 @@ pandoc:
 
 ## 5.3 レシピ YAML の version と procedure 記法
 
-レシピのトップレベル `version` は、後方互換のない仕様変更を区別するための番号である。どのセクションでも、後方互換のない変更を行うときは `version` を上げる。現在の最新は `2`。
+レシピのトップレベル `version` は、後方互換のない仕様変更を区別するための番号である。どのセクションでも、後方互換のない変更を行うときは `version` を上げる。現在の最新は `4`。
 
 | version | procedure の記法 | 状態 |
 | ------- | ---------------- | ---- |
 | `1`（省略時も 1） | operation 記法（`- operation: insertpptx` ＋ `pptxfilename: ...`） | 非推奨。読み込み時にファイルごとに 1 回 warning |
-| `2` | 操作キー記法（`- insertpptx: somefile.pptx`） | 推奨 |
+| `2` | 操作キー記法（`- insertpptx: somefile.pptx`） | 使える（PDF の暗黙の標準表紙に警告） |
+| `3` | version 2 と同じ | 使える。PDF の表紙は `pandoc.typst-cover-md` を書いたときだけ付く（下記） |
+| `4` | version 2 と同じ | 推奨。pandoc のキーを LaTeX 撤去後の名前に整理した（下記） |
 
-### version 2 の操作キー記法
+### version 4 の変更点（pandoc のキー）
+
+2026-11-15 に LaTeX（lualatex）を撤去し、PDF は typst だけになった。version 3 までは typst 用のキーに `typst-` を付け、接頭辞のない `cover-md` / `defaults` は LaTeX 用だったので、typst では黙って無視されるキーが混在していた。version 4 で PDF 用を接頭辞なし、HTML 用を `html` 付きにそろえた。
+
+| 用途 | version 3 以前 | version 4 |
+| ---- | -------------- | --------- |
+| PDF の表紙 | `typst-cover-md` | `cover-md` |
+| PDF の pandoc defaults | `typstdefaults` | `defaults` |
+| HTML / reveal の表紙 | `htmlcover`（と `cover-md` の HTML 変換） | `htmlcover` |
+| LaTeX 専用（`engine` / `format` / `template` / `include-in-header` / `include-before-body` / `conditional-process-input` / `conditional-process-output`） | 警告して使わない | エラー |
+| メタデータファイル `metadata-file` | 使える（非推奨の警告） | エラー。defaults ファイルの `metadata:` に書く |
+
+* version 4 で `typst-cover-md` / `typstdefaults` や LaTeX 専用キーを書くと、`pandoc` と `validate` がエラーにする（移行先を案内する）
+* version 3 以前のレシピは今の typst の動きのまま読む。`cover-md` / `defaults` は LaTeX 用の意味なので PDF では使わない
+* 書き換えは `tools/convert_recipe_v4.py`。キーの改名・LaTeX 専用キーと `output.texfilename` / `resourcepathfilename` の削除・`version: 4` への書き換えをし、version 2 で暗黙に付いていた標準表紙は `cover-md: cover_standard.md` として書き足す。`metadata-file` は消して「中身を defaults の `metadata:` に移す」よう表示する（中身は自動では移さない）。コメントは残す（行単位の置換）
+* `_include` で共有している pandoc 設定ファイルのキーの意味は、読み込むレシピの version で決まる。共有ファイルを読むレシピはまとめて version 4 にする（変換ツールは、変換対象に入っていない読み手が見つかると止まる。`--with-includers` で一緒に変換する）
+* 同梱の標準表紙は `cover_standard_typst.md` から `cover_standard.md` に改名した。旧名は受け付けない（2026-11-16 から。どの version のレシピでも `pandoc` と `validate` がエラーにして新しい名前を案内する。`tools/convert_recipe_v4.py` は変換時に新しい名前に書き換える）
+* 同梱の PDF defaults は `typst_semantic_engine.yaml` から `report_base_defaults.yaml` に改名した。旧名は同じくエラー
+
+### version 3 の変更点（PDF の表紙）
+
+version 2 以前は、`pandoc.typst-cover-md` を省略しても `cover-md` か `conditional-process-input`（どちらも LaTeX 用の表紙）があれば、同梱の標準表紙 `cover_standard_typst.md` を暗黙に使っていた。LaTeX→Typst 移行のための仕様で、レシピを読んでも表紙が分からないため、version 3 で次のように変えた。
+
+* PDF の表紙は `pandoc.typst-cover-md` だけで決まる。省略時は表紙なし
+* 同梱の標準表紙は `typst-cover-md: cover_standard.md` と明示する（名前だけなら同梱 templates/ を探す。当時の名前は `cover_standard_typst.md` で、今はエラー）
+* `cover-md` / `conditional-process-input` は PDF では使わない。typst-cover-md が無くそれらだけあると、`pandoc` 実行時と `validate` で警告する
+
+version 2 以前のレシピは従来どおり暗黙の標準表紙を使い、`pandoc` 実行時と `validate` で「`typst-cover-md: cover_standard.md` を明示する」よう警告する。（version 4 への移行は `tools/convert_recipe_v4.py` で、この標準表紙も `cover-md: cover_standard.md` として書き足す）。
+
+### version 2 以降の操作キー記法
 
 各要素は「操作名をキー、主引数を値」とする。その他の引数（`slides` / `title` / `when` / `description` など）は同じ要素の兄弟キーに書く。引数のない操作は `- beginstay` のように文字列 1 つで書ける（兄弟キーがある場合は `- beginstay:`）。
 
 ```yaml
-version: 2
+version: 3
 procedure:
   - chapter: "+"
     title: 背景
@@ -240,20 +271,24 @@ procedure:
 | ---- | ------------ | -------------------- |
 | `insertpptx` | 入力 pptx ファイル名 | `pptxfilename` |
 | `insertmd` | 入力 MD ファイル名（`[from-to]` レンジ可） | `mdfilename` |
+| `insertvar` | 変数名（値の文字列をそのまま MD として挿入） | `varname` |
 | `chapter` / `section` / `subsection` | カウンタ値（`"+"` / `n` / `+n` / `-n`）。省略可 | 同名キー |
 | `insertvspace` | 行数または単位付き長さ | `lines` |
 | `beginstay` / `endstay` / `insertpagebreak` / `insertvfill` | なし | — |
 
-version 2 では次をエラーにする（読み込んだ時点で全サブコマンドが停止する）:
+version 2 以降では次をエラーにする（読み込んだ時点で全サブコマンドが停止する）:
 
 * `operation` キーを書いた要素（version 1 の記法の混入）
 * 操作キーが 1 つもない要素（version 1 で許していた「`operation` 省略時は insertpptx」は廃止）
 * 1 要素に操作キーが 2 つ以上ある要素。version 1 で chapter 操作に書けた `section` キー（およびその逆）は書けない
 * 主引数キーの併記（例: `- insertpptx: a.pptx` と `pptxfilename: b.pptx`）
 * 引数のない操作に値を書いた要素（例: `- beginstay: true`）
-* `insertpptx` / `insertmd` の値が文字列でない要素（YAML の `no` → `false` など。引用符で囲む）
+* `insertpptx` / `insertmd` / `insertvar` の値が文字列でない要素（YAML の `no` → `false` など。引用符で囲む）
+* `group` 要素の誤り（値が項目のリストでない・空、操作キーや `group` / `when` / `description` 以外のキーとの併記）
 
-逆に version 1 のレシピに操作キー記法（`operation` のない要素に操作名のキーがある、または `- beginstay` のような文字列要素）が混入した場合もエラーにする。
+複数の項目を `- group:` で束ね、`when:` をまとめて付けられる（version 2 以降。読み込み時に展開される）。詳細は [md_pipeline.md](spec/md_pipeline.md) の「複数項目にまとめて掛ける（`group:`）」。
+
+逆に version 1 のレシピに操作キー記法（`operation` のない要素に操作名のキーがある、または `- beginstay` のような文字列要素）や `group` 要素が混入した場合もエラーにする。
 
 ### 注意
 
@@ -297,9 +332,7 @@ output:
 | `output.idcollectfilename` | `work_<base>_idcollect.yaml` | `work_target_idcollect.yaml` |
 | `output.idresolvedfilename` | `work_<base>_idresolve.yaml` | `work_target_idresolve.yaml` |
 | `output.renderedfilename` | `<base>_rendered.md` | `target_rendered.md` |
-| `output.resourcepathfilename` | `work_<base>_resourcepath.tex` | `work_target_resourcepath.tex` |
 | `output.pdffilename` | `<base>.pdf` | `target.pdf` |
-| `output.texfilename` | `<base>.tex` | `target.tex` |
 | `output.htmlfilename` | `<base>.html` | `target.html` |
 | `output.revealfilename` | `<base>_reveal.html` | `target_reveal.html` |
 | `output.puremdfilename` | `<base>_puremd.md` | `target_puremd.md` |
@@ -331,12 +364,14 @@ sample.yaml → sample_merge.md
 | 分冊 | 収録サブコマンド |
 |---|---|
 | [spec/md_pipeline.md](spec/md_pipeline.md) | [merge](spec/md_pipeline.md#merge) / [idcollect](spec/md_pipeline.md#idcollect) / [idresolve](spec/md_pipeline.md#idresolve) / [render](spec/md_pipeline.md#render) |
-| [spec/output_formats.md](spec/output_formats.md) | [pandoc](spec/output_formats.md#pandoc) / [puremd](spec/output_formats.md#puremd別名-githubmd) / [condblockprocess](spec/output_formats.md#condblockprocess) / [transfer](spec/output_formats.md#transfer) / [notecomexport](spec/output_formats.md#notecomexport) |
+| [spec/output_formats.md](spec/output_formats.md) | [pandoc](spec/output_formats.md#pandoc) / [puremd](spec/output_formats.md#puremd別名-githubmd) / [表紙](spec/output_formats.md#表紙cover-md--htmlcover) / [transfer](spec/output_formats.md#transfer) / [notecomexport](spec/output_formats.md#notecomexport) |
 | [spec/pptx.md](spec/pptx.md) | [pptmerge](spec/pptx.md#pptmerge) / [pptimgexport](spec/pptx.md#pptimgexport) / [pptmdexport](spec/pptx.md#pptmdexport) / [pptyamlexport](spec/pptx.md#pptyamlexport) / [pptpdfexport](spec/pptx.md#pptpdfexport) / [pptdeletecsl](spec/pptx.md#pptdeletecsl) |
 | [spec/pipelines.md](spec/pipelines.md) | [crop_to_pdf](spec/pipelines.md#crop_to_pdf) / [ppt_to_pdf](spec/pipelines.md#ppt_to_pdf) / [ppt_to_transfer](spec/pipelines.md#ppt_to_transfer) / [ppt_to_puremd](spec/pipelines.md#ppt_to_puremd) / [ppt_to_notecom](spec/pipelines.md#ppt_to_notecom) |
-| [spec/validation.md](spec/validation.md) | [checkgen](spec/validation.md#checkgen) / [checkverify](spec/validation.md#checkverify) / [validate](spec/validation.md#validate) |
+| [spec/validation.md](spec/validation.md) | [checkgen](spec/validation.md#checkgen) / [checkverify](spec/validation.md#checkverify) / [validate](spec/validation.md#validate) / [explain](spec/validation.md#explain) |
 
 レシピ YAML の全キー一覧は [recipe_key_reference.md](recipe_key_reference.md) を正典とする。分冊側は各キーの**挙動**を記述し、キーの網羅列挙は行わない。
+
+変数・条件・番号マーカーの**書き方の約束**と、意図的に入れない機能は [recipe_design_guide.md](recipe_design_guide.md) にまとめている。
 
 原稿 MD・PPTX ノート・テンプレートに書ける**記法**の一覧は [notation_reference.md](notation_reference.md) を索引とする。こちらも同様に、分冊側が挙動の正典で、索引側は網羅と相互リンクに徹する。
 
@@ -428,10 +463,10 @@ md_merge/
 │   ├── md_merge_spec.md            # ツール仕様書（共通仕様 ＋ 分冊への索引）
 │   ├── spec/                       # サブコマンド詳細仕様（§7 の分冊）
 │   │   ├── md_pipeline.md          #   merge / idcollect / idresolve / render
-│   │   ├── output_formats.md       #   pandoc / puremd / condblockprocess / transfer / notecomexport
+│   │   ├── output_formats.md       #   pandoc / puremd / 表紙 / transfer / notecomexport
 │   │   ├── pptx.md                 #   pptmerge / pptimgexport / pptmdexport / pptyamlexport / pptpdfexport
 │   │   ├── pipelines.md            #   crop_to_pdf / ppt_to_pdf / ppt_to_transfer / ppt_to_puremd / ppt_to_notecom
-│   │   └── validation.md           #   checkgen / checkverify / validate
+│   │   └── validation.md           #   checkgen / checkverify / validate / explain
 │   ├── md_pptx_merge_spec.yaml     # レシピ YAML スキーマ仕様
 │   ├── md_inventory_spec.yaml      # インベントリ YAML スキーマ仕様
 │   └── md_resolved_spec.yaml       # ID解決済み YAML スキーマ仕様
@@ -439,7 +474,7 @@ md_merge/
 │   └── md_merge/
 │       ├── __init__.py
 │       ├── __main__.py
-│       ├── _filters.py             # 共有フィルター（escape_backslash_smart・replace_slide_placeholders）（pptmdexport / pptimgexport / pptyamlexport / condblockprocess 共有）
+│       ├── _filters.py             # 共有フィルター（escape_backslash_smart・replace_slide_placeholders）（pptmdexport / pptimgexport / pptyamlexport 共有）
 │       ├── _cropsrc.py             # input.cropsrc の正規化・パス解決（ppt*export / --preprocess 共有）
 │       ├── _note_parser.py         # NOTE_CONTENT_FORMAT パーサー（pptmdexport / pptimgexport / pptyamlexport 共有）
 │       ├── _inventory.py           # ID インベントリ抽出・出力（merge / idinventory 共有）
@@ -448,8 +483,8 @@ md_merge/
 │       ├── _resolve.py             # ID 解決ロジック（idresolve 用）
 │       ├── filters/                # ビルトイン Lua filter（パッケージデータ）
 │       │   └── *.lua
-│       ├── templates/              # TeX テンプレートサンプル（パッケージデータ）
-│       │   └── *.tex
+│       ├── templates/              # typst テンプレート・表紙・同梱 defaults（パッケージデータ）
+│       │   └── *.typ / *.typst / *.md / *.yaml / *.html
 │       ├── idcollect/
 │       │   └── __init__.py         # idcollect サブコマンド
 │       ├── idresolve/
@@ -477,10 +512,8 @@ md_merge/
 │       │   └── __init__.py         # pptpdfexport サブコマンド（win32com PDF エクスポート）
 │       ├── ppt_to_pdf/
 │       │   └── __init__.py         # ppt_to_pdf パイプライン（pptimgexport→pptmdexport→…→pandoc）
-│       ├── condblockprocess/
-│       │   └── __init__.py         # condblockprocess サブコマンド（条件ブロック・変数置換）
 │       ├── puremd/
-│       │   └── __init__.py         # puremd サブコマンド（LaTeX raw ブロック除去）
+│       │   └── __init__.py         # puremd サブコマンド（raw ブロック除去・GFM への降格）
 │       ├── render/
 │       │   └── __init__.py         # render サブコマンド
 │       ├── transfer/
@@ -502,8 +535,8 @@ md_merge/
 ```text
 my_project/
 ├── pandoc/                          # プロジェクト共通 pandoc 設定
-│   ├── defaults_pdf.yaml            # PDF 出力用 defaults
-│   ├── defaults_latex.yaml          # LaTeX 出力用 defaults
+│   ├── defaults_pdf.yaml            # PDF（typst）出力用 defaults
+│   ├── defaults_html.yaml           # HTML 出力用 defaults
 │   └── metadata_common.yaml        # 共通メタデータ（組織名・フォント等）
 │
 ├── doc_a/                           # 文書 A

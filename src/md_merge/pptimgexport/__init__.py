@@ -3,7 +3,6 @@ from __future__ import annotations
 import argparse
 import json
 import logging
-import re
 import sys
 from io import BytesIO
 from pathlib import Path
@@ -14,22 +13,22 @@ from pptx import Presentation
 
 from md_merge._filters import replace_slide_placeholders
 from md_merge._note_parser import parse_note_image_directives
-from md_merge._cropsrc import cropsrc_entries, resolve_cropsrc_path
+from md_merge._cropsrc import auto_cropsrc_pdf_path, cropsrc_entries, resolve_cropsrc_path
 from md_merge._output import EXIT_BAD_INPUT, EXIT_FAILURE, EXIT_NOT_FOUND, EXIT_OK, emit, setup_logging
 from md_merge._preprocess import cropsrc_read_path
 from md_merge._shapes import find_shape, not_found_reason
+from md_merge._steps import STEP_ALL as _STEP_ALL
+from md_merge._steps import STEP_LAST as _STEP_LAST
+from md_merge._steps import STEP_PLACEHOLDER as _STEP_PLACEHOLDER
+from md_merge._steps import count_click_steps
+from md_merge._steps import parse_step_spec as _parse_step_spec
 from md_merge.merge._recipe import load_yaml, resolve_input_path, resolve_workdir, setup_recipe_file_logging
-from md_merge.pptmerge._config import resolve_base
 
 _DEFAULT_DPI = 150
 _MODE_SLIDE = "slide"
 _MODE_NAMED_SHAPE = "named_shape"
 _MODE_SLIDE_WITH_RECTPCT = "slide_with_rectpct"
 _KNOWN_MODES = {_MODE_SLIDE, _MODE_NAMED_SHAPE, _MODE_SLIDE_WITH_RECTPCT}
-_STEP_PLACEHOLDER = "<__STEP__>"
-_STEP_ALL = "all"
-_STEP_LAST = "last"
-_STEP_ITEM_RE = re.compile(r"^(\d+)(?:\s*-\s*(\d+))?$")
 
 
 def _to_ltrb_float(
@@ -44,16 +43,6 @@ def _to_ltrb_float(
 
 
 
-def _auto_pdf_path(pptx_val: str, output_section: dict, yaml_path: Path, workdir: Path | None) -> Path:
-    """Auto-generate PDF path as output.outputdir/<pptx_stem>.pdf."""
-    base = resolve_base(yaml_path, workdir)
-    outdir_val = output_section.get("outputdir")
-    if outdir_val:
-        p = Path(str(outdir_val))
-        out_dir = p if p.is_absolute() else (base / p).resolve()
-    else:
-        out_dir = base
-    return out_dir / (Path(pptx_val).stem + ".pdf")
 
 
 def _crop_pdf_page(
@@ -99,30 +88,6 @@ def _slide_pixel_size(slide_width: int, slide_height: int, dpi: int) -> tuple[in
     rect = fitz.Rect(0, 0, slide_width / 12700, slide_height / 12700) * fitz.Matrix(scale, scale)
     irect = rect.irect
     return irect.width, irect.height
-
-
-def _parse_step_spec(raw: str) -> list[int] | str | None:
-    """``export-image-step`` の値を解釈する。
-
-    戻り値: 空なら None（PDF 経路）、``all`` / ``last`` はその文字列、それ以外は昇順・重複なしの
-    ステップ番号リスト（``0-3, 5`` 形式）。書式が不正なら ValueError。
-    """
-    raw = raw.strip()
-    if not raw:
-        return None
-    if raw.lower() in (_STEP_ALL, _STEP_LAST):
-        return raw.lower()
-    steps: set[int] = set()
-    for item in raw.split(","):
-        m = _STEP_ITEM_RE.match(item.strip())
-        if not m:
-            raise ValueError(f"ステップ指定を解釈できません: {item.strip()!r}")
-        lo = int(m.group(1))
-        hi = int(m.group(2)) if m.group(2) is not None else lo
-        if hi < lo:
-            raise ValueError(f"範囲の向きが逆です: {item.strip()!r}")
-        steps.update(range(lo, hi + 1))
-    return sorted(steps)
 
 
 def _is_multi_step(spec: list[int] | str) -> bool:
@@ -201,7 +166,7 @@ def run(args: argparse.Namespace) -> int:
         if pdf_val:
             pdf_path = resolve_cropsrc_path(str(pdf_val), yaml_path, workdir)
         else:
-            pdf_path = _auto_pdf_path(str(pptx_val), output_section, yaml_path, workdir)
+            pdf_path = auto_cropsrc_pdf_path(str(pptx_val), output_section, yaml_path, workdir)
             logging.debug("%s.pdf: 自動生成 %s", label, pdf_path)
 
         if not pptx_path.exists():
@@ -247,6 +212,8 @@ def run(args: argparse.Namespace) -> int:
             )
 
         tasks: list[dict] = []
+        # p:timing から数えたクリック数（キャプチャ時の GetClickCount() との照合用）
+        offline_clicks: dict[int, int] = {}
         for slide_idx, slide in enumerate(prs.slides, start=1):
             note_text = ""
             if slide.has_notes_slide:
@@ -345,6 +312,9 @@ def run(args: argparse.Namespace) -> int:
                 export_path = Path(export_val)
                 out_path = export_path if export_path.is_absolute() else (pptx_path.parent / export_path).resolve()
 
+                if step_spec is not None and slide_idx not in offline_clicks:
+                    offline_clicks[slide_idx] = count_click_steps(slide)
+
                 tasks.append({
                     "slide": slide_idx,
                     "mode": mode,
@@ -383,6 +353,7 @@ def run(args: argparse.Namespace) -> int:
             step_errors, step_failures = _run_step_tasks(
                 args, pptx_path, read_pptx_path, step_tasks,
                 _slide_pixel_size(sw, sh, dpi), force, dry_run, crop_results,
+                offline_clicks,
             )
             errors += step_errors
             failures.extend(step_failures)
@@ -485,6 +456,7 @@ def _run_step_tasks(
     force: bool,
     dry_run: bool,
     crop_results: list[dict],
+    offline_clicks: dict[int, int] | None = None,
 ) -> tuple[int, list[str]]:
     """``export-image-step`` 付きタスクをスライドショーのキャプチャで処理する。
 
@@ -532,6 +504,15 @@ def _run_step_tasks(
                     if slide_n not in click_counts:
                         click_counts[slide_n] = show.click_count(slide_n)
                         logging.debug("slide %d: GetClickCount() = %d", slide_n, click_counts[slide_n])
+                        offline = (offline_clicks or {}).get(slide_n)
+                        if offline is not None and offline != click_counts[slide_n]:
+                            # pptmdexport の <!-- #steps --> 展開は p:timing の数を使うので、
+                            # ずれると MD が存在しない画像を参照する（または一部を落とす）
+                            logging.warning(
+                                "slide %d: ステップ数が一致しません（GetClickCount()=%d, p:timing のクリック数=%d）。"
+                                "<!-- #steps --> の [all] / [last] 展開がキャプチャ結果とずれます",
+                                slide_n, click_counts[slide_n], offline,
+                            )
                     clicks = click_counts[slide_n]
                 except StepCaptureError as e:
                     fail(slide_n, str(e))

@@ -1,4 +1,4 @@
-version: 2
+version: 4
 _constants: ../constants_settings.toml
 
 # PowerPointファイル結合指示サンプル
@@ -33,8 +33,6 @@ output:
   renderedfilename:         # 結合後のmdファイルに対してタイトル置換・参照置換を行ったレンダー済みmdファイルのファイル名
   puremdfilename:         # rendered.mdファイルからlatex命令を削除した純粋なmdファイルのファイル名。MD自体でプレビューを見るときはこれを使う
   pdffilename:          
-  texfilename:          
-  resourcepathfilename: 
   htmlfilename:        
   revealfilename:        
 
@@ -45,7 +43,7 @@ indexer:
 
 # merge サブコマンドのオプション
 merge:
-  no-copy-images: false # trueなら画像ファイルのコピーおよびパス書き換えを行わない。（既定値 false は画像ファイルのコピーおよびパス書き換えを行う）
+  copy-images: true # falseなら画像ファイルのコピーおよびパス書き換えを行わない。（既定値 true は画像ファイルのコピーおよびパス書き換えを行う。旧キー no-copy-images も可）
   image-dir:          # 画像コピー先サブディレクトリ名（既定: 空値。結合後のmdファイルでもソースのmdファイルの相対パスを維持するように画像ファイルをコピーする）
   flatten-images: false # trueならすべての画像を<outputdir>/<image-dir>/ にフラット集約する。同名ファイルは _1, _2 … のサフィックスを付けて上書きを回避する（既定: false）
   strict: false         # 警告をエラーとして扱う（既定: false）

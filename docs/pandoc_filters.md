@@ -16,19 +16,20 @@ pandoc:
 
 ## fenced div クラス一覧
 
-`::: {.CLASS ...}` 形式の fenced div を処理する filter とクラスの対応。特記なき場合、ラップ処理は出力形式が **LaTeX のときのみ** 適用され、それ以外の形式では素通しする。
+`::: {.CLASS ...}` 形式の fenced div を処理する filter とクラスの対応。特記なき場合、ラップ処理は出力形式が **typst（PDF）のときのみ** 適用され、HTML ではクラス付きの `<div>` のまま `semantic.css` が装飾する。関数の定義と既定の見た目は `templates/semantic_macros.typ`。
 
 | クラス | filter | 処理内容 |
 |---|---|---|
-| `leadline` | `divboxes.lua` | `leadlinebox` 環境でラップ（擬似見出し用、既定は枠なし） |
-| `note` | `divboxes.lua` | `notebox` 環境でラップ（補足情報、薄い囲み） |
-| `warning` | `divboxes.lua` | `warningbox` 環境でラップ（注意喚起、強い囲み） |
-| `widequote` | `divboxes.lua` | `widequotebox` 環境でラップ |
-| `largefontblock` | `largefontblock.lua` | `largefontblock` 環境でラップ |
-| `blockindent` | `blockindent.lua` | `blockindent` 環境でラップ |
-| `keep-together` | `keep-together.lua` | 直前に `\Needspace{...}` を挿入し、クラスを除去（改ページ抑制） |
+| `leadline` | `divboxes.lua` | `#sem-box("leadline")[…]` でラップ（擬似見出し用、既定は枠なし） |
+| `note` | `divboxes.lua` | `#sem-box("note")[…]` でラップ（補足情報、薄い囲み） |
+| `warning` | `divboxes.lua` | `#sem-box("warning")[…]` でラップ（注意喚起、強い囲み） |
+| `widequote` | `divboxes.lua` | `#sem-box("widequote")[…]` でラップ |
+| `largefontblock` | `largefontblock.lua` | `#semlargefontblock[…]` でラップ |
+| `blockindent` | `blockindent.lua` | `#semblockindent(indent: …)[…]` でラップ（HTML は margin-left） |
+| `keep-together` | `keep-together.lua` | `#semkeeptogether[…]`（分割しない block）でラップ。HTML は `break-inside: avoid` |
+| `center` | `center.lua` | `#semcenter[…]` でラップ。HTML は `text-align: center` |
 
-> これらの fenced div は LaTeX/PDF 出力では上表の Lua filter が処理する。一方 `puremd` サブコマンドは、pandoc を通さずにこれらの fenced div を素の Markdown（GitHub 風アラート `> [!NOTE]` / ラベル付き引用 `> **CLASS**`）へ変換する。詳細は [spec/output_formats.md の「fenced div の変換」](spec/output_formats.md#fenced-div-の変換) を参照。
+> これらの fenced div は PDF（Typst）・HTML 出力では上表の Lua filter が処理する。一方 `puremd` サブコマンドは、pandoc を通さずにこれらの fenced div を素の Markdown（GitHub 風アラート `> [!NOTE]` / ラベル付き引用 `> **CLASS**`）へ変換する。詳細は [spec/output_formats.md の「fenced div の変換」](spec/output_formats.md#fenced-div-の変換) を参照。
 
 ### 使用例
 
@@ -45,8 +46,8 @@ pandoc:
 ここは注意書きです。読み飛ばされると困る内容を置く。
 :::
 
-::: {.keep-together lines=14}
-このブロックは 14 行分のスペースが確保できないとき改ページする。
+::: {.keep-together}
+このブロックはページをまたがない（収まらなければ次のページへ送る）。
 :::
 
 細い枠
@@ -79,7 +80,7 @@ pandoc:
 
 fontsizeを指定する方法は？
 
-fontsize 属性で指定します（値は LaTeX のフォントサイズ命令）。box 系（note / warning / leadline / widequote）で使えます。内部的には kind/font={値} → fontupper=値 として box の本文に適用されます。
+fontsize 属性で指定します（値は旧 LaTeX 版と同じフォントサイズ命令か、14pt のような長さ）。box 系（note / warning / leadline / widequote）で使えます。Typst では本文に対する倍率（\large → 1.2em など）に読み替えます。
 
 相対サイズ（簡単・推奨）
 ::: {.widequote fontsize="\large"}
@@ -90,16 +91,16 @@ fontsize 属性で指定します（値は LaTeX のフォントサイズ命令�
 \tiny \scriptsize \footnotesize \small \normalsize \large \Large \LARGE \huge \Huge
 
 絶対サイズ（pt 指定）
-::: {.widequote fontsize="\fontsize{14pt}{17pt}\selectfont"}
+::: {.widequote fontsize=14pt}
 テキスト
 :::
-- 第1引数＝文字サイズ、第2引数＝行送り（目安は文字サイズの約1.2倍。14pt なら 17pt 前後）。
+- LaTeX の `"\fontsize{14pt}{17pt}\selectfont"` は読み替えられず、警告して無視されます。行送りは stretch 属性で変えます。
 
 注意点
 
 - 値はクォートで囲む：\ を含むので fontsize="\large" のように必ず "..." で。素で書くとパンドックの属性解析で崩れます。
-- 対象は box 系のみ：note / warning / leadline / widequote。largefontblock（＝\Large 固定）・blockindent・center は tcolorbox ではないので fontsize は効きません。
-- leadline は太字ゴシックが前置されます（leadline/font が \gtfamily\sffamily\bfseries を付ける）。なので ::: {.leadline fontsize="\LARGE"} はゴシック太字＋特大になります。
+- 対象は box 系のみ：note / warning / leadline / widequote。largefontblock（＝\Large 相当で固定）・blockindent・center では fontsize は効きません。
+- leadline は既定で太字ゴシックです。なので ::: {.leadline fontsize="\LARGE"} はゴシック太字＋特大になります。
 
 背景色や余白と併用する例：
 ::: {.widequote frame=true colback=blue!8 fontsize="\large" left=6mm}
@@ -112,24 +113,22 @@ fontsize 属性で指定します（値は LaTeX のフォントサイズ命令�
 
 ## divboxes.lua の属性
 
-`leadline` / `note` / `warning` / `widequote` の各クラスでは、div 属性を tcolorbox オプションに変換して付与できる。指定できる属性は以下に限定される（`allowed` リスト）。属性は固定順で処理される。
+`leadline` / `note` / `warning` / `widequote` の各クラスでは、div 属性を `#sem-box` の引数に読み替えて見た目を調整できる（PDF のみ。HTML では属性を使わない）。属性名と値の書き方は旧 LaTeX（tcolorbox）版と同じものを受け付ける。指定できる属性は以下に限定される（`divboxes.lua` の `TYPST_ARGS`）。
 
-| 属性 | 変換先 / 意味 |
-|---|---|
-| `frame` | `true`/`yes`/`1` で `<kind>/frame` スタイル、`false`/`no`/`0` で `<kind>/noframe`（既定） |
-| `fontsize` | `<kind>/font={...}`（`leadline/font` など） |
-| `stretch` | `<kind>/stretch={...}` |
-| `before_skip` | `before skip={...}` |
-| `after_skip` | `after skip={...}` |
-| `left` / `right` / `top` / `bottom` | 同名の tcolorbox オプション `key={value}` |
-| `colback` / `colframe` | 背景色 / 枠色 `key={value}` |
-| `boxrule` | 枠線太さ `boxrule={value}` |
-| `width` | 幅 `width={value}` |
-| `center` | `true`/`yes`/`1` のとき `center` オプションを付与 |
+| 属性 | `#sem-box` の引数 | 値 |
+|---|---|---|
+| `frame` | `frame` | 真偽値。既定は種類ごと（`semantic_macros.typ`） |
+| `width` | `width` | 長さ。`0.7\linewidth` は `70%` に、`%` / `mm` / `cm` / `pt` / `em` / `in` はそのまま、`bp` は `pt` に |
+| `center` | `center` | 真偽値（箱を中央寄せ） |
+| `colback` / `colframe` | `fill` / `stroke-color` | 色。xcolor の `name` / `name!pct` / `name!pct!name2` と `#RRGGBB` |
+| `boxrule` | `rule` | 長さ（枠線の太さ） |
+| `left` / `right` / `top` / `bottom` | 同名 | 長さ（内側の余白） |
+| `before_skip` / `after_skip` | `above` / `below` | 長さ（箱の前後の空き） |
+| `fontsize` | `size` | `\large` などのサイズ命令（本文に対する倍率に読み替え）か長さ |
+| `stretch` | `stretch` | 数値（行送りの倍率） |
 
-- `<kind>` はクラス名（`leadline` / `note` / `warning` / `widequote`）。
 - 真偽値は `true`/`yes`/`1` と `false`/`no`/`0` を受け付ける。
-- `allowed` にない属性（`style` など）は無視される。
+- 読み替えられない値は警告して無視する（Typst への生の注入を防ぐ）。表にない属性も無視される。
 
 ---
 
@@ -178,7 +177,6 @@ pptmdmerge merge recipe.yaml
 
 - 言語名は pandoc（skylighting）の名前をそのまま指定する（`bash` / `sh` / `console` / `powershell` / `yaml` / `python` など）。
 - ハイライトのスタイルはレシピキー `pandoc.syntax-highlighting`（例 `tango`）で指定し、`--syntax-highlighting` に渡る。詳細は [spec/output_formats.md](spec/output_formats.md) の pandoc セクションを参照。
-- LaTeX 出力では、ハイライト用マクロ（`Shaded` / `Highlighting` / `\KeywordTok` 等）の定義はテンプレート側が担う。同梱テンプレートは `report_template.tex` が pandoc 3.x のパーシャル `$common.latex()$` 経由、`book_template.tex` が `$highlighting-macros$` の直接展開で対応済み。自作テンプレートを使う場合はどちらかを備えること（無いと未定義マクロで LaTeX が失敗する）。
 - HTML / GFM（`puremd`・`transfer`）出力ではコードブロックのまま素通しする。
 
 ### 予約済みの info string
@@ -186,7 +184,7 @@ pptmdmerge merge recipe.yaml
 | info string | 意味 |
 |---|---|
 | ` ```{.include} ` | 別 MD の取り込み（前述の include コードブロック）。コード例として書くと展開されてしまう |
-| ` ```{=latex} ` / ` ```{=html} ` | raw passthrough（`semantics.yaml` の `raw:`）。非対象形式では警告して破棄し、`puremd` では `=latex` を破棄する |
+| ` ```{=typst} ` / ` ```{=html} ` | raw passthrough（`semantics.yaml` の `raw:`）。非対象形式では警告して破棄し、`puremd` では `=typst` / `=latex` を破棄する。`{=latex}` はどの出力でも破棄される（LaTeX は撤去済み） |
 
 これら以外の info string（`bash` 等）は filter の対象外で、そのまま出力形式へ渡る。
 
@@ -213,7 +211,7 @@ pptmdmerge ppt_to_pdf recipe.yaml
 
 ### インラインのコード・パス
 
-インラインは素の `` `foo` `` でもよいが、セマンティック記述に寄せる場合はインラインクラス `path` を使う（`[recipe.yaml]{.path}` → LaTeX `\sempath` / HTML `<code>` / GFM バッククォート）。キー入力は `kbd`（`[Ctrl+C]{.kbd}`）。
+インラインは素の `` `foo` `` でもよいが、セマンティック記述に寄せる場合はインラインクラス `path` を使う（`[recipe.yaml]{.path}` → Typst `#sempath` / HTML `<code>` / GFM バッククォート）。キー入力は `kbd`（`[Ctrl+C]{.kbd}`）。
 
 ---
 
@@ -221,10 +219,11 @@ pptmdmerge ppt_to_pdf recipe.yaml
 
 | filter | 主な対象 | 役割 | 主な出力形式 |
 |---|---|---|---|
-| `divboxes.lua` | fenced div（`leadline`/`note`/`warning`/`widequote`） | tcolorbox 環境でラップ | LaTeX |
-| `largefontblock.lua` | fenced div（`largefontblock`） | `largefontblock` 環境でラップ | LaTeX |
-| `blockindent.lua` | fenced div（`blockindent`） | `blockindent` 環境でラップ | LaTeX |
-| `keep-together.lua` | fenced div（`keep-together`） | `\Needspace{...}` 挿入で改ページ抑制 | LaTeX |
+| `divboxes.lua` | fenced div（`leadline`/`note`/`warning`/`widequote`） | `#sem-box` でラップ | typst |
+| `largefontblock.lua` | fenced div（`largefontblock`） | `#semlargefontblock` でラップ | typst |
+| `blockindent.lua` | fenced div（`blockindent`） | `#semblockindent` でラップ | typst / HTML |
+| `keep-together.lua` | fenced div（`keep-together`） | `#semkeeptogether` で分割を抑制 | typst |
+| `center.lua` | fenced div（`center`） | `#semcenter` / `text-align` | typst / HTML |
 | `include-files.lua` | code block（`include`） | 別 MD を取り込み | 全形式 |
 | `include-files-resource-path.lua` | code block（`include`） | 別 MD を取り込み（resource-path 対応） | 全形式 |
 | `dump-sections.lua` | Header | 章節項一覧を stderr へ出力 | 全形式（本文不変） |

@@ -15,7 +15,6 @@
 
 
 
-<!-- source: defaults/common_assets/tex_newpage.md -->
 
 
 
@@ -51,7 +50,6 @@ pptmdmerge pptmerge PROJECT_ROOT\examples\pm1_simple_ppt_merge_recipe.yaml --for
 
 結果、ファイル4が生成されれば成功です
 
-<!-- source: defaults/common_assets/tex_newpage.md -->
 
 
 
@@ -68,7 +66,6 @@ pptmdmerge pptmerge PROJECT_ROOT\examples\pm1_simple_ppt_merge_recipe.yaml --for
 ![](build/figures/simple_ppt_merge_guide_slide3_fig.png)
 
 
-<!-- source: defaults/common_assets/tex_newpage.md -->
 
 
 

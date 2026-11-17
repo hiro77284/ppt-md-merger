@@ -1,4 +1,4 @@
-# 検証系サブコマンド仕様（checkgen / checkverify / validate）
+# 検証系サブコマンド仕様（checkgen / checkverify / validate / explain）
 
 > [仕様書トップ](../md_merge_spec.md) — 共通オプション・入力/出力指定・ログ・JSON・dry-run の各仕様はトップを参照。
 
@@ -122,7 +122,7 @@ pptmdmerge checkverify recipe.yaml --json
 
 ### 概要
 
-レシピ YAML を読み込み、(1) **未知のキー**の検査、(2) **`input.cropsrc` と `procedure` の対応**の検査、(3) **`vars` 値の生 LaTeX** の検査を行う。ファイルの生成・変更は行わない。
+レシピ YAML を読み込み、(1) **未知のキー**の検査、(2) **`input.cropsrc` と `procedure` の対応**の検査、(3) **`vars` 値の生 LaTeX** の検査、(4) **変数・条件・番号マーカー**の検査を行う。ファイルの生成・変更は行わない。
 
 ### 使用例
 
@@ -130,6 +130,8 @@ pptmdmerge checkverify recipe.yaml --json
 pptmdmerge validate recipe.yaml
 pptmdmerge validate recipe.yaml --strict   # 警告があれば終了コード 1
 pptmdmerge validate recipe.yaml --json
+pptmdmerge validate recipe.yaml --list-params   # params: の一覧（切り替えに使える --var）
+pptmdmerge validate recipe.yaml --var TARGET=RECIPRO   # --var の値も宣言と照合する
 ```
 
 ### 固有オプション
@@ -138,10 +140,11 @@ pptmdmerge validate recipe.yaml --json
 | ---------- | ---- | ---- |
 | `--workdir` / `-w` DIR | input / output の相対パスをこのディレクトリ基準で解釈する | 任意 |
 | `--strict` | 警告（未知キー・vars 生 LaTeX 等）が1件でもあれば終了コード 1 を返す | 任意 |
+| `--list-params` | `params:` で宣言された変数（名前・取りうる値・既定値・説明）を表示して終了する | 任意 |
 
 ### 1) 未知キー検査
 
-トップレベル・各セクション（`input` / `output` / `merge` / `pandoc` / `indexer` / `log` / `pptmerge` / `separator` / `puremd`）・`procedure` の各アイテム（操作ごとの許可キー）について、スキーマに無いキーを **warning** で報告する。`procedure` の `when:`（条件付き適用）はどの操作でも許可し、未知のキー・値の型（文字列または文字列のリスト）・実在しないサブコマンド名・同じ名前が `command` と `not_command`（または `tag` と `not_tag`）の両方にある場合を warning にする。`version` が未指定または `1`（operation 記法は非推奨）の場合も警告する。`version` と `procedure` 記法の不整合（version 2 に operation 記法、version 1 に操作キー記法、未対応の `version` 値など）は **error** として全件を報告し、終了コード 1 で終了する（[仕様書トップ](../md_merge_spec.md) 5.3）。`description` はどの階層でも人間用メモとして許可される。`--strict` 指定時、警告が1件以上あれば終了コード 1。
+トップレベル・各セクション（`input` / `output` / `merge` / `pandoc` / `indexer` / `log` / `pptmerge` / `separator` / `puremd`）・`procedure` の各アイテム（操作ごとの許可キー）について、スキーマに無いキーを **warning** で報告する。`procedure` の `when:`（条件付き適用）はどの操作でも許可し、未知のキー・値の型（文字列または文字列のリスト）・実在しないサブコマンド名・同じ名前が `command` と `not_command` の両方にある場合を warning にする。廃止した `tag` / `not_tag` と、`var` の不正な条件式は **error** にする。`- group:`（項目の束）の `when:` も同じ基準で検査し、位置を `procedure[3].group[1]` のように示す。group 要素の書式誤り（値が空・リストでない、許可外のキー）は記法エラーとして **error**。`version` が未指定または `1`（operation 記法は非推奨）の場合も警告する。version 3 以前で `pandoc.typst-cover-md` が無く `cover-md` / `conditional-process-input` がある場合も警告する（version 2 以前は「暗黙の標準表紙を使っている」、version 3 は「LaTeX 用の表紙は使われず表紙が付かない」）。version 3 以前で LaTeX 専用の pandoc キー（`template` / `include-in-header` / `include-before-body` / `conditional-process-*` / `format`）があると「使わない」と警告する。version 3 以前で `pandoc.metadata-file` があると非推奨と警告する。version 4 で廃止した pandoc キー（`typst-cover-md` / `typstdefaults` / `engine` / `metadata-file` と上の LaTeX 専用キー）と、`pandoc.engine` に typst 以外を書いたものは **error**（移行先を案内する）。`version` と `procedure` 記法の不整合（version 2 以降に operation 記法、version 1 に操作キー記法、未対応の `version` 値など）は **error** として全件を報告し、終了コード 1 で終了する（[仕様書トップ](../md_merge_spec.md) 5.3）。`description` はどの階層でも人間用メモとして許可される。`--strict` 指定時、警告が1件以上あれば終了コード 1。
 
 ### 2) cropsrc 使用状況チェック（info）
 
@@ -160,6 +163,25 @@ pptmdmerge validate recipe.yaml --json
 
 （`!include ../../common_assets/TEX_VARS.yaml` 等で取り込んだ legacy な `TEX_*` 変数は生 latex 値なので、この検査で移行対象として可視化される。）
 
+### 4) 変数・条件・番号マーカー検査
+
+レシピに加え、procedure の **insertmd が参照する MD**、**insertvar が挿入する変数の値** と **`input.cropsrc` の pptx ノート**を読んで検査する（見つからないファイルは飛ばし、件数を info で表示する。生成前の MD は検査されないので、ノート側の `{{#if}}` は cropsrc で検査される）。` ``` ` / `~~~` のフェンス内は対象外。
+
+| 種別 | 内容 | 重さ |
+| ---- | ---- | ---- |
+| `params:` の誤り | 書式、`vars:` との重複、`--var` の未宣言名・範囲外の値、`when.var` の未宣言名・範囲外の比較値（[md_pipeline](md_pipeline.md#切り替え用の変数の宣言params) と同じ検査） | error |
+| 未宣言の変数（`params:` あり） | MD / ノートの `{{#if}}` が `params:` にも `vars:` にも無い名前、または取りうる値でない比較値を使っている（実行時もエラーになる） | error |
+| 未定義の変数（`params:` なし） | `when.var` / `{{#if}}` が `vars:` に無い名前を使っている（未定義は偽になり、打ち間違いでも黙って除外される）。名前ごとにまとめて場所を表示 | warning |
+| 未定義の `{{v:}}` | `vars:`・`params:`・insertpptx の `vars:` のどれにも無い名前（置換されずに残る） | warning |
+| 未定義の insertvar | procedure の `insertvar` の変数名が `vars:` にも `params:` にも無い（`--var` で渡さなければ何も挿入されない） | warning |
+| 未使用の param | `params:` で宣言したが when.var / insertvar / MD / ノートのどこからも参照されていない（表紙テンプレートだけで使う場合は無視してよい） | warning |
+| 結果が変わらない when | 値を列挙できる param（`values` / `bool`）だけを使う `when.var` で、どの値の組み合わせでも常に適用、または常に除外になる（group から引き継いだ条件も含めて判定。`command` 条件は見ない） | warning |
+| 深すぎる入れ子 | `{{#if}}` が 3 段以上、`group` が 2 段以上 | warning |
+| 番号マーカーの誤り | `{{nolabel}}` / `{{noref}}` / `{{nonum}}` が `{{#id:}}` の無い行にある（効かない）。`{{nolabel}}` と `{{nonum}}` の併用（`nonum` は採番しないので `nolabel` は不要） | warning |
+| 同じ when の連続 | トップレベルで同じ `when:` が 3 回以上続く（insertvfill 等の区切りは連続を切らない）。`- group:` にまとめる提案 | info |
+
+error が 1 件でもあれば終了コード 1。warning は `--strict` のときだけ終了コード 1。info は終了コードに影響しない。
+
 ### 終了コード
 
 | 状況 | 終了コード |
@@ -167,8 +189,57 @@ pptmdmerge validate recipe.yaml --json
 | 警告なし（cropsrc 使用状況の info の有無は不問） | 0 |
 | 警告あり・`--strict` 未指定 | 0 |
 | 警告あり・`--strict` 指定 | 1 |
+| エラーあり（記法・`params:`・未宣言の変数） | 1 |
 | 入力ファイル未指定 | 2 |
 | 入力ファイルが存在しない | 3 |
 | YAML 読み込みエラー | 1 |
 
-`--json` 指定時は `{"status": "ok"|"warn", "input": ..., "warnings": [...], "cropsrc_usage": [...]}` を出力する。
+`--json` 指定時は `{"status": "ok"|"warn", "input": ..., "warnings": [...], "cropsrc_usage": [...], "suggestions": [...]}` を出力する（エラー時は `{"status": "error", "errors": [...], "warnings": [...]}`）。
+
+---
+
+## explain
+
+### 概要
+
+条件（procedure の `when:` / `group` と、MD の `{{#if}}`）を展開した結果を表示する。ファイルの生成・変更は行わない。与えた `--var` のもとで procedure のどの項目が採用／除外されるかを、判定に使った条件つきで一覧にする（レシピの「デバッガ」）。
+
+### 使用例
+
+```bash
+pptmdmerge explain recipe.yaml                          # 既定値（params: の default）で
+pptmdmerge explain recipe.yaml --var TARGET=RECIPRO     # 値を与えて
+pptmdmerge explain recipe.yaml --command ppt_to_pdf     # when.command も判定する
+pptmdmerge explain recipe.yaml --matrix TARGET          # 値ごとに結果が変わる項目だけ
+pptmdmerge explain recipe.yaml --matrix TARGET --matrix STEP   # 全組み合わせ
+pptmdmerge explain recipe.yaml --matrix EDITION=print,web      # params: に無い変数は値を並べる
+pptmdmerge explain recipe.yaml --blocks                 # 採用された insertmd の {{#if}} の判定も
+```
+
+### 固有オプション
+
+| オプション | 説明 | 必須 |
+| ---------- | ---- | ---- |
+| `--workdir` / `-w` DIR | input の相対パスをこのディレクトリ基準で解釈する（`--blocks` 用） | 任意 |
+| `--command` NAME | `when.command` / `not_command` をこのサブコマンド名で判定する。省略時は command 条件を満たすものとして扱い、行末に `(command 条件は未評価)` と出す | 任意 |
+| `--matrix` NAME[=a,b] | 変数の値ごとに結果を比べ、値によって採用／除外が変わる項目だけを表示する。値は `params:` の `values` / `type: bool` から取る（`NAME=a,b` で明示も可）。繰り返すと全組み合わせ（上限 64） | 任意 |
+| `--blocks` | 採用された insertmd ファイル中の `{{#if}}` / `{{#else}}` ごとに「残す／削る」を表示する（見つからないファイルは飛ばす） | 任意 |
+
+### 出力
+
+```
+# explain: book.yaml
+# vars: TARGET=RECIPRO
+ 0 ✓ insertpptx src/cover.pptx (slides: all)
+ 1 ✓ insertmd q1_md.md
+ 2 ✓ insertmd q1_answer_md.md   [var TARGET=RECIPRO ○]
+ 3 ✗ insertmd q1_note_md.md   [procedure[4] var TARGET=PDF ×]
+# 採用 3 / 全 4 項目
+```
+
+- 番号は group 展開後の procedure の位置。条件の前の `procedure[4]` は、その条件を引き継いだ group の位置。
+- `--matrix` は列ごとの採用（`✓`）／除外（`·`）を並べる。どの組み合わせでも同じなら「差はありません」と出す。
+- 出力は安定したテキストなので、ファイルに保存して git diff すれば、レシピを編集したときに意図しない項目が入った／消えたことを検出できる。
+- `--json` では `{"status": "ok", "items": [{"index", "item", "active", "conditions", "command_unevaluated"}], "blocks": {...}}`（`--matrix` 時は `{"matrix": [...], "items": [{"index", "item", "active": [...]}], "total": N}`）。
+- `params:` の誤り・記法の誤りは他のサブコマンドと同じくエラー（終了コード 1）。
+

@@ -15,7 +15,6 @@
 
 
 
-<!-- source: defaults/common_assets/tex_newpage.md -->
 
 
 
@@ -32,7 +31,6 @@ deletecsp がfalseまたは未指定の場合は、#CSP#マーカーだけが消
 ![](build/figures/delete_csp_guide_slide2_fig.png)
 
 
-<!-- source: defaults/common_assets/tex_newpage.md -->
 
 
 
@@ -49,7 +47,6 @@ CSPマーカーの基本的な利用イメージです。左側が原本ファ�
 ![](build/figures/delete_csp_guide_slide4_fig.png)
 
 
-<!-- source: defaults/common_assets/tex_newpage.md -->
 
 
 
@@ -64,7 +61,6 @@ CSPマーカーの基本的な利用イメージです。左側が原本ファ�
 ![](build/figures/delete_csp_guide_slide6_fig.png)
 
 
-<!-- source: defaults/common_assets/tex_newpage.md -->
 
 
 

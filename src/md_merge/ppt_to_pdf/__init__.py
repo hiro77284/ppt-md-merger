@@ -6,16 +6,15 @@ import logging
 import sys
 from pathlib import Path
 
-from md_merge._output import EXIT_OK, setup_logging
+from md_merge._cropsrc import cropsrc_pdf_paths
+from md_merge._output import EXIT_BAD_INPUT, EXIT_OK, print_done, setup_logging
 from md_merge._preprocess import apply_preprocess, cleanup_preprocessed
 from md_merge.checkverify import gate as checkverify_gate
-from md_merge.condblockprocess import run as run_condblockprocess
 from md_merge.idcollect import run as run_idcollect
 from md_merge.idresolve import run as run_idresolve
 from md_merge.merge import preflight_clear_confirm, run as run_merge
 from md_merge.merge._recipe import (
     load_yaml,
-    resolve_condblock_output,
     resolve_input_path,
     resolve_out_file,
     resolve_workdir,
@@ -30,7 +29,6 @@ _WORK_FILE_KEYS = (
     "mdfilename",
     "idcollectfilename",
     "idresolvedfilename",
-    "resourcepathfilename",
 )
 
 
@@ -47,9 +45,6 @@ def _cleanup_work_files(args: argparse.Namespace) -> None:
         p = resolve_out_file(recipe, key, yaml_path, workdir)
         if p is not None:
             candidates.append(p)
-    cond_out = resolve_condblock_output(recipe.get("pandoc") or {}, recipe, yaml_path, workdir)
-    if cond_out is not None:
-        candidates.append(cond_out)
 
     logging.info("[ppt_to_pdf] deleting work-files")
     deleted = 0
@@ -65,17 +60,6 @@ def _cleanup_work_files(args: argparse.Namespace) -> None:
         logging.info("[ppt_to_pdf] use --keep-work option to preserve work-files")
 
 
-def _run_condblockprocess_if_configured(args: argparse.Namespace) -> int:
-    yaml_path = resolve_input_path(args)
-    if yaml_path is None or not yaml_path.exists():
-        return run_condblockprocess(args)
-    recipe = load_yaml(yaml_path)
-    if not (recipe.get("pandoc") or {}).get("conditional-process-input"):
-        logging.info("[ppt_to_pdf] condblockprocess: conditional-process-input 未設定 — スキップ")
-        return EXIT_OK
-    return run_condblockprocess(args)
-
-
 _STEPS: list[tuple[str, ...]] = [
     ("pptpdfexport",     run_pptpdfexport),
     ("pptimgexport",     run_pptimgexport),
@@ -84,7 +68,6 @@ _STEPS: list[tuple[str, ...]] = [
     ("idcollect",        run_idcollect),
     ("idresolve",        run_idresolve),
     ("render",           run_render),
-    ("condblockprocess", _run_condblockprocess_if_configured),
     ("pandoc",           run_pandoc),
 ]
 
@@ -103,6 +86,38 @@ def _fill_defaults(args: argparse.Namespace) -> None:
     ):
         if not hasattr(args, attr):
             setattr(args, attr, default)
+
+
+def _check_pdf_collision(args: argparse.Namespace) -> int:
+    """cropsrc のスライド PDF と最終成果物 PDF が同じパスなら中止する。
+
+    同じだと pandoc の出力がスライド PDF を上書きし、次回の pptpdfexport が
+    「最新」と誤判定してスキップ → pptimgexport が成果物 PDF からスライドを
+    切り出そうとしてページ不足で失敗する。
+    """
+    yaml_path = resolve_input_path(args)
+    if yaml_path is None or not yaml_path.exists():
+        return EXIT_OK  # 入力不正は後段の通常エラー処理に任せる
+    try:
+        recipe = load_yaml(yaml_path)
+    except Exception:  # noqa: BLE001  読み込み失敗も後段に委ねる
+        return EXIT_OK
+    cli_workdir = Path(args.workdir).resolve() if getattr(args, "workdir", None) else None
+    workdir = resolve_workdir(recipe, yaml_path, cli_workdir)
+    out_pdf = resolve_out_file(recipe, "pdffilename", yaml_path, workdir)
+    if out_pdf is None:
+        return EXIT_OK
+    out_pdf = out_pdf.resolve()
+    for slide_pdf in cropsrc_pdf_paths(recipe, yaml_path, workdir):
+        if slide_pdf.resolve() == out_pdf:
+            logging.error(
+                "input.cropsrc の PDF と成果物 PDF（output.pdffilename）が同じパスです: %s"
+                " — pandoc の出力がスライド PDF を上書きしてしまうため、"
+                "input.cropsrc[].pdf か output.pdffilename / targetbasefilename を別名にしてください",
+                out_pdf,
+            )
+            return EXIT_BAD_INPUT
+    return EXIT_OK
 
 
 def _step_print(args: argparse.Namespace, name: str, status: str, exit_code: int | None = None) -> None:
@@ -126,6 +141,10 @@ def run(args: argparse.Namespace) -> int:
     setup_logging(args.log_level)
     sys.stdout.reconfigure(line_buffering=True)
     _fill_defaults(args)
+
+    code = _check_pdf_collision(args)
+    if code != EXIT_OK:
+        return code
 
     # 全処理を始める前に clear-dir-before-merge の確認を済ませる（承認後は後段 merge が再確認しない）
     code = preflight_clear_confirm(args)
@@ -163,7 +182,5 @@ def run(args: argparse.Namespace) -> int:
         _cleanup_work_files(args)
         cleanup_preprocessed(args)
     if not getattr(args, "json", False):
-        print("\n========================================")
-        print("  ppt_to_pdf 完了")
-        print("========================================\n")
+        print_done("ppt_to_pdf")
     return EXIT_OK

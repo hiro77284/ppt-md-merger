@@ -1,6 +1,6 @@
 [project]
 name = "pptmdmerge"
-version = "1.0.3"
+version = "2.0.0"
 requires-python = ">=3.11"
 dependencies = [
     "pyyaml>=6.0",
@@ -25,4 +25,4 @@ build-backend = "setuptools.build_meta"
 where = ["src"]
 
 [tool.setuptools.package-data]
-md_merge = ["filters/*.lua", "templates/*.tex", "templates/*.html", "templates/*.typ", "templates/*.typst", "templates/*.md", "templates/*.yaml","semantics.yaml"]
+md_merge = ["filters/*.lua", "templates/*.html", "templates/*.typ", "templates/*.typst", "templates/*.md", "templates/*.yaml","semantics.yaml"]

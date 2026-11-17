@@ -75,6 +75,7 @@ YAML_BODY :=
 - FORMAT_VERSION_LINE は前方一致で判定するため、こちらも行末にコメントを書ける。
 - "{{BLOCK:MD}}" は "{{BLOCK:MD:LONG}}" と同じ意味とする。
 - YAML_BODY は key: value 行の羅列ではなく、1 個の YAML ドキュメントとして解析される（`pptyamlexport` が処理する）。
+- MD_BODY と YAML_BODY では、単独行のタグ `{{#if:NAME}}` … `{{#endif:NAME}}` による条件ブロックが使える（pptmdexport / pptyamlexport が書き出し・解析の前に展開する。詳細は [conditional_block_process.md](conditional_block_process.md)）。
 - YAML_BODY はレシピ YAML と同じ規則（`_include` / `_constants` / `__CONSTANT__`）で読み込まれる。相対パスは元 PPTX と同じディレクトリが基準（詳細は [pptx.md](spec/pptx.md#ノート-yaml-での-_include)）。
 
 

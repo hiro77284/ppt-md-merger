@@ -6,8 +6,8 @@ from md_merge._output import EXIT_FAILURE
 from md_merge._procedure import ProcedureNotationError
 from md_merge.checkgen import run as run_checkgen
 from md_merge.checkverify import run as run_checkverify
-from md_merge.condblockprocess import run as run_condblockprocess
 from md_merge.validate import run as run_validate
+from md_merge.explain import run as run_explain
 from md_merge.crop import run as run_crop
 from md_merge.crop_to_pdf import run as run_crop_to_pdf
 from md_merge.pptdeletecsl import run as run_pptdeletecsl
@@ -46,8 +46,9 @@ def _make_common_parser() -> argparse.ArgumentParser:
     p.add_argument("--constants", metavar="FILE", action="append", default=None,
                    help="TOML constants file for __NAME__ substitution (repeatable)")
     p.add_argument(
-        "--tag", metavar="NAME", action="append", default=None,
-        help="Tag for conditional procedure items (when: tag / not_tag). Repeatable",
+        "--var", metavar="NAME=VALUE", action="append", default=None, dest="cli_vars",
+        help="Override recipe vars: (NAME=VALUE, or NAME alone = true). Used by {{v:NAME}} and "
+             "{{#if:NAME}} condition blocks / procedure when: var. Repeatable",
     )
     p.add_argument(
         "--keep-work", action="store_true", dest="keep_work",
@@ -110,6 +111,15 @@ def _make_parser() -> argparse.ArgumentParser:
         dest="overwrite_images",
         help="Deprecated alias for --image-collision overwrite",
     )
+    merge.add_argument("--no-copy-yamls", action="store_true", dest="no_copy_yamls",
+                       help="Skip copying YAML files linked as [text](x.yaml)")
+    merge.add_argument("--yaml-dir", metavar="NAME", dest="yaml_dir",
+                       help="Output directory name for linked YAML files (default: same as --image-dir)")
+    merge.add_argument("--flatten-yamls", action="store_true", dest="flatten_yamls",
+                       help="Copy all linked YAML files into a single flat directory")
+    merge.add_argument("--overwrite-yamls", action="store_true", dest="overwrite_yamls",
+                       help="When two different YAML files map to the same destination, warn and overwrite "
+                            "(default: add _1/_2)")
     merge.add_argument("--no-check", action="store_true", dest="no_check", help="Skip insertmd content drift check even when a check file exists")
     merge.add_argument(
         "--clear-dir-before-merge",
@@ -163,19 +173,13 @@ def _make_parser() -> argparse.ArgumentParser:
     pandoc = sub.add_parser(
         "pandoc",
         parents=[common],
-        help="Invoke pandoc on the rendered MD to produce PDF, LaTeX, or other formats",
+        help="Invoke pandoc on the rendered MD to produce PDF (via typst), HTML or reveal.js",
     )
     pandoc.add_argument("input", nargs="?", metavar="INPUT", help="Input YAML file")
     pandoc.add_argument("--workdir", "-w", metavar="DIR", help="Base directory for relative paths")
     pandoc.add_argument("--force", action="store_true", help="Overwrite existing output file")
-    pandoc.add_argument("--tex", action="store_true", help="Output LaTeX (use texfilename, -t latex)")
     pandoc.add_argument("--html", action="store_true", help="Output HTML (use htmlfilename, -t html)")
     pandoc.add_argument("--reveal", action="store_true", help="Output reveal.js (use revealfilename, -t revealjs)")
-    pandoc.add_argument(
-        "--engine", choices=["latex", "typst"], default=None, metavar="latex|typst",
-        help="PDF typesetting engine (overrides recipe pandoc.engine; default typst, which also "
-             "keeps <pdfstem>.typ). latex (lualatex) is deprecated",
-    )
 
     # ── render ─────────────────────────────────────────────────────────────
     render = sub.add_parser(
@@ -223,11 +227,6 @@ def _make_parser() -> argparse.ArgumentParser:
     c2p.add_argument("--workdir", "-w", metavar="DIR", help="Base directory for relative paths")
     c2p.add_argument("--force", action="store_true", help="Overwrite existing output files")
     c2p.add_argument("--no-check", action="store_true", dest="no_check", help="Skip the pre-merge insertmd drift check (no confirmation prompt)")
-    c2p.add_argument(
-        "--engine", choices=["latex", "typst"], default=None, metavar="latex|typst",
-        help="PDF typesetting engine (overrides recipe pandoc.engine; default typst, which also "
-             "keeps <pdfstem>.typ). latex (lualatex) is deprecated",
-    )
 
     # ── pptimgexport ───────────────────────────────────────────────────────
     pptimgexport = sub.add_parser(
@@ -293,21 +292,6 @@ def _make_parser() -> argparse.ArgumentParser:
     p2p.add_argument("--deletecsl", nargs="?", const="on", choices=["on", "off"], default=None, dest="delete_csl", metavar="[on|off]", help="[非推奨/無視] パイプラインでは CSL 処理を行わないため効果がない。指定すると警告する")
     p2p.add_argument("--deletecsp", nargs="?", const="on", choices=["on", "off"], default=None, dest="delete_csp", metavar="[on|off]", help="Preprocess: delete shapes containing #CSP#. Bare flag = on; 'off' forces off; omitted = recipe indexer.deletecsp. Effective only with --preprocess")
     p2p.add_argument("--no-check", action="store_true", dest="no_check", help="Skip the pre-merge insertmd drift check (no confirmation prompt)")
-    p2p.add_argument(
-        "--engine", choices=["latex", "typst"], default=None, metavar="latex|typst",
-        help="PDF typesetting engine (overrides recipe pandoc.engine; default typst, which also "
-             "keeps <pdfstem>.typ). latex (lualatex) is deprecated",
-    )
-
-    # ── condblockprocess ──────────────────────────────────────────────────────
-    cbp = sub.add_parser(
-        "condblockprocess",
-        parents=[common],
-        help="Process conditional blocks and variable substitution in a template file",
-    )
-    cbp.add_argument("input", nargs="?", metavar="INPUT", help="Input YAML file")
-    cbp.add_argument("--workdir", "-w", metavar="DIR", help="Base directory for relative paths")
-    cbp.add_argument("--force", action="store_true", help="Overwrite existing output file")
 
     # ── ppt_to_transfer ───────────────────────────────────────────────────
     p2t = sub.add_parser(
@@ -399,6 +383,23 @@ def _make_parser() -> argparse.ArgumentParser:
     validate.add_argument("input", nargs="?", metavar="INPUT", help="Input YAML file")
     validate.add_argument("--workdir", "-w", metavar="DIR", help="Base directory for relative paths")
     validate.add_argument("--strict", action="store_true", help="未知のキーがあれば終了コード 1 を返す")
+    validate.add_argument("--list-params", action="store_true", dest="list_params", help="params: で宣言された切り替え（--var）の一覧を表示する")
+
+    # ── explain ────────────────────────────────────────────────────────────
+    explain = sub.add_parser(
+        "explain",
+        parents=[common],
+        help="条件（when: / group / {{#if}}）を展開した procedure を採用／除外の理由つきで表示する",
+    )
+    explain.add_argument("input", nargs="?", metavar="INPUT", help="Input YAML file")
+    explain.add_argument("--workdir", "-w", metavar="DIR", help="Base directory for relative paths")
+    explain.add_argument("--command", dest="for_command", metavar="NAME",
+                         help="when.command / not_command をこのサブコマンド名で判定する（省略時は未評価）")
+    explain.add_argument("--matrix", action="append", metavar="NAME[=a,b]", default=None,
+                         help="変数の値ごとに結果が変わる項目だけを並べる（params: の values/bool、"
+                              "または NAME=a,b で値を指定。繰り返すと全組み合わせ）")
+    explain.add_argument("--blocks", action="store_true",
+                         help="採用された insertmd の {{#if}} ブロックの判定も表示する")
 
     # ── pptpdfexport ───────────────────────────────────────────────────────
     pptpdfexport = sub.add_parser(
@@ -438,6 +439,8 @@ _KEEP_WORK_SUBCOMMANDS = {"ppt_to_pdf", "ppt_to_transfer", "ppt_to_puremd", "ppt
 
 
 def main() -> None:
+    from md_merge._output import start_timer
+    start_timer()
     parser = _make_parser()
     args = parser.parse_args()
 
@@ -452,6 +455,18 @@ def main() -> None:
     if args.constants:
         from md_merge.merge._recipe import init_cli_constants
         init_cli_constants(args.constants)
+
+    if getattr(args, "cli_vars", None):
+        from md_merge._condblock import parse_cli_vars
+        from md_merge.merge._recipe import init_cli_vars
+        try:
+            init_cli_vars(parse_cli_vars(args.cli_vars))
+        except ValueError as exc:
+            import logging
+            from md_merge._output import setup_logging
+            setup_logging(getattr(args, "log_level", "info"))
+            logging.error("%s", exc)
+            sys.exit(2)
 
     # レシピの version と procedure 記法の不整合は、どのサブコマンドでもトレースバックなしで終了する
     try:
@@ -469,9 +484,8 @@ def main() -> None:
             case "pandoc":
                 code = run_pandoc(args)
                 if code == 0 and not getattr(args, "json", False) and not getattr(args, "dry_run", False):
-                    print("\n========================================")
-                    print("  pandoc 完了")
-                    print("========================================\n")
+                    from md_merge._output import print_done
+                    print_done("pandoc")
             case "render":
                 code = run_render(args)
             case "puremd" | "githubmd":
@@ -494,8 +508,6 @@ def main() -> None:
                 code = run_pptpdfexport(args)
             case "pptdeletecsl":
                 code = run_pptdeletecsl(args)
-            case "condblockprocess":
-                code = run_condblockprocess(args)
             case "ppt_to_transfer":
                 code = run_ppt_to_transfer(args)
             case "ppt_to_puremd":
@@ -508,6 +520,8 @@ def main() -> None:
                 code = run_ppt_to_notecom(args)
             case "validate":
                 code = run_validate(args)
+            case "explain":
+                code = run_explain(args)
             case _:
                 parser.print_help()
                 code = 2

@@ -22,7 +22,7 @@ procedure:
 値が数値でも単位付き長さでもない場合や負の値の場合は、警告を出して `1` を使います。
 
 ::: {.note}
-旧来の `insertmd: ../../defaults/common_assets/tex_newpage.md`（中身が生 LaTeX の `\newpage`）は Typst エンジンでは効きません。`insertpagebreak` に置き換えてください。`tex_Nline.md` は `insertvspace: N`、`tex_vfill.md` は `insertvfill` に対応します。
+旧来の `insertmd: ../../defaults/common_assets/tex_newpage.md`（中身が生 LaTeX の `\newpage`）は、LaTeX 撤去に合わせてファイルごと削除しました。`insertpagebreak` に置き換えてください。`tex_Nline.md` は `insertvspace: N`、`tex_vfill.md` は `insertvfill` に対応します。
 :::
 
 **表示結果**

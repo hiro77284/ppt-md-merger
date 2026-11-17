@@ -1,9 +1,17 @@
 import logging
+import os
 import shutil
 from dataclasses import dataclass, field
 from pathlib import Path
 
-from md_merge._imagerefs import Ref, apply_naming, pick_destination, rewrite_line, should_skip
+from md_merge._imagerefs import (
+    Ref,
+    apply_naming,
+    pick_destination,
+    rewrite_line,
+    rewrite_yaml_links,
+    should_skip,
+)
 
 # image-dir 未指定時の既定サブディレクトリ名。結合済み MD と画像を同階層の 1 段構成に
 # 保つための規約（docs/design_image_refs.md §4.2）。レシピで空文字を明示すると
@@ -29,7 +37,10 @@ class ImageCopier:
 
     @property
     def img_dir(self) -> Path:
-        return self.out_md.parent / self.dir_name
+        # 正規化しておく。outputdir が ``../build`` のように ``..`` を含み、image-dir も
+        # ``../build/images`` のときに、参照が ``../build/images/x.png`` という遠回りの
+        # 相対パスになると typst が --root の外に出るとみなしてエラーにするため。
+        return (self.out_md.parent / self.dir_name).resolve()
 
     def rewrite_line(self, line: str, source_md: Path, *, in_frontmatter: bool) -> str:
         """Rewrite the local image refs in *line*, copying the files.
@@ -45,16 +56,19 @@ class ImageCopier:
 
     # ── internals ────────────────────────────────────────
 
+    # 見つからないときの警告に出す種別名（サブクラスで差し替える）
+    _label = "画像"
+
     def _resolve(self, ref: Ref, source_md: Path) -> str | None:
         """Copy the referenced image and return its ref relative to the merged MD."""
         if should_skip(ref.ref):
             return None
         img_src = (source_md.parent / ref.ref).resolve()
         if not img_src.exists():
-            logging.warning("画像ファイルが見つかりません: %s (参照元: %s)", img_src, source_md)
+            logging.warning("%sファイルが見つかりません: %s (参照元: %s)", self._label, img_src, source_md)
             return None
         img_dst = self._copy(img_src)
-        return img_dst.relative_to(self.out_md.parent).as_posix()
+        return Path(os.path.relpath(img_dst, self.out_md.parent.resolve())).as_posix()
 
     def _copy(self, src: Path) -> Path:
         if src in self._registry:
@@ -87,6 +101,36 @@ class ImageCopier:
 
 
 @dataclass
+class YamlCopier(ImageCopier):
+    """Copies YAML files linked from the body (``[text](x.yaml)``) and rewrites the links.
+
+    コピー先・命名・衝突回避・既に yaml-dir 内にあるファイルの扱いは ImageCopier と同じ。
+    設定は merge.yaml-dir / flatten-yamls / overwrite-yamls / no-copy-yamls で画像と独立。
+    """
+
+    _label = "YAML "
+
+    def rewrite_line(self, line: str, source_md: Path, *, in_frontmatter: bool) -> str:
+        return rewrite_yaml_links(
+            line,
+            in_frontmatter=in_frontmatter,
+            resolve=lambda r: self._resolve(r, source_md),
+        )
+
+
+@dataclass
+class ChainedCopier:
+    """複数の copier を順に適用する（画像 → YAML リンク）。expand_md には 1 つとして渡す。"""
+
+    copiers: list
+
+    def rewrite_line(self, line: str, source_md: Path, *, in_frontmatter: bool) -> str:
+        for c in self.copiers:
+            line = c.rewrite_line(line, source_md, in_frontmatter=in_frontmatter)
+        return line
+
+
+@dataclass
 class ImageSourceCollector:
     """Records the resolved local image sources referenced by the merge inputs.
 
@@ -104,18 +148,36 @@ class ImageSourceCollector:
             return None
 
         rewrite_line(line, in_frontmatter=in_frontmatter, resolve=record)
+        rewrite_yaml_links(line, in_frontmatter=in_frontmatter, resolve=record)
         return line
 
 
-def make_image_copier(args, out_path: Path, in_dir: Path | None) -> "ImageCopier | None":
-    if getattr(args, "no_copy_images", False):
+def make_image_copier(args, out_path: Path, in_dir: Path | None):
+    """merge 用の copier を作る（画像と YAML リンク。両方無効なら None）。"""
+    naming = getattr(args, "image_naming", None) or "preserve"
+    image_dir = getattr(args, "image_dir", None)
+    image_dir = DEFAULT_IMAGE_DIR if image_dir is None else image_dir
+    copiers: list = []
+    if not getattr(args, "no_copy_images", False):
+        copiers.append(ImageCopier(
+            out_md=out_path,
+            dir_name=image_dir,
+            flatten=getattr(args, "flatten_images", False),
+            in_dir=in_dir,
+            naming=naming,
+            collision=getattr(args, "image_collision", None) or "rename",
+        ))
+    if not getattr(args, "no_copy_yamls", False):
+        # yaml-dir 省略時は image-dir と同じディレクトリに置く
+        yaml_dir = getattr(args, "yaml_dir", None)
+        copiers.append(YamlCopier(
+            out_md=out_path,
+            dir_name=image_dir if yaml_dir is None else yaml_dir,
+            flatten=getattr(args, "flatten_yamls", False),
+            in_dir=in_dir,
+            naming=naming,
+            collision="overwrite" if getattr(args, "overwrite_yamls", False) else "rename",
+        ))
+    if not copiers:
         return None
-    dir_name = getattr(args, "image_dir", None)
-    return ImageCopier(
-        out_md=out_path,
-        dir_name=DEFAULT_IMAGE_DIR if dir_name is None else dir_name,
-        flatten=getattr(args, "flatten_images", False),
-        in_dir=in_dir,
-        naming=getattr(args, "image_naming", None) or "preserve",
-        collision=getattr(args, "image_collision", None) or "rename",
-    )
+    return copiers[0] if len(copiers) == 1 else ChainedCopier(copiers)

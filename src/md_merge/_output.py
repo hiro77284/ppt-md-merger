@@ -1,6 +1,7 @@
 import argparse
 import json
 import logging
+import time
 from pathlib import Path
 
 EXIT_OK = 0
@@ -14,6 +15,43 @@ _LOG_LEVELS = {
     "warn": logging.WARNING,
     "error": logging.ERROR,
 }
+
+
+# コマンド開始時刻 (perf_counter)。main() が start_timer() で設定する。
+# 未設定のまま print_done() が呼ばれた場合 (テスト等で run() を直接呼ぶ) は
+# モジュール読み込み時刻を起点にする。
+_start_time: float = time.perf_counter()
+
+
+def start_timer() -> None:
+    """コマンド全体の所要時間計測を開始する。"""
+    global _start_time
+    _start_time = time.perf_counter()
+
+
+def elapsed_seconds() -> float:
+    """start_timer() からの経過秒数。"""
+    return time.perf_counter() - _start_time
+
+
+def format_elapsed(seconds: float) -> str:
+    """所要時間を人が読める形にする (例: 12.3秒 / 2分05.4秒 / 1時間02分03秒)。"""
+    if seconds < 60:
+        return f"{seconds:.1f}秒"
+    if seconds < 3600:
+        m, s = divmod(seconds, 60)
+        return f"{int(m)}分{s:04.1f}秒"
+    h, rem = divmod(int(round(seconds)), 3600)
+    m, s = divmod(rem, 60)
+    return f"{h}時間{m:02d}分{s:02d}秒"
+
+
+def print_done(label: str) -> None:
+    """「<label> 完了」バナーと、その直後に所要時間を表示する。"""
+    print("\n========================================")
+    print(f"  {label} 完了")
+    print(f"  所要時間: {format_elapsed(elapsed_seconds())}")
+    print("========================================\n")
 
 
 def setup_logging(level: str) -> None:

@@ -15,7 +15,6 @@
 
 
 
-<!-- source: defaults/common_assets/tex_newpage.md -->
 
 
 
@@ -32,7 +31,6 @@
 ![](build/figures/delete_csl_guide_slide3_fig.png)
 
 
-<!-- source: defaults/common_assets/tex_newpage.md -->
 
 
 

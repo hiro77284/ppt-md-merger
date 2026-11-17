@@ -1,5 +1,5 @@
 // report_template.typst
-// engine: typst 用の pandoc テンプレート（report_template.tex の Typst 版）。
+// PDF（typst）用の pandoc テンプレート（旧 report_template.tex の Typst 版）。
 // pandoc の既定 Typst テンプレートから、Typst writer が前提にする定義（horizontalrule・
 // terms・table・figure・ハイライト）だけを残し、ページ設計は include-in-header の
 // semantic_macros.typ / report_style.typ に任せる（既定テンプレートの conf() は使わない）。
@@ -11,10 +11,18 @@
   #block(inset: (left: 1.5em, top: -0.4em))[#it.description]
 ]
 
+// 表の標準: 罫線 0.5pt・セルは左揃え。pandoc は表を #align(center)[#table(...)] で包み、
+// 揃え指定の無い列（`---`）は align: auto（＝周囲の center を継承）になるため、
+// セルの既定を left にする。md の列揃え（`:---:` / `---:`）は pandoc が列ごとに
+// center / right を明示するので、そちらが優先される。表そのものの配置は中央のまま。
 #set table(
   inset: 6pt,
-  stroke: none
+  stroke: 0.5pt
 )
+#show table.cell: set align(left)
+// 見出し行（1 行目）は太字＋薄い灰色の背景にして、中身の行と区別する。
+#set table(fill: (x, y) => if y == 0 { luma(90%) })
+#show table.cell.where(y: 0): set text(weight: "bold")
 
 #show figure.where(
   kind: table
@@ -38,7 +46,10 @@ $for(header-includes)$
 $header-includes$
 
 $endfor$
-$if(title)$
+$if(sem-document)$
+// PDF の文書プロパティ（pptmdmerge が COVER_* と metadata: から作る。_pdf_metadata.py）
+$sem-document$
+$elseif(title)$
 #set document(title: [$title$])
 $endif$
 $if(include-before)$

@@ -30,6 +30,7 @@ from pathlib import Path
 _PRIMARY = {
     "insertmd": "mdfilename",
     "insertpptx": "pptxfilename",
+    "insertvar": "varname",
     "chapter": "chapter",
     "section": "section",
     "subsection": "subsection",

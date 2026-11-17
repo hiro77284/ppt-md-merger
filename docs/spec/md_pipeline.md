@@ -25,6 +25,10 @@ pptmdmerge merge sample.yaml
 | `--no-copy-images` | 画像ファイルのコピーおよびパス書き換えを行わない | 任意 |
 | `--image-dir` NAME | 画像コピー先サブディレクトリ名（既定: 空 = 出力 MD と同じディレクトリ） | 任意 |
 | `--flatten-images` | すべての画像を `<outdir>/<image-dir>/` にフラット集約する。同名ファイルはサフィックスで衝突回避する | 任意 |
+| `--no-copy-yamls` | YAML ファイルへのリンク `[text](x.yaml)` のコピーおよびパス書き換えを行わない（後述「YAML ファイルへのリンクのコピー」） | 任意 |
+| `--yaml-dir` NAME | YAML ファイルのコピー先サブディレクトリ名（既定: `image-dir` と同じ） | 任意 |
+| `--flatten-yamls` | YAML ファイルを `<outdir>/<yaml-dir>/` にフラット集約する | 任意 |
+| `--overwrite-yamls` | 別の YAML ファイルが同じコピー先になったとき、警告して上書きする（既定は `_1` 連番で回避） | 任意 |
 | `--clear-dir-before-merge` | image-dir 指定時、merge 前に image-dir 内を全削除する（**既定 on**。削除前に確認、後述） | 任意 |
 | `--no-check` | チェックデータ（`output.checkfilename`）が存在しても insertmd 整合性チェックをスキップする | 任意 |
 | `--force` | 既存の出力ファイルを上書きする | 任意 |
@@ -48,7 +52,7 @@ pptmdmerge merge sample.yaml
 | ------ | ---- |
 | 入力解決 | 位置引数 `INPUT` で指定された YAML ファイルを読み込む |
 | `input.mddir` 解決 | `input` セクションまたは `input.mddir` 省略時は YAML ファイルと同じディレクトリを使用する。相対パスは `workdir`（省略時は YAML ファイルの親ディレクトリ）基準で解決する |
-| ファイル収集 | `procedure` を走査し、`insertmd` はファイルパスを収集（ファイル名のレンジ展開を含む。後述）、`chapter`/`section`/`subsection` はマーカーコメント行を、`insertvspace`/`insertpagebreak`/`insertvfill` は semantic リーフ記法（`{{vspace:N}}` 等）を生成する |
+| ファイル収集 | `procedure` を走査し、`insertmd` はファイルパスを収集（ファイル名のレンジ展開を含む。後述）、`insertvar` は変数の値を引く（後述）、`chapter`/`section`/`subsection` はマーカーコメント行を、`insertvspace`/`insertpagebreak`/`insertvfill` は semantic リーフ記法（`{{vspace:N}}` 等）を生成する |
 | 出力先解決 | `output.mdfilename` > `output.targetbasefilename`（`<base>_merged.md`）> 自動生成（`<yaml_stem>_merge.md`）の優先順で決定する。`output.outputdir` が指定されている場合はその下に配置する |
 | 上書きガード | `--force` なしで出力先に既存ファイルがある場合はエラー（終了コード 1）とする |
 | `--dry-run` | 上書きガードをスキップし、ファイルへの書き込みを行わず実行内容のみ表示する |
@@ -84,15 +88,26 @@ CLI オプションと同等の設定をレシピ YAML の `merge:` セクショ
 
 ```yaml
 merge:
-  no-copy-images: false        # --no-copy-images 相当
+  copy-images: true            # 既定 true。false で --no-copy-images 相当
   image-dir: ""                # --image-dir 相当（既定: 空 = 出力 MD と同じディレクトリ）
   flatten-images: false        # --flatten-images 相当
+  copy-yamls: true             # 既定 true。false で --no-copy-yamls 相当
+  yaml-dir: images             # --yaml-dir 相当（省略時は image-dir と同じ）
+  flatten-yamls: false         # --flatten-yamls 相当
+  overwrite-yamls: false       # --overwrite-yamls 相当
   clear-dir-before-merge: true # 既定 true。image-dir が空でないとき merge 前に image-dir 内を全削除（削除前に確認）
   strict: false                # --strict 相当
 
 output:
   force: false              # --force 相当（全サブコマンドに共通。merge セクションから移動）
 ```
+
+#### copy-images / copy-yamls と旧キー no-copy-images / no-copy-yamls
+
+コピー有無の標準キーは肯定形の `copy-images` / `copy-yamls`（既定 `true`）。旧来の否定形 `no-copy-images` / `no-copy-yamls` も引き続き受け付ける（`no-copy-images: true` は `copy-images: false` と同じ）。
+
+- 肯定形と否定形を**両方**書いた場合、意味が一致していれば許容し、食い違っていれば**エラー**（merge は終了コード 2、`validate` もエラーとして報告）。例: `copy-images: true` と `no-copy-images: true` はエラー。
+- CLI は従来どおり `--no-copy-images` / `--no-copy-yamls`。指定するとレシピの値に関係なくコピーしない。
 
 #### clear-dir-before-merge
 
@@ -179,7 +194,7 @@ MDファイル内のローカル画像参照を検出し、画像を出力ディ
 | `--flatten-images` | すべての画像を `<outdir>/<image-dir>/` にフラット集約する（相対構造を保持しない） |
 | `--image-naming MODE` | コピー名の変換。`preserve`（既定・元名のまま）/ `sanitize`（NFKC 正規化・小文字化して非 ASCII 連続を `-` に畳む。空になれば `img`） |
 | `--image-collision MODE` | 衝突時の扱い。`rename`（既定・`_1`, `_2` … を付けて回避）/ `overwrite`（警告して上書き）。`--overwrite-images` は後者の非推奨エイリアス |
-| `--no-copy-images` | 画像のコピーおよびパス書き換えを行わない |
+| `--no-copy-images` / `merge.copy-images: false` | 画像のコピーおよびパス書き換えを行わない（旧キー `no-copy-images: true` も可） |
 
 #### 「衝突」の定義
 
@@ -192,6 +207,28 @@ MDファイル内のローカル画像参照を検出し、画像を出力ディ
 #### 重複コピーの防止
 
 同一ソースファイルが複数箇所から参照された場合、コピーは1回のみ行い、すべての参照を同じコピー先パスに書き換える。
+
+#### YAML ファイルへのリンクのコピー
+
+本文に書いた YAML ファイルへの通常リンク `[text](path.yaml)`（拡張子 `.yaml` / `.yml`、画像の `![...]` は除く）も、画像と同じ規則でコピーしてパスを書き換える。入力欄定義のように、MD と組で使うデータファイルを結合済み MD と同階層に揃えるため。
+
+```markdown
+<!-- #inputs -->
+![入力欄背景](../images/レシプロ入力欄機能_slide2.png)
+[入力欄定義](../mds/レシプロ入力欄機能_slide2.yaml)
+<!-- /inputs -->
+```
+
+設定は画像と独立した 4 キーで行う（CLI 同名フラグが優先）。
+
+| レシピキー / CLI | 動作 |
+| ---------- | ---- |
+| `merge.yaml-dir` / `--yaml-dir NAME` | コピー先 `<outdir>/NAME/`。**省略時は `image-dir` と同じ**（画像と同じディレクトリに入る） |
+| `merge.flatten-yamls` / `--flatten-yamls` | フラット集約（相対構造を保持しない）。省略時は `input.dirs` 先頭からの相対構造を保持 |
+| `merge.overwrite-yamls` / `--overwrite-yamls` | 衝突時に警告して上書き（既定は `_1`, `_2` … で回避）。衝突の定義は画像と同じ |
+| `merge.copy-yamls: false` / `--no-copy-yamls` | YAML のコピーおよびパス書き換えを行わない（旧キー `no-copy-yamls: true` も可） |
+
+URL・絶対パス・アンカーは画像と同じく対象外。命名変換は `image-naming` に従う。frontmatter 内は対象外。`clear-dir-before-merge` が削除するのは `image-dir` だけなので、`yaml-dir` を別にした場合そのディレクトリは削除されない（`yaml-dir` 内にある参照元 YAML は、画像と同じくコピーせずその場で参照する）。
 
 ### 章見出しマーカーの挿入
 
@@ -259,23 +296,136 @@ procedure:
   - chapter:
     title: おまけ
     when:
-      tag: extra                                  # --tag extra を付けたときだけ
+      var: extra                                  # 変数 extra が真のときだけ（--var extra など）
+  - insertmd: print_only.md
+    when:
+      var: EDITION=print                          # vars: の EDITION が print のときだけ
 ```
 
 | キー | 適用条件 |
 | ---- | -------- |
 | `command` | 起動したサブコマンドが列挙したいずれかである |
 | `not_command` | 起動したサブコマンドが列挙したいずれでもない |
-| `tag` | `--tag` で指定したタグに、列挙したいずれかが含まれる |
-| `not_tag` | `--tag` で指定したタグに、列挙したいずれも含まれない |
+| `var` | 列挙した条件式のいずれかが真である。条件式は `{{#if:…}}` と同じ `NAME` / `!NAME` / `NAME=VALUE` / `NAME!=VALUE` |
 
 - 値は文字列 1 つ、または文字列のリスト。リスト内は OR、キー同士は AND。
 - **サブコマンドはトップレベルで起動したコマンド名で照合する。** パイプラインは各段に同じ引数を渡すため、`ppt_to_pdf` の中の merge 段では command は `ppt_to_pdf` になる。逆に `merge` を単独実行すると command は `merge` なので、`command: [ppt_to_puremd]` の項目は除外される。別名 `githubmd` は `puremd` として扱う。
-- `--tag` は全サブコマンド共通のオプション（`--tag blog --tag extra` のように繰り返し指定）。
+- `var` の変数はレシピの `vars:` に、全サブコマンド共通の `--var NAME=VALUE`（`--var NAME` だけなら true）を上書きしたもの。真偽判定は行単位の IF ブロックと同じ（偽 = 未定義 / null / 空文字 / false / 文字列 `false`・`0`・`no`・`off`・`none`・`null`）。
+- 旧 `tag` / `not_tag`（`--tag`）は廃止した。`when:` に書かれていると読み込み時・validate ともにエラーになる。`tag: X` は `var: X`、`not_tag: X` は `var: '!X'` に、`--tag X` は `--var X` に置き換える（`!` で始まる値は YAML のタグ記法と衝突するので引用符で囲む）。
 - 条件判定はレシピ読み込み直後に 1 回だけ行い、除外した項目は procedure から取り除いてから後段に渡す（除外した項目は info ログに `procedure[N] (...) をスキップ` と出る）。章・節を除外すると、以降の番号はそのぶん詰まる。
 - 対象: `merge`、`pptmerge`（`--preprocess` の前処理対象も含む）、パイプラインの insertmd ドリフトゲート。`checkgen` / `checkverify` / `validate` は条件を無視して**全項目**を対象にする（チェックデータはどの組み合わせで実行しても照合できるよう全項目分を作る）。
 - `pptpdfexport` / `pptimgexport` / `pptmdexport` は procedure を参照しない（`input.cropsrc` が対象）ので、除外した pptx の書き出しはそのまま行われる。
 - 実装は `src/md_merge/_conditions.py`。
+
+#### 複数項目にまとめて掛ける（`group:`）
+
+version 2 では `- group:` の下に procedure の項目をリストで書いて束ね、`when:` を 1 回だけ書ける。条件を満たさなければグループ内の項目がすべて除外される。
+
+```yaml
+procedure:
+  - insertmd: q1.md
+  - group:                                    # レシプロマーカー向けでないときだけ、解答をまとめて末尾に置く
+      - insertpagebreak
+      - insertmd: answer_slide2_md.md
+      - insertvspace: 2
+      - insertmd: answer_slide3_md.md
+        when:
+          command: ppt_to_pdf                 # 項目自身の when: はグループの条件と AND
+      - insertvfill
+    when:
+      var: TARGET!=RECIPRO
+    description: 解答（非レシプロ向け）
+```
+
+- group 要素に書けるキーは `group`（値は項目のリスト。空は不可）・`when`・`description` だけ。操作キーや `slides` などを同じ要素に書くとエラー。
+- 入れ子にできる。内側の項目は、外側から自分までの全グループの `when:` と自分の `when:` をすべて満たすときだけ適用される。
+- `when:` の無い group も書ける（`description:` を付けて見出し代わりに束ねるだけ）。
+- group は読み込み時に展開され、元の位置に子の項目がそのまま並んだのと同じになる。`checkgen` / `checkverify` / `validate` は他の `when:` と同じく条件を無視して全項目を対象にする。
+- エラー・警告の位置は `procedure[3].group[1]` のように示す。スキップ時の info ログの `procedure[N]` は展開後の位置。
+- version 1 のレシピでは使えない（エラー）。
+- 入れ子は 1 段までを推奨する（2 段以上は `validate` が警告する）。
+
+### 切り替え用の変数の宣言（`params:`）
+
+`when.var` や `{{#if}}` で切り替えに使う変数は、トップレベルの `params:` で型・取りうる値・既定値つきで宣言できる。`vars:`（文字を埋める置換用）とは分けて書く。
+
+```yaml
+params:
+  TARGET:
+    values: [PDF, RECIPRO]   # 取りうる値（文字列）
+    default: PDF
+    description: 最終出力。RECIPRO はレシプロマーカー向け
+  MULTISTEP:
+    type: bool               # true / false
+    default: false
+  AUDIENCE:
+    type: string             # 任意の文字列（値は検査しない）
+```
+
+- 宣言のキーは `type`（`bool` / `string`）・`values`（文字列のリスト）・`default`・`description`。`type` と `values` は同時に書けない。どちらも無ければ `string`。
+- `values` の値は文字列で書く。`ON` / `OFF` / `yes` / `no` を引用符なしで書くと YAML の真偽値になるのでエラーにする（`'ON'` と書く）。
+- `--var` で渡さなかった param は `default` を値とする（`default` が無ければ未定義＝偽）。bool の値は `true` / `false` に正規化される（`--var MULTISTEP` / `--var MULTISTEP=yes` は `true`）。
+- **`params:` があるレシピでは、宣言に反する使い方を読み込み時にエラーにする**（どのサブコマンドでも）。
+  - `params:` の書式の誤り、同じ名前を `vars:` と `params:` の両方に書くこと。
+  - `--var` の名前が `params:` にも `vars:` にも無い、値が取りうる値でない（`--var TARGET=RECIPLO` など）。
+  - `when.var` や MD / ノートの `{{#if}}` が、宣言の無い名前（`TAGRET` など）や取りうる値でない比較値を使っている。
+- `params:` の無いレシピの動作は従来どおり（未定義の変数は偽）。`validate` は宣言の無い変数を警告する。
+- 宣言の一覧は `pptmdmerge validate recipe.yaml --list-params` で表示できる。
+- 追加的な変更なので、レシピの `version` は 2 のまま。
+
+### 条件ブロック（行単位の切り替え）
+
+insertmd ファイルの中では、単独行のタグ `{{#if:NAME}}` … `{{#else:NAME}}` … `{{#endif:NAME}}` で囲んだ行を、レシピ `vars:`（`--var NAME=VALUE` で上書き可）の値によって残す／削る。項目単位の `when:` に対し、こちらはファイル内の行単位の切り替え。
+
+```markdown
+{{#if:EDITION=student}}
+> 演習問題の解答は巻末にあります。
+{{#else:EDITION}}
+> 解答例は講師用資料を参照。
+{{#endif:EDITION}}
+```
+
+```text
+pptmdmerge merge recipe.yaml --var EDITION=student
+```
+
+- 各ファイル（`!include` 先も）を読んだ直後、`!include` の展開・画像コピーより先に処理する。偽のブロック内の `!include` や画像は読み込まない。
+- フェンスコード（` ``` ` / `~~~`）の中のタグは解釈しない。
+- タグの文法エラー（対応しない endif など）は、ファイル名と行番号を出して merge を失敗（終了コード 1）にする。
+- 記法・真偽の判定・ネストの規則は [conditional_block_process.md](../conditional_block_process.md#32-条件ブロック)。
+
+### 変数の値の挿入（insertvar）
+
+`- insertvar: NAME` と書くと、変数 `NAME` の値（文字列）を結合済み MD の**その位置にそのまま挿入**する。insertmd がファイルの中身を挿入するのに対し、こちらはレシピ側に書いた文字列を挿入する。主な用途は frontmatter の挿入（transfer / notecomexport 向けの title・tags・hero などをレシピで与える）。
+
+```yaml
+vars:
+  TITLE: 情報整理の基本
+  FRONTMATTER: |
+    ---
+    title: "{{v:TITLE}}"
+    tags: [情報整理, 図解]
+    hero: images/hero.png
+    ---
+params:
+  WEB:
+    type: bool
+    default: false
+procedure:
+  - insertvar: FRONTMATTER
+    when:
+      var: WEB                   # Web 向けのときだけ frontmatter を付ける
+  - insertmd: deck_slide[1-5]_md.md
+```
+
+- 値は `vars:` に、`--var` と `params:` の既定値を反映したもの（`when.var` と同じ）。複数行は YAML のブロック文字列 `|` で書く。値が文字列でない（マッピング・リスト）場合と、変数が未定義の場合は警告してスキップする（数値などのスカラーは文字列にする）。
+- insertmd のファイルと同じく、値の前に出所コメント `<!-- source: var:NAME -->` を付け、値の末尾に改行が無ければ補う。
+- 値の中の `{{#if}}` 条件ブロックは insertmd と同様に評価する。`{{v:NAME}}` は後段の `render` が置換する（上の例の `title`）。`!include` は展開しない。
+- 値の中の画像参照（本文の `![](...)` と frontmatter の `hero` / `notecom_cover`）は**レシピのディレクトリ基準**で解決し、insertmd と同じく画像ディレクトリへコピー・書き換える。
+- `when:` / `group:` はほかの項目と同じく使える。`pptmerge` では無視する（MD 専用の操作）。checkgen / checkverify の対象外（ファイルではないため）。
+- PDF / HTML などの pandoc 出力では、frontmatter は insertmd のものと同じく `pandoc` 段で取り除かれる（`<!-- source: -->` 直後の `---` ブロック）。`puremd` → `transfer` / `notecomexport` には残る。
+- `validate` は、`vars:` / `params:` に無い変数名の insertvar を警告し、値の中の `{{#if}}` / `{{v:}}` / 番号マーカーも MD と同じく検査する。insertvar で使う param は「未使用」とみなさない。
+- 追加的な変更なので、レシピの `version` は 2 のまま（version 1 では `operation: insertvar` ＋ `varname:`）。
 
 ### 行空け・改ページの挿入（insertvspace / insertpagebreak / insertvfill）
 
@@ -296,7 +446,7 @@ procedure:
   - insertvfill
 ```
 
-`insertvspace` の値が数値でも単位付き長さでもない・負値の場合は警告して `1` を使用する。各出力形式での挙動: PDF は `\par\vspace{N\baselineskip}`（単位付きは `\par\vspace{5mm}` のようにそのまま）/ `\newpage` / `\vspace*{\fill}`、HTML は対応する `<div class>`（vspace は `height`。数値=`em`、単位付き=その単位）、MD（puremd）は vspace/vfill を破棄・pagebreak を `---` に変換。
+`insertvspace` の値が数値でも単位付き長さでもない・負値の場合は警告して `1` を使用する。各出力形式での挙動: PDF は `\par\vspace{N\baselineskip}`（単位付きは `\par\vspace{5mm}` のようにそのまま）/ `\newpage` / `\vspace*{\fill}`、HTML は対応する `<div class>`（vspace は `height`。数値=`em`、単位付き=その単位）、MD（puremd）は vspace/pagebreak/vfill をいずれも破棄する（v1.0.3 までは pagebreak を `---` に変換していた）。
 
 #### 見出し内の強制改行（`{{br}}`）
 
@@ -306,7 +456,7 @@ procedure:
 
 | 形式 | 変換 | 備考 |
 |---|---|---|
-| PDF (LaTeX) | `\hdbreak`（`semantic_macros.tex` 定義のロバストマクロ） | 既定は空白。見出しの**組版時のみ** `report_header.tex` の `\titleformat` が局所的に `\\` へ上書きするため、本文（章・節・項の見出し）だけ改行になる。目次・柱（running head）・PDF しおりでは空白として扱われ、`\\` による moving 引数エラーを避ける |
+| PDF (Typst) | `#linebreak();` | 見出しの中だけ改行になる。目次・柱（running head）・PDF しおりでは `semantic_macros.typ` の show ルールで消える |
 | HTML | `<br>` | 見出し `<h1>`〜内で改行 |
 | MD (puremd/GFM) | （除去） | 改行位置の指定は PDF の固定幅組版向けで、表示幅が可変な Web（transfer / notecomexport の入力）では不要なため破棄する。空白も入れない（`問題解決に役立つ{{br}}情報整理` → `問題解決に役立つ情報整理`） |
 | pptx スライドタイトル | （除去） | `pptmerge` がスライドタイトルを置換する際、タイトル文字列中の `{{br}}` は除去する（タイトルは1行に収めるため。`{{ br }}` のような空白入りも許容） |
@@ -544,6 +694,7 @@ ID マーカー行のコメント変換・参照変換・変数置換は `pptxnu
 | -------- | ---- |
 | `{{nolabel}}` | label による見出しタイトル置換をスキップする。参照変換・変数置換は通常通り適用される |
 | `{{noref}}` | `{{#id:...}}` 行と直後の見出し行の参照変換・変数置換をスキップする |
+| `{{nonum}}` | ID は登録する（`{{title:}}` などで参照できる）が**採番しない**。カウンタを進めない・リセットしないので、前後の見出しは連番のまま。見出しは書いたまま出力される（label 置換をしない） |
 
 ```markdown
 {{#id:chapter:foo:bar}} {{nolabel}}
@@ -555,6 +706,26 @@ ID マーカー行のコメント変換・参照変換・変数置換は `pptxnu
 {{#id:subsection:foo:qux}} {{nolabel}} {{noref}}
 ### タイトル（label 置換なし、参照変換なし）
 ```
+
+`{{nolabel}}` と `{{nonum}}` の違い:
+
+| マーカー | 見出しの表示 | 番号の消費 |
+| -------- | ------------ | ---------- |
+| `{{nolabel}}` | 番号なし（原文のまま） | **消費する**（後続の番号が 1 つ飛ぶ） |
+| `{{nonum}}` | 番号なし（原文のまま） | **消費しない**（後続は連番のまま） |
+
+```markdown
+{{#id:subsection:foo:a}}
+### 手順A          → 1.1.1) 手順A
+
+{{#id:subsection:foo:note}} {{nonum}}
+### 補足           → 補足（番号なし）
+
+{{#id:subsection:foo:b}}
+### 手順B          → 1.1.2) 手順B
+```
+
+`{{nonum}}` のエントリは resolved で `number` が空、`label` がタイトルと同じになる。したがって参照は `{{title:}}` / `{{label:}}` がタイトル、`{{num:}}` が空文字に展開される。`{{sectionlist}}` にはタイトルで載る。pptx のノートに書いた場合（pptmerge idresolve モード）は、そのスライドのタイトルを置換しない。`{{enclosenum:}}` でこの ID を参照しても何も前置しない。
 
 #### 見出し行の検索ルール
 

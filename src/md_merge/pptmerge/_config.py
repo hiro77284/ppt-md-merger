@@ -174,7 +174,7 @@ def validate_config(config: dict[str, Any]) -> None:
                 f"indexer.pptxnumbering は {' / '.join(_VALID_NUMBERING)} です: {pptxnumbering!r}"
             )
 
-    # insertmd / insertvfill / insertpagebreak / insertvspace は MD 結合(merge)専用の
+    # insertmd / insertvar / insertvfill / insertpagebreak / insertvspace は MD 結合(merge)専用の
     # operation。pptmerge では対象にならないため、許可はするがマージループでは無視する。
     _VALID_OPS = PROCEDURE_OPS
     for item in procedure:

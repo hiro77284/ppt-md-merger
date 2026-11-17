@@ -1,6 +1,6 @@
 # 設計草案: PDF 化を lualatex から Typst へ移行する
 
-> **ステータス:** Phase 0〜5 完了（2026-10-22）、Phase 6（既定を Typst に）実施（2026-10-23）。lualatex は `engine: latex` でしばらく残し、問題が出なければ Phase 7（LaTeX の撤去）。§2 は**現在の実装の事実**（2026-10-21 時点の調査。2026-10-22 に前提を確認し §2.3 に反映）、§3 以降が**移行の方針と計画**。
+> **ステータス:** Phase 0〜5 完了（2026-10-22）、Phase 6（既定を Typst に）実施（2026-10-23）、Phase 7（LaTeX の撤去）完了（2026-11-15）。§2 は**現在の実装の事実**（2026-10-21 時点の調査。2026-10-22 に前提を確認し §2.3 に反映）、§3 以降が**移行の方針と計画**。
 
 ## 1. 背景と目的
 
@@ -95,7 +95,7 @@ HTML / GFM（puremd）系の出力は今回の対象外。lowering 規則（`sem
 
 **実施結果（2026-10-22、完了）:**
 
-- 実装: `pandoc.engine` / `--engine`（`pandoc`・`ppt_to_pdf`・`crop_to_pdf`）、`pandoc.typstdefaults`（省略時は同梱 `templates/typst_semantic_engine.yaml`）、`pandoc.typst-root`。`.typ` を残す 2 段構成。画像は同梱フィルタ `typst-images.lua` が resource-path から探して `.typ` 相対に書き換え、`--root` は既定で共通の上位ディレクトリ。`semantics.yaml` にインライン（`templates/semantic_macros.typ` の関数）とリーフ（`#v` / `#pagebreak` / `#v(1fr)`）の `typst:` 列を追加し、`raw.allowed_formats` と `raw.gfm.drop` に `typst` を追加。仕様は `docs/spec/output_formats.md` の「Typst エンジン」。
+- 実装: `pandoc.engine` / `--engine`（`pandoc`・`ppt_to_pdf`・`crop_to_pdf`）、`pandoc.typstdefaults`（省略時は同梱 `templates/typst_semantic_engine.yaml`。2026-11-16 に `report_base_defaults.yaml` へ改名し旧名は不可）、`pandoc.typst-root`。`.typ` を残す 2 段構成。画像は同梱フィルタ `typst-images.lua` が resource-path から探して `.typ` 相対に書き換え、`--root` は既定で共通の上位ディレクトリ。`semantics.yaml` にインライン（`templates/semantic_macros.typ` の関数）とリーフ（`#v` / `#pagebreak` / `#v(1fr)`）の `typst:` 列を追加し、`raw.allowed_formats` と `raw.gfm.drop` に `typst` を追加。仕様は `docs/spec/output_formats.md` の「PDF（Typst）」。
 - 基準文書を Typst で生成（render 済み MD から `pptmdmerge pandoc <レシピ> --engine typst --force`）:
 
   | 文書 | lualatex | Typst | Typst の所要時間 |
@@ -150,12 +150,13 @@ HTML / GFM（puremd）系の出力は今回の対象外。lowering 規則（`sem
 
 **実施結果（2026-10-22）:**
 
-- 実装（すべてパッケージ同梱。仕様は `docs/spec/output_formats.md` の「Typst エンジン」）:
+- 実装（すべてパッケージ同梱。仕様は `docs/spec/output_formats.md` の「PDF（Typst）」）:
   - `templates/report_template.typst`: pandoc テンプレート（既定テンプレートの `conf()` は使わず、表紙 → 目次 → 本文の順に組む）
   - `templates/report_style.typ`: ページ設計（用紙・余白・フォント・行送り・章／節／項の見出し・柱・ノンブル・目次・表紙ページ）。寸法は `report_header.tex` と基準 PDF の実測から
   - `templates/semantic_macros.typ`: ブロックの関数を追加（`sem-box` で note / warning / leadline / widequote、`semcenter` / `semblockindent` / `semlargefontblock` / `semkeeptogether`）
   - フィルタの typst 分岐: `divboxes.lua`（属性の読み替え。`\linewidth` の係数 → %、xcolor の `blue!8` → 色の混合、`\large` などのサイズ命令 → 倍率、読み替えられない値は警告して無視）、`center.lua` / `blockindent.lua` / `largefontblock.lua` / `keep-together.lua`
   - 表紙: `pandoc.typst-cover-md`。省略時は LaTeX 用の表紙が指定されていれば同梱の `cover_standard_typst.md`（`COVER_*` を使う標準の表紙。QR などのフッタ画像も可）。表紙 Markdown で `{{#if:}}` が使えるようにした
+    - 2026-11-14: この暗黙の切り替えは分かりにくいので、レシピ version 3 で廃止した。typst の表紙は `typst-cover-md` を書いたときだけ付く（version 2 以前は従来どおりで警告）
   - `typst-images.lua` の不具合修正: `..` を含む相対パスを作れず絶対パスのまま残っていた（Typst は絶対パスを読めない）
   - `semantics.yaml` の blocks に typst 列（記録用）
 - 結果:
@@ -195,7 +196,7 @@ HTML / GFM（puremd）系の出力は今回の対象外。lowering 規則（`sem
 
   どちらのフォルダにも README.md がある。また文書 B ・C の旧版のフォルダは過去の記録で、今後の作業ベースは `shared_assets` と文書 B ・C の現行版。調査・修正はこの区別に従う。
 
-- **表紙:** `common_assets/cover_type1.md` は LaTeX 用のまま残す（Typst では同梱の `cover_standard_typst.md` を使う）。LaTeX を撤去する Phase 7 で、表紙をどちらにするか決める。
+- **表紙:** `common_assets/cover_type1.md` は LaTeX 用のまま残す（Typst では `typst-cover-md: cover_standard_typst.md` で同梱の表紙を使う）。LaTeX を撤去する Phase 7 で、表紙をどちらにするか決める。
 - 基準文書のレシピに `pptmdexport.latex_check: error` を入れるかは作者の判断（レシピは作者のファイル）。
 
 ### Phase 5: 併存運用（文書ごとの切り替え）
@@ -256,6 +257,12 @@ HTML / GFM（puremd）系の出力は今回の対象外。lowering 規則（`sem
   - pandoc の defaults の `pandoc-crossref` と `figPrefix` などのメタデータ（図・表の番号は使っていない）
   - テンプレートの `qrcode` パッケージ読み込み
 - ドキュメントと 作者の環境の pandoc data-dirの LaTeX 用 defaults を整理する。
+
+**実施結果（2026-11-15、完了）:**
+
+- 撤去: `engine: latex` / `--engine` / `--tex`、`condblockprocess` サブコマンド（`procedure` の `when.command` に書くとエラー）、`templates/*.tex`、`semantics.yaml` の `latex:` 列と Lua フィルタの latex 分岐、`\graphicspath` の出力（`resourcepathfilename`）、`output.texfilename`、同梱の LaTeX 用 pandoc defaults（book / report）、HTML defaults の `pandoc-crossref` とメタデータ、`defaults/common_assets/tex_*.md`。条件ブロックの処理（`_condblock.py`）は表紙・ノート・insertmd 用に残した。
+- レシピ version 4: PDF の表紙を `pandoc.cover-md`、PDF の defaults を `pandoc.defaults` に改名（version 3 以前の `typst-cover-md` / `typstdefaults`）。同梱の標準表紙は `cover_standard.md`（旧名 `cover_standard_typst.md` は 2026-11-16 からエラー）。version 4 で旧キーや LaTeX 専用キーを書くとエラー。version 3 以前のレシピは従来の typst の挙動のまま動く。書き換えは `tools/convert_recipe_v4.py`（仕様は `docs/md_merge_spec.md` 5.3）。
+- `tools/convert_pptx_latex.py`（ノートの生 LaTeX をセマンティック記法へ書き換える）は残した。
 
 ## 5. リスク
 

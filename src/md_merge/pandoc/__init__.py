@@ -8,9 +8,16 @@ from pathlib import Path
 
 import yaml
 
+from md_merge._cover_images import body_image_targets, copy_cover_images, cover_image_settings
+from md_merge._filters import strip_frontmatter
+from md_merge._imagerefs import join_image_attributes
 from md_merge._output import EXIT_BAD_INPUT, EXIT_FAILURE, EXIT_NOT_FOUND, EXIT_OK, emit, setup_logging
-from md_merge.condblockprocess import _process_conditionals
-from md_merge.merge._recipe import apply_recipe_force, load_yaml, resolve_condblock_output, resolve_from_datadir, resolve_input_path, resolve_out_file, resolve_workdir, setup_recipe_file_logging
+from md_merge._condblock import process_conditionals as _process_conditionals
+from md_merge._pdf_metadata import collect_metadata, document_properties, typst_document_code
+from md_merge._pandoc_keys import deprecated_keys_warning, pandoc_key_errors, pdf_defaults_key, removed_latex_keys_warning, uses_plain_keys
+from md_merge._procedure import ProcedureNotationError, recipe_version
+from md_merge._typst_cover import select_typst_cover
+from md_merge.merge._recipe import apply_recipe_force, load_yaml, resolve_from_datadir, resolve_input_path, resolve_out_file, resolve_workdir, setup_recipe_file_logging
 
 # Built-in Lua filters shipped with this package
 _BUILTIN_FILTERS_DIR = Path(__file__).parent.parent / "filters"
@@ -28,20 +35,35 @@ _COVER_SEMANTIC_FILTERS = [
     "keep-together.lua",
 ]
 
-# PDF 化の組版エンジン。typst = pandoc で .typ を書き出し typst compile で PDF にする 2 段構成（既定）、
-# latex = pandoc → lualatex（廃止予定。指定すると警告する）。docs/design_typst_migration.md Phase 6。
-_ENGINES = ("latex", "typst")
-_DEFAULT_ENGINE = "typst"
+# PDF は pandoc で .typ を書き出し typst compile で PDF にする 2 段構成。lualatex の経路は
+# 撤去した（docs/design_typst_migration.md Phase 7）。pandoc.engine は typst 以外をエラーにする。
 
-# engine: typst で pandoc.typstdefaults を省略したときに使う同梱 defaults（templates/ にある）。
-_TYPST_DEFAULT_DEFAULTS = "typst_semantic_engine.yaml"
+# PDF で defaults（version 3 以前は typstdefaults）を省略したときに使う同梱 defaults（templates/ にある）。
+_TYPST_DEFAULT_DEFAULTS = "report_base_defaults.yaml"
 
-# engine: typst で常に適用する同梱フィルタ（画像を resource-path から探して .typ 相対にする）。
+# PDF（typst）で常に適用する同梱フィルタ（画像を resource-path から探して .typ 相対にする）。
 _TYPST_IMAGES_FILTER = "typst-images.lua"
 
-# engine: typst で typst-cover-md を省略したときの同梱の既定表紙（templates/ にある）。
+# 同梱テンプレート（表紙を名前だけ書いたときのフォールバック先など）。
 _BUILTIN_TEMPLATES_DIR = Path(__file__).parent.parent / "templates"
-_TYPST_DEFAULT_COVER = "cover_standard_typst.md"
+
+
+def _warn_latex_defaults_ignored(pandoc_section: dict) -> bool:
+    """PDF（typst）で typstdefaults が無く、LaTeX 用の defaults だけがあるときに警告する。
+
+    typst では pandoc.defaults（LaTeX 用）を読まないため、そこに書いた toc-depth などは
+    黙って効かず、同梱 report_base_defaults.yaml（toc-depth: 3）が使われてしまう。
+    警告したら True を返す。
+    """
+    if pandoc_section.get("typstdefaults") or not pandoc_section.get("defaults"):
+        return False
+    logging.warning(
+        "PDF（typst）では pandoc.defaults（LaTeX 用）を読みません。同梱の %s を使います"
+        "（toc-depth: 3 など）。typst 用の設定は pandoc.typstdefaults（version 4 では pandoc.defaults）に書いてください。"
+        "例: typstdefaults: [%s, <上書き用 defaults>]（後勝ち）",
+        _TYPST_DEFAULT_DEFAULTS, _TYPST_DEFAULT_DEFAULTS,
+    )
+    return True
 
 
 def run(args: argparse.Namespace) -> int:
@@ -63,20 +85,21 @@ def run(args: argparse.Namespace) -> int:
 
     pandoc_section = recipe.get("pandoc", {})
 
-    engine = str(getattr(args, "engine", None) or pandoc_section.get("engine") or _DEFAULT_ENGINE).strip().lower()
-    if engine not in _ENGINES:
-        logging.error("pandoc.engine は %s のいずれかです: %s", " / ".join(_ENGINES), engine)
+    try:
+        version = recipe_version(recipe)
+    except ProcedureNotationError:
+        version = 1
+    _key_errors = pandoc_key_errors(pandoc_section, version)
+    if _key_errors:
+        for _msg in _key_errors:
+            logging.error("%s", _msg)
         return EXIT_BAD_INPUT
-    typst_mode = False
-    if engine == "latex" and not (getattr(args, "tex", False) or getattr(args, "html", False) or getattr(args, "reveal", False)):
-        logging.warning("engine: latex（lualatex）は廃止予定です。既定の typst に移行してください")
+    _deprecated = deprecated_keys_warning(pandoc_section, version)
+    if _deprecated:
+        logging.warning("%s", _deprecated)
 
-    if getattr(args, "tex", False):
-        out_key = "texfilename"
-        pandoc_format = "latex"
-        defaults_key = "defaults"
-        simple_mode = False
-    elif getattr(args, "html", False):
+    typst_mode = False
+    if getattr(args, "html", False):
         out_key = "htmlfilename"
         pandoc_format = "html"
         defaults_key = "htmldefaults"
@@ -86,19 +109,12 @@ def run(args: argparse.Namespace) -> int:
         pandoc_format = "revealjs"
         defaults_key = "revealdefaults"
         simple_mode = True
-    elif engine == "typst":
-        out_key = "pdffilename"
-        pandoc_format = "typst"
-        defaults_key = "typstdefaults"
-        simple_mode = False
-        typst_mode = True
     else:
         out_key = "pdffilename"
-        pandoc_format = pandoc_section.get("format") or "pdf"
-        defaults_key = "defaults"
+        pandoc_format = "typst"
+        defaults_key = pdf_defaults_key(version)
         simple_mode = False
-    if engine == "typst" and not typst_mode:
-        logging.debug("engine: typst は PDF 出力にだけ効きます（--tex / --html / --reveal では無視）")
+        typst_mode = True
 
     rendered_path = resolve_out_file(recipe, "renderedfilename", yaml_path, workdir)
     if rendered_path is None:
@@ -128,6 +144,8 @@ def run(args: argparse.Namespace) -> int:
     _defaults_val = pandoc_section.get(defaults_key)
     _defaults_items = _defaults_val if isinstance(_defaults_val, list) else ([_defaults_val] if _defaults_val else [])
     if typst_mode and not _defaults_items:
+        if not uses_plain_keys(version):
+            _warn_latex_defaults_ignored(pandoc_section)
         _defaults_items = [_TYPST_DEFAULT_DEFAULTS]
     defaults_paths: list[Path] = []
     for _dv in _defaults_items:
@@ -139,38 +157,22 @@ def run(args: argparse.Namespace) -> int:
         pandoc_section.get("filters") or [], yaml_path, workdir
     )
 
-    # metadata-file: resolved from workdir (not data-dir)
-    # template / include-in-header: resolved from data-dir (PDF/LaTeX mode only)
+    # metadata-file: resolved from workdir (not data-dir)。version 3 以前だけ（version 4 で廃止）
+    # template / include-in-header は defaults ファイル側に書く（_rewrite_defaults_paths が解決）
     # data-dir: already resolved above, appended last with canonical path
     path_opts: list[tuple[str, Path]] = []
     _metadata = _resolve_path(pandoc_section.get("metadata-file"), yaml_path, workdir)
     if _metadata is not None:
         path_opts.append(("metadata-file", _metadata.resolve()))
-    if not simple_mode and not typst_mode:
-        # template / include-in-header は LaTeX 用。typst の template / include-in-header は
-        # typstdefaults 側に書く（_rewrite_defaults_paths が bare 名を同梱にフォールバック解決）。
-        # template: pandoc allows only one, so this stays single-valued.
-        tmpl = resolve_from_datadir(pandoc_section.get("template"), data_dir, yaml_path, workdir)
-        if tmpl is not None:
-            path_opts.append(("template", tmpl))
-        # include-in-header: a single file or a list of files. Each becomes its own
-        # --include-in-header flag; pandoc concatenates them into the preamble in order.
-        iih = pandoc_section.get("include-in-header")
-        iih_list = iih if isinstance(iih, list) else ([iih] if iih else [])
-        for val in iih_list:
-            resolved = resolve_from_datadir(val, data_dir, yaml_path, workdir)
-            if resolved is not None:
-                path_opts.append(("include-in-header", resolved))
     if data_dir is not None:
         path_opts.append(("data-dir", data_dir))
 
     highlight_style = pandoc_section.get("syntax-highlighting") or None
 
-    # include-before-body: single path or list.
-    # HTML/reveal モードは LaTeX 表紙を使わないが、pandoc.htmlcover を指定すると
-    # その HTML 表紙を変数置換して本文前に挿入する（シンプルなタイトルブロック）。
+    # 本文前に挿入する表紙。HTML/reveal は pandoc.htmlcover（変数置換した HTML）、
+    # PDF は cover-md（version 3 以前は typst-cover-md。下で typst 断片に変換）。
+    include_before_body: list[Path] = []
     if simple_mode:
-        include_before_body = []
         _htmlcover = pandoc_section.get("htmlcover")
         if _htmlcover and not args.dry_run:
             _cover_src = resolve_from_datadir(_htmlcover, data_dir, yaml_path, workdir)
@@ -180,48 +182,34 @@ def run(args: argparse.Namespace) -> int:
                     include_before_body = [_cover_out]
             else:
                 logging.warning("pandoc.htmlcover が見つかりません: %s", _htmlcover)
-    elif typst_mode:
-        # include-before-body / conditional-process-output は LaTeX 断片なので使わない。
-        # 表紙は cover-md（下）を typst に変換して使う。
-        include_before_body = []
-        if pandoc_section.get("include-before-body") or resolve_condblock_output(pandoc_section, recipe, yaml_path, workdir):
-            logging.info("engine: typst では include-before-body / conditional-process-output（LaTeX 断片）を使いません")
-    else:
-        include_before_body = _resolve_resource_paths(
-            pandoc_section.get("include-before-body"), yaml_path, workdir
-        )
-        cond_out = resolve_condblock_output(pandoc_section, recipe, yaml_path, workdir)
-        if cond_out is not None:
-            include_before_body = [cond_out] + include_before_body
-            logging.debug("conditional-process-output prepended to include-before-body: %s", cond_out)
+    if typst_mode:
+        _latex_warn = removed_latex_keys_warning(pandoc_section, version)
+        if _latex_warn:
+            logging.warning("%s", _latex_warn)
 
-    # cover-md: markdown で書いた表紙を tex/html 断片へ変換し、本文前（toc より前）に前置する。
-    # 手書き tex 表紙（conditional-process-input）の markdown 版。{{v:NAME}} をレシピ vars で
-    # 置換してから pandoc（セマンティック lua フィルタ付き）で変換する。生成物は
-    # include-before-body の先頭に置く（conditional-process-output があればその前）。
-    # resource-path: semicolon-separated string or YAML list
-    # Resolved paths are written to output.resourcepathfilename as \graphicspath{...}
-    # and added to pandoc via --include-in-header.
-    # Not used in HTML mode.
+    # resource-path: semicolon-separated string or YAML list。typst-images.lua が画像を探す。
+    # HTML では使わない。
     if simple_mode:
         resource_paths = []
-        graphicspath_tex = None
     else:
         resource_paths = _resolve_resource_paths(pandoc_section.get("resource-path"), yaml_path, None)
-        graphicspath_tex = None if typst_mode else resolve_out_file(recipe, "resourcepathfilename", yaml_path, workdir)
 
-    # engine: typst の表紙は typst-cover-md。省略時、LaTeX 用の表紙（cover-md /
-    # conditional-process-input）が指定されていれば同梱の既定表紙を使う（LaTeX 用の表紙は
-    # 中身が生 LaTeX で Typst では空になるため）。
-    _cover_md = pandoc_section.get("cover-md")
+    # PDF（typst）の表紙は cover-md（version 3 は typst-cover-md。どちらも明示したときだけ）。
+    # version 2 以前は、省略時に LaTeX 用の表紙があれば同梱の標準表紙を暗黙に使う（_typst_cover.py）。
+    # HTML/reveal では、version 3 以前だけ cover-md（LaTeX 用の Markdown 表紙）も HTML に変換する。
+    # version 4 の cover-md は PDF 専用（中身が typst の生コードなので HTML では崩れる）。
+    _cover_md = None if uses_plain_keys(version) else pandoc_section.get("cover-md")
     if typst_mode:
-        _cover_md = pandoc_section.get("typst-cover-md")
-        if not _cover_md and (pandoc_section.get("cover-md") or pandoc_section.get("conditional-process-input")):
-            _cover_md = str(_BUILTIN_TEMPLATES_DIR / _TYPST_DEFAULT_COVER)
+        _cover_md, _builtin, _cover_warn = select_typst_cover(pandoc_section, version)
+        if _cover_warn:
+            logging.warning("%s", _cover_warn)
+        if _cover_md and _builtin:
+            _cover_md = str(_BUILTIN_TEMPLATES_DIR / _cover_md)
     if _cover_md and not args.dry_run:
         _cover_frag = _build_cover_from_md(
             _cover_md, recipe.get("vars") or {}, yaml_path, workdir,
             pdf_path.parent, pandoc_format, simple_mode, resource_paths,
+            cover_image_opts=_cover_image_opts(recipe, yaml_path, workdir, rendered_path),
         )
         if _cover_frag is None:
             return EXIT_FAILURE
@@ -244,7 +232,6 @@ def run(args: argparse.Namespace) -> int:
     logging.debug("yaml     : %s", yaml_path)
     logging.debug("rendered : %s", rendered_path)
     logging.debug("output   : %s", pdf_path)
-    logging.debug("engine   : %s", "typst" if typst_mode else "latex")
     if typst_mode:
         logging.debug("typ      : %s", typ_path)
         logging.debug("typst-root: %s", typst_root)
@@ -259,8 +246,6 @@ def run(args: argparse.Namespace) -> int:
         logging.debug("include-before-body: %s", include_before_body)
     if resource_paths:
         logging.debug("resource-path   : %s", resource_paths)
-    if graphicspath_tex:
-        logging.debug("graphicspath-tex: %s", graphicspath_tex)
 
     if args.dry_run:
         emit(args, "ok", "pandoc", yaml_path, pdf_path, dry_run=True)
@@ -303,12 +288,8 @@ def run(args: argparse.Namespace) -> int:
         logging.error("pandoc not found on PATH")
         return EXIT_FAILURE
     if typst_mode and shutil.which("typst") is None:
-        logging.error("typst not found on PATH（engine: typst に必要）")
+        logging.error("typst not found on PATH（PDF 出力に必要）")
         return EXIT_FAILURE
-
-    # Write \graphicspath{...} tex file when resource-path and output file are both set
-    if resource_paths and graphicspath_tex:
-        _write_graphicspath(resource_paths, graphicspath_tex)
 
     pdf_path.parent.mkdir(parents=True, exist_ok=True)
 
@@ -323,7 +304,25 @@ def run(args: argparse.Namespace) -> int:
         if temp is not None:
             temp_defaults_files.append(temp)
 
-    cmd = ["pandoc", str(rendered_path), "-o", str(typ_path if typst_mode else pdf_path)]
+    # YAML frontmatter（transfer / notecomexport 用の title・hero 等）は PDF などの本文に出さない。
+    # merge 後は frontmatter の直前に <!-- source: --> 等のコメントが来るため pandoc は
+    # メタデータとして読まず本文に漏らす（2 ファイル目以降は文書の途中に来る）。
+    # 取り除いた本文を標準入力で渡す。frontmatter が無ければ従来どおりファイルを渡す。
+    rendered_text = rendered_path.read_text(encoding="utf-8-sig")
+    stripped_text, fm_count = strip_frontmatter(rendered_text)
+    if fm_count:
+        logging.info("frontmatter を %d 件取り除いて pandoc に渡します: %s", fm_count, rendered_path)
+    # `![](a.png) {width=80%}` のように画像と属性の間に空白があると pandoc は属性と
+    # みなさず文字列で出すため、空白を詰めてから渡す（コードブロック内は変えない）。
+    stripped_text, attr_count = join_image_attributes(stripped_text)
+    if attr_count:
+        logging.info("画像参照と属性の間の空白を %d 件詰めて pandoc に渡します: %s", attr_count, rendered_path)
+    pandoc_stdin: str | None = None
+    if fm_count or attr_count:
+        pandoc_stdin = stripped_text
+        cmd = ["pandoc", "-o", str(typ_path if typst_mode else pdf_path)]
+    else:
+        cmd = ["pandoc", str(rendered_path), "-o", str(typ_path if typst_mode else pdf_path)]
     for _dp in final_defaults:
         cmd += ["-d", str(_dp)]
     for fp in filter_paths:
@@ -337,8 +336,18 @@ def run(args: argparse.Namespace) -> int:
         cmd += [f"--syntax-highlighting={highlight_style}" ]
     for p in include_before_body:
         cmd += ["--include-before-body", str(p)]
-    if resource_paths and graphicspath_tex:
-        cmd += ["--include-in-header", str(graphicspath_tex)]
+    if typst_mode:
+        # PDF の文書プロパティ: COVER_* を流用し、defaults の metadata: で上書き（_pdf_metadata.py）
+        _doc_code = typst_document_code(document_properties(
+            recipe.get("vars") or {},
+            collect_metadata(defaults_paths, _metadata.resolve() if _metadata is not None else None),
+        ))
+        if _doc_code:
+            # -V だと非 UTF-8 ロケールで pandoc が引数の日本語を化かすので、一時 defaults の
+            # variables: で渡す（defaults ファイルは常に UTF-8 で読まれる）
+            _vars_tmp = _write_document_vars(_doc_code, pdf_path.parent)
+            temp_defaults_files.append(_vars_tmp)
+            cmd += ["-d", str(_vars_tmp)]
 
     cmd += ["--resource-path", _resource_path_arg(resource_paths)]
 
@@ -346,7 +355,9 @@ def run(args: argparse.Namespace) -> int:
     _orig_cwd = Path.cwd()
     os.chdir(pdf_path.parent)
     try:
-        result = subprocess.run(cmd, capture_output=True, text=True)
+        result = subprocess.run(
+            cmd, input=pandoc_stdin, capture_output=True, text=True, encoding="utf-8", errors="replace",
+        )
     finally:
         os.chdir(_orig_cwd)
         for temp in temp_defaults_files:
@@ -374,6 +385,16 @@ def run(args: argparse.Namespace) -> int:
 
 
 # ── helpers ────────────────────────────────────────────────────────────────
+
+
+def _write_document_vars(code: str, out_dir: Path) -> Path:
+    """PDF の文書プロパティの typst コードを variables: に持つ一時 defaults を書く。"""
+    import tempfile
+
+    fd, name = tempfile.mkstemp(prefix=".sem_document_", suffix=".yaml", dir=str(out_dir))
+    with os.fdopen(fd, "w", encoding="utf-8") as f:
+        yaml.safe_dump({"variables": {"sem-document": code}}, f, allow_unicode=True)
+    return Path(name)
 
 
 def _compile_typst(typ_path: Path, pdf_path: Path, root: Path) -> int:
@@ -428,16 +449,17 @@ def _build_cover_from_md(
     pandoc_format: str,
     simple_mode: bool,
     resource_paths: "list[Path] | None" = None,
+    cover_image_opts: "dict | None" = None,
 ) -> "Path | None":
-    """markdown 表紙を pandoc で tex/html 断片へ変換して返す（失敗時 None）。
+    """markdown 表紙を pandoc で typst/html 断片へ変換して返す（失敗時 None）。
 
-    手順: ``{{#if:NAME}}`` … ``{{#endif:NAME}}`` を condblockprocess と同じ規則で展開
+    手順: ``{{#if:NAME}}`` … ``{{#endif:NAME}}`` を _condblock の規則で展開
     （値が空のブロックを省く）→ ``{{v:NAME}}`` をレシピ vars で置換（未定義は空文字＝寛容）→ 中間 md を
     書き出し → セマンティック lua フィルタ付きで pandoc により断片（standalone なし）へ
     変換。生成断片は本文前に ``--include-before-body`` で挿入される想定なので、内部で
     参照する画像やマクロは本体 pandoc 実行時の resource-path / プリアンブルで解決される。
 
-    出力形式は PDF/LaTeX なら latex（.tex）、engine: typst なら typst（.typ）、
+    出力形式は PDF なら typst（.typ）、
     HTML/reveal なら該当形式（.html）。typst では画像の参照が本体の .typ と同じ場所からの
     相対になるよう、out_dir を作業ディレクトリにして typst-images.lua と resource-path を渡す。
     """
@@ -448,11 +470,12 @@ def _build_cover_from_md(
         cover_src = yaml_path.parent / p
         if not cover_src.exists() and workdir is not None and (workdir / p).exists():
             cover_src = workdir / p
-        # どこにも無ければ同梱 templates に basename でフォールバック（cover_standard_typst.md 等）
+        # どこにも無ければ同梱 templates に basename でフォールバック（cover_standard.md 等）。
+        # 旧名 cover_standard_typst.md は読み替えない（pandoc_key_errors が先にエラーにする）。
         if not cover_src.exists() and (_BUILTIN_TEMPLATES_DIR / p.name).exists():
             cover_src = _BUILTIN_TEMPLATES_DIR / p.name
     if not cover_src.exists():
-        logging.error("pandoc.cover-md が見つかりません: %s", cover_src)
+        logging.error("表紙の Markdown（pandoc.cover-md / typst-cover-md）が見つかりません: %s", cover_src)
         return None
     if shutil.which("pandoc") is None:
         logging.error("pandoc not found on PATH (cover-md の変換に必要)")
@@ -476,12 +499,27 @@ def _build_cover_from_md(
         content,
     )
 
+    # 表紙の画像（COVER_IMAGE など）は merge を通らないので、ここでレシピ基準に解決して
+    # merge.image-dir にコピーする（merge.copy-images が有効なとき。_cover_images.py）。
+    if cover_image_opts is not None:
+        try:
+            content = copy_cover_images(
+                content,
+                bases=[*cover_image_opts["bases"], cover_src.parent],
+                img_dir=cover_image_opts["img_dir"],
+                ref_base=out_dir,
+                naming=cover_image_opts["naming"],
+                collision=cover_image_opts["collision"],
+                taken=cover_image_opts["taken"],
+            )
+        except OSError as e:
+            logging.error("表紙の画像のコピーに失敗しました: %s", e)
+            return None
+
     if simple_mode:
         to_fmt, ext = pandoc_format, ".html"
-    elif pandoc_format == "typst":
-        to_fmt, ext = "typst", ".typ"
     else:
-        to_fmt, ext = "latex", ".tex"
+        to_fmt, ext = "typst", ".typ"
 
     try:
         out_dir = out_dir.resolve()
@@ -513,13 +551,29 @@ def _build_cover_from_md(
     return cover_out
 
 
-def _write_graphicspath(paths: list[Path], out_path: Path) -> None:
-    """Write a LaTeX file containing \\graphicspath{{path1/}{path2/}...}."""
-    comment = f"% {out_path.name}"
-    entries = "\n".join(f"  {{{p.as_posix()}/}}" for p in paths)
-    content = f"{comment}\n\\graphicspath{{\n{entries}\n}}\n"
-    out_path.parent.mkdir(parents=True, exist_ok=True)
-    out_path.write_text(content, encoding="utf-8")
+def _cover_image_opts(
+    recipe: dict, yaml_path: Path, workdir: "Path | None", rendered_path: Path,
+) -> "dict | None":
+    """表紙画像のコピー設定（merge.copy-images が無効なら None）。
+
+    コピー先は merge と同じ image-dir（結合済み MD の場所基準）。探す基準はレシピの
+    ディレクトリ → workdir（表紙 MD のディレクトリは呼び出し側で足す）。
+    """
+    copy, image_dir, naming, collision = cover_image_settings(recipe.get("merge"))
+    if not copy:
+        return None
+    md_path = resolve_out_file(recipe, "mdfilename", yaml_path, workdir) or rendered_path
+    img_dir = (md_path.parent / image_dir).resolve()
+    bases = [yaml_path.parent.resolve()]
+    if workdir is not None and workdir.resolve() not in bases:
+        bases.append(workdir.resolve())
+    return {
+        "bases": bases,
+        "img_dir": img_dir,
+        "naming": naming,
+        "collision": collision,
+        "taken": body_image_targets(rendered_path, img_dir),
+    }
 
 
 def _resource_path_arg(paths: "list[Path]") -> str:
@@ -560,8 +614,7 @@ def _resolve_path(val: str | None, yaml_path: Path, workdir: Path | None) -> Pat
     return result
 
 
-# _resolve_from_datadir は merge/_recipe.py の resolve_from_datadir に移動（pandoc /
-# condblockprocess で共有）。同梱テンプレへの basename フォールバックもそちらに実装。
+# _resolve_from_datadir は merge/_recipe.py の resolve_from_datadir にある。同梱テンプレへの basename フォールバックもそちらに実装。
 
 
 def _resolve_filters(
@@ -620,7 +673,7 @@ def _rewrite_defaults_paths(
     filters は ``_resolve_filters``、include-in-header/template は ``resolve_from_datadir``
     （どちらも basename でパッケージ同梱にフォールバック）で解決した絶対パスに置換した
     **一時 defaults** を生成して pandoc に渡す。これにより defaults に ``center.lua`` /
-    ``semantic_macros.tex`` 等の bare 名を書けば同梱の正本に解決される。
+    ``semantic_macros.typ`` 等の bare 名を書けば同梱の正本に解決される。
 
     解決できないエントリ（``pandoc-crossref`` 等の外部フィルタ、実在しないパス）と並び順は
     そのまま保持する。戻り値: (pandoc に渡す defaults パス, 後始末する一時ファイル or None)。

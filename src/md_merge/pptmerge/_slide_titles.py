@@ -14,6 +14,7 @@ from pptx.enum.shapes import MSO_SHAPE_TYPE
 from pptx.oxml.ns import qn
 
 from ._com import dispatch_powerpoint
+from ._xmltext import single_line_text
 from ._csl import (
     CSL_MARKER,
     delete_slides as _csl_delete_slides,
@@ -30,6 +31,7 @@ from ._slide_operation import (
 
 chapter_title_format = r'#CHAPTNUM##SEPA##CONTENT#'
 section_title_format = r'#CHAPTNUM##DELM##SECTNUM##SEPA##CONTENT#'
+subsection_title_format = r'#CHAPTNUM##DELM##SECTNUM##DELM##SUBSECTNUM##SEPA##CONTENT#'
 
 NOREPLACE_MARKER = "#NOREPLACE#"
 NONUMBERING_MARKER = "#NONUMBERING#"
@@ -68,6 +70,7 @@ def _apply_index_counter(current: int, value: Any) -> int:
 _INDEXER_DEFAULTS: dict[str, Any] = {
     "chapter_marker": "#CHAPT#",
     "section_marker": "#SECTION#",
+    "subsection_marker": "#SUBSECTION#",
     "stay_marker": "#STAY#",
     "delimiter": ".",
     "separator": ") ",
@@ -112,7 +115,7 @@ def load_slide_titles(prs: pptx_presentation.Presentation) -> list[tuple[int, st
     for index, slide in enumerate(prs.slides, start=1):
         title_text = ""
         if slide.shapes.title is not None:
-            title_text = (slide.shapes.title.text or "").strip()
+            title_text = single_line_text(slide.shapes.title.text or "")
         result.append((index, title_text))
     return result
 
@@ -124,6 +127,8 @@ def replace_slide_title(
 ) -> None:
     # スライドタイトルは1行に収めるため {{br}}（見出し内強制改行）は除去する。
     title = _BR_MARKER_RE.sub("", title)
+    # ソフト改行（Shift+Enter → \x0b）や制御文字は lxml が拒否するので 1 行化・除去する。
+    title = single_line_text(title)
     n = len(prs.slides)
     if slide_number < 1 or slide_number > n:
         raise ValueError(f"スライド番号が範囲外です: {slide_number} （プレゼンは {n} 枚）")
@@ -175,6 +180,108 @@ def load_slide_all_shape_texts(prs: pptx_presentation.Presentation) -> list[str]
     return combined
 
 
+def compute_chapt_section_titles(
+    operations: list[SlideOperation],
+    slide_texts: list[str],
+    config: dict[str, Any] | None,
+) -> list[tuple[int, str]]:
+    """chapt_section モードの章・節・小節カウンタを進め、書き換え後のタイトルを返す。
+
+    戻り値は ``(結合後スライド番号, 新タイトル)`` のリスト。``#NONUMBERING#`` を含む
+    スライドは（カウンタは進めたうえで）結果に含めない。
+    """
+    chapter_count = 0
+    section_count = 0
+    subsection_count = 0
+    result: list[tuple[int, str]] = []
+
+    chapter_marker = str(_get_indexer_value(config, "chapter_marker"))
+    section_marker = str(_get_indexer_value(config, "section_marker"))
+    subsection_marker = str(_get_indexer_value(config, "subsection_marker"))
+    stay_marker = str(_get_indexer_value(config, "stay_marker"))
+    delimiter = str(_get_indexer_value(config, "delimiter"))
+    separator = str(_get_indexer_value(config, "separator"))
+
+    chapsectfreeze_flag = False
+    # 直近のスライドの階層（#STAY# 等でカウンタが進まないスライドはこの階層の書式を引き継ぐ）
+    chapt_or_section_flag = "chapter"
+
+    for operation in operations:
+        if operation.action == "insertslide":
+            slide_body = slide_texts[operation.composedslidenum - 1]
+            has_nonumbering = NONUMBERING_MARKER in slide_body
+            has_chapt = bool(chapter_marker) and chapter_marker in slide_body
+            has_sect = bool(section_marker) and section_marker in slide_body
+            has_subsect = bool(subsection_marker) and subsection_marker in slide_body
+            has_stay = bool(stay_marker) and stay_marker in slide_body
+            counting = not chapsectfreeze_flag and not has_stay
+
+            if has_chapt and counting:
+                chapt_or_section_flag = "chapter"
+                chapter_count = _apply_index_counter(chapter_count, "+")
+                section_count = 0
+                subsection_count = 0
+            if has_sect and counting:
+                chapt_or_section_flag = "section"
+                section_count = _apply_index_counter(section_count, "1")
+                subsection_count = 0
+            if has_subsect and not has_chapt and not has_sect and counting:
+                chapt_or_section_flag = "subsection"
+                subsection_count = _apply_index_counter(subsection_count, "+")
+
+            if not has_chapt and not has_sect and not has_subsect and counting:
+                chapt_or_section_flag = "section"
+                section_count = _apply_index_counter(section_count, "+")
+                subsection_count = 0
+
+            title_disp = operation.slidetitle if operation.slidetitle else "(タイトルなし)"
+            if has_chapt or chapt_or_section_flag == "chapter":
+                newtitle = (
+                    chapter_title_format
+                    .replace("#CHAPTNUM#", str(chapter_count))
+                    .replace("#SEPA#", separator)
+                    .replace("#CONTENT#", title_disp)
+                )
+            elif has_sect or chapt_or_section_flag == "section":
+                newtitle = (
+                    section_title_format
+                    .replace("#CHAPTNUM#", str(chapter_count))
+                    .replace("#DELM#", delimiter)
+                    .replace("#SECTNUM#", str(section_count))
+                    .replace("#SEPA#", separator)
+                    .replace("#CONTENT#", title_disp)
+                )
+            else:
+                newtitle = (
+                    subsection_title_format
+                    .replace("#CHAPTNUM#", str(chapter_count))
+                    .replace("#DELM#", delimiter)
+                    .replace("#SECTNUM#", str(section_count))
+                    .replace("#SUBSECTNUM#", str(subsection_count))
+                    .replace("#SEPA#", separator)
+                    .replace("#CONTENT#", title_disp)
+                )
+
+            if not has_nonumbering:
+                result.append((operation.composedslidenum, newtitle))
+
+        elif operation.action == "chapter":
+            chapter_count = _apply_index_counter(chapter_count, operation.value)
+            section_count = _apply_index_counter(section_count, "0")
+            subsection_count = 0
+        elif operation.action == "section":
+            section_count = _apply_index_counter(section_count, operation.value)
+            subsection_count = 0
+        elif operation.action == "subsection":
+            subsection_count = _apply_index_counter(subsection_count, operation.value)
+        elif operation.action == "beginstay":
+            chapsectfreeze_flag = True
+        elif operation.action == "endstay":
+            chapsectfreeze_flag = False
+
+    return result
+
+
 def postprocess_after_merge(
     pptx_path: Path,
     log_file: Path,
@@ -183,8 +290,6 @@ def postprocess_after_merge(
     operations: list[SlideOperation] = [],
     csl_mode: str | None = None,
 ) -> None:
-    chapter_count = 0
-    section_count = 0
     slides_modified = False
 
     merged_prs = Presentation(str(pptx_path))
@@ -192,78 +297,12 @@ def postprocess_after_merge(
     lines: list[str] = []
     slide_texts = load_slide_all_shape_texts(merged_prs)
 
-    chapter_marker = str(_get_indexer_value(config, "chapter_marker"))
-    section_marker = str(_get_indexer_value(config, "section_marker"))
-    stay_marker = str(_get_indexer_value(config, "stay_marker"))
-
-    chapsectfreeze_flag = False
-    chapt_or_section_flag = "chapter"
-
-    for operation in operations:
-        has_chapt = False
-        has_sect = False
-        has_stay = False
-        if operation.action == "insertslide":
-            title_disp = operation.slidetitle if operation.slidetitle else "(タイトルなし)"
-            slide_body = slide_texts[operation.composedslidenum - 1]
-            has_nonumbering = NONUMBERING_MARKER in slide_body
-            has_chapt = bool(chapter_marker) and chapter_marker in slide_body
-            has_sect = bool(section_marker) and section_marker in slide_body
-            has_stay = bool(stay_marker) and stay_marker in slide_body
-
-            if has_chapt and not chapsectfreeze_flag and not has_stay:
-                chapt_or_section_flag = "chapter"
-                chapter_count = _apply_index_counter(chapter_count, "+")
-                section_count = 0
-            if has_sect and not chapsectfreeze_flag and not has_stay:
-                chapt_or_section_flag = "section"
-                section_count = _apply_index_counter(section_count, "1")
-
-            if not has_chapt and not has_sect:
-                if not has_stay and not chapsectfreeze_flag:
-                    chapt_or_section_flag = "section"
-                    section_count = _apply_index_counter(section_count, "+")
-
-        elif operation.action == "blank":
+    for composedslidenum, newtitle in compute_chapt_section_titles(operations, slide_texts, config):
+        try:
+            replace_slide_title(merged_prs, composedslidenum, newtitle)
+            slides_modified = True
+        except ValueError:
             pass
-        elif operation.action == "chapter":
-            chapter_count = _apply_index_counter(chapter_count, operation.value)
-            section_count = _apply_index_counter(section_count, "0")
-        elif operation.action == "section":
-            section_count = _apply_index_counter(section_count, operation.value)
-        elif operation.action == "beginstay":
-            chapsectfreeze_flag = True
-        elif operation.action == "endstay":
-            chapsectfreeze_flag = False
-
-        if operation.action == "insertslide":
-            title_disp = operation.slidetitle if operation.slidetitle else "(タイトルなし)"
-            if has_chapt or chapt_or_section_flag == "chapter":
-                newtitle = (
-                    chapter_title_format
-                    .replace("#CHAPTNUM#", str(chapter_count))
-                    .replace("#SEPA#", str(_get_indexer_value(config, "separator")))
-                    .replace("#CONTENT#", title_disp)
-                )
-            elif has_sect or chapt_or_section_flag == "section":
-                newtitle = (
-                    section_title_format
-                    .replace("#CHAPTNUM#", str(chapter_count))
-                    .replace("#DELM#", str(_get_indexer_value(config, "delimiter")))
-                    .replace("#SECTNUM#", str(section_count))
-                    .replace("#SEPA#", str(_get_indexer_value(config, "separator")))
-                    .replace("#CONTENT#", title_disp)
-                )
-            else:
-                newtitle = title_disp
-
-            if not has_nonumbering:
-                try:
-                    replace_slide_title(merged_prs, operation.composedslidenum, newtitle)
-                    slides_modified = True
-                except ValueError:
-                    pass
-
 
     ppt_saved_by_com_shape_delete, deleted_csl_slides = _run_modify_slide_shapes(
         pptx_path, merged_prs, config, csl_mode,
@@ -294,6 +333,7 @@ def postprocess_after_merge(
 _CHAPT_SECTION_STAY_MARKERS = (
     re.compile(r"#CHAPT#\s?.*"),
     re.compile(r"#SECTION#\s?.*"),
+    re.compile(r"#SUBSECTION#\s?.*"),
     re.compile(r"#STAY#\s?.*"),
 )
 
@@ -301,7 +341,7 @@ _CHAPT_SECTION_STAY_MARKERS = (
 def _strip_chapter_section_stay_markers_from_text_frame(tf: Any) -> None:
     for paragraph in tf.paragraphs:
         full = paragraph.text
-        if "#CHAPT#" not in full and "#SECTION#" not in full and "#STAY#" not in full:
+        if not any(m in full for m in ("#CHAPT#", "#SECTION#", "#SUBSECTION#", "#STAY#")):
             continue
         new_full = full
         for pat in _CHAPT_SECTION_STAY_MARKERS:
@@ -567,7 +607,8 @@ def _parse_title_markers(notes_text: str) -> list[tuple[str, str, bool]]:
     """
     result: list[tuple[str, str, bool]] = []
     for line in notes_text.splitlines():
-        nolabel = "{{nolabel}}" in line
+        # {{nonum}} (unnumbered ID) leaves the slide title as is, like {{nolabel}}.
+        nolabel = "{{nolabel}}" in line or "{{nonum}}" in line
         for m in _ID_MARKER_RE.finditer(line):
             result.append(("iddef", m.group(1), nolabel))
         for m in _ENCLOSENUM_RE.finditer(line):
@@ -632,8 +673,19 @@ def postprocess_idresolve(
                 slide_num, NOREPLACE_MARKER,
             )
 
+        # {{enclosenum:}} is applied at most once per slide: the first marker whose
+        # FULL_ID resolves to exactly one entry wins; later ones are ignored so the
+        # number is never prepended twice (e.g. "(1) (1) Title").
+        enclosenum_applied = False
+
         for kind, full_id, nolabel in markers:
             if has_noreplace:
+                continue
+            if kind == "num" and enclosenum_applied:
+                logging.debug(
+                    "idresolve: スライド %d: {{enclosenum:}} は適用済みのためスキップ (%s)",
+                    slide_num, full_id,
+                )
                 continue
             if kind == "iddef" and nolabel:
                 logging.debug(
@@ -654,11 +706,16 @@ def postprocess_idresolve(
                 if kind == "num":
                     # {{enclosenum:FULL_ID}} reference: keep the slide title and
                     # prepend "(number) ".
+                    enclosenum_applied = True
                     number = str(matches[0].get("number", ""))
                     cur_title = ""
                     if slide.shapes.title is not None:
-                        cur_title = (slide.shapes.title.text or "").strip()
-                    newtitle = f"({number}) {cur_title}".rstrip()
+                        cur_title = single_line_text(slide.shapes.title.text or "")
+                    if number:
+                        newtitle = f"({number}) {cur_title}".rstrip()
+                    else:
+                        # {{nonum}} entry: nothing to prepend; keep the title.
+                        newtitle = cur_title
                 else:
                     # iddef / {{titlelabel:FULL_ID}}: replace the title with label.
                     newtitle = matches[0].get("label", "")

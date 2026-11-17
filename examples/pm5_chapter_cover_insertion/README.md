@@ -17,7 +17,6 @@
 
 機能としては単なる operation:insertpptx と varsであり、Chapter Cover 用ファイルを用意して中身を変数置換することで実現します。
 
-<!-- source: defaults/common_assets/tex_newpage.md -->
 
 
 
@@ -34,7 +33,6 @@ Chapter Cover 挿入運用の詳しい説明をします。
 ![](build/figures/chapter_cover_insertion_guide_slide2_fig.png)
 
 
-<!-- source: defaults/common_assets/tex_newpage.md -->
 
 
 
@@ -51,7 +49,6 @@ Chapter Cover 挿入運用の詳しい説明をします。
 
 はっきりとデザインの違う Chapter Cover スライドを挿入しておけば、この問題を解決できます。
 
-<!-- source: defaults/common_assets/tex_newpage.md -->
 
 
 
@@ -68,7 +65,6 @@ Chapter Cover 挿入運用の詳しい説明をします。
 ![](build/figures/chapter_cover_insertion_guide_slide4_fig.png)
 
 
-<!-- source: defaults/common_assets/tex_newpage.md -->
 
 
 

@@ -1,4 +1,0 @@
-﻿
-\vfill
-\newpage
-

@@ -44,6 +44,13 @@ def resolve_entries(entries: list[dict], delimiter: str, separator: str) -> list
         title = entry.get("title", "")
         op_val = str(entry.get("numbering_op", "+"))
 
+        if entry.get("nonum"):
+            # {{nonum}}: referable but unnumbered. No counter is advanced or
+            # reset, so surrounding entries keep consecutive numbers.
+            entry["number"] = ""
+            entry["label"] = title
+            continue
+
         if id_type == "chapter":
             cnum = _next_counter(cnum, op_val)
             snum = 0
@@ -87,6 +94,8 @@ def expand_title_label_refs(entries: list[dict], separator: str) -> None:
         number = entry.get("number", "")
         if number:
             entry["label"] = f"{number}{separator}{new_title}"
+        elif entry.get("nonum"):
+            entry["label"] = new_title
 
 
 def _expand_ref_in_str(text: str, resolved_map: dict[str, dict]) -> str:

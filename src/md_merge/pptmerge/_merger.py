@@ -16,16 +16,14 @@ from pptx import Presentation as _PptxPresentation
 from pptx.oxml.ns import qn as _qn
 
 _A_NS = 'http://schemas.openxmlformats.org/drawingml/2006/main'
-_SOFT_RETURN_RE = re.compile(r'\x0B')
-_INVALID_XML_RE = re.compile(r'[\x00-\x08\x0C\x0E-\x1F\x7F]')
 
 
 def _sanitize_note_text(text: str) -> str:
     """Sanitize note text for XML: convert soft returns to newlines, strip other control chars."""
-    text = _SOFT_RETURN_RE.sub('\n', text)
-    return _INVALID_XML_RE.sub('', text)
+    return multiline_text(text)
 
 from ._com import dispatch_powerpoint
+from ._xmltext import multiline_text, single_line_text
 from ._config import (
     ConfigError,
     load_yaml,
@@ -301,11 +299,14 @@ def _apply_notes_replacements(
         new_text = new_text.replace("<__BASEFILENAME__>", info["basefilename"])
         new_text = new_text.replace("<__FILENAME__>", info["filename"])
         new_text = new_text.replace("<__SLIDENUM__>", info["slidenum"])
-        new_text = new_text.replace("<__TITLE__>", info["title"])
+        new_text = new_text.replace("<__TITLE__>", single_line_text(info["title"]))
         for name, value in info["vars"].items():
             new_text = new_text.replace("{{v:" + name + "}}", value)
         if resolved_map:
             new_text = _resolve_ref_in_text(new_text, resolved_map)
+        # Substituted values (titles, vars, refs) may carry soft returns or
+        # control characters that lxml would reject.
+        new_text = _sanitize_note_text(new_text)
 
         if new_text == text:
             continue
@@ -319,7 +320,12 @@ def _apply_notes_replacements(
             if line:
                 r_elem = etree.SubElement(p_elem, f'{{{_A_NS}}}r')
                 t_elem = etree.SubElement(r_elem, f'{{{_A_NS}}}t')
-                t_elem.text = line
+                try:
+                    t_elem.text = line
+                except ValueError as exc:
+                    raise ValueError(
+                        f"slide {info['composedslidenum']}: cannot write note text {line!r}: {exc}"
+                    ) from exc
         changed = True
 
     if changed:

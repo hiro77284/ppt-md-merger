@@ -4,16 +4,20 @@ import shutil
 import sys
 from pathlib import Path
 
+from md_merge._params import condition_vars
 from md_merge._fingerprint import load_check_map, verify_against_check
 from md_merge._output import EXIT_BAD_INPUT, EXIT_FAILURE, EXIT_NOT_FOUND, EXIT_OK, emit, setup_logging
 from md_merge._imagerefs import COLLISION_MODES, NAMING_MODES
+from md_merge.merge._copy_keys import CopyKeyConflictError, resolve_no_copy
 from md_merge.merge._images import DEFAULT_IMAGE_DIR, ImageSourceCollector, make_image_copier
 from md_merge.merge._recipe import (
     CircularIncludeError,
     IncludeNotFoundError,
+    VarInsert,
     apply_recipe_force,
     collect_procedure_items,
     expand_md,
+    expand_var,
     iter_insertmd_entries,
     load_recipe,
     load_yaml,
@@ -43,7 +47,11 @@ def run(args: argparse.Namespace) -> int:
     setup_recipe_file_logging(recipe, yaml_path, workdir)
 
     apply_recipe_force(args, recipe)
-    _apply_recipe_merge_opts(args, recipe.get("merge", {}))
+    try:
+        _apply_recipe_merge_opts(args, recipe.get("merge", {}))
+    except CopyKeyConflictError as exc:
+        logging.error("%s", exc)
+        return EXIT_BAD_INPUT
     if args.image_naming not in NAMING_MODES:
         logging.error("merge.image-naming は %s のいずれかです: %s",
                       " / ".join(NAMING_MODES), args.image_naming)
@@ -56,7 +64,7 @@ def run(args: argparse.Namespace) -> int:
     in_dirs = resolve_input_dirs(recipe, yaml_path, workdir)
     procedure_items = collect_procedure_items(recipe, in_dirs, yaml_path)
 
-    if not any(isinstance(i, Path) for i in procedure_items):
+    if not any(isinstance(i, (Path, VarInsert)) for i in procedure_items):
         logging.warning("No insertmd entries found in procedure")
 
     check_problems = _verify_insertmd_check(args, recipe, in_dirs, yaml_path, workdir)
@@ -80,12 +88,14 @@ def run(args: argparse.Namespace) -> int:
         return EXIT_FAILURE
 
     strict = getattr(args, "strict", False)
+    # 条件ブロック（{{#if:NAME}}）の判定に使う変数（レシピ vars: ＋ --var、load_yaml でマージ済み）
+    cond_vars = condition_vars(recipe)
 
     # clear-dir-before-merge: wipe the image directory before merging when enabled
     # and an image-dir name is set. 削除前にフルパスを提示して確認する（中止なら merge 全体を止める）。
     image_dir_name = getattr(args, "image_dir", None)
     if getattr(args, "clear_dir_before_merge", False) and image_dir_name:
-        sources = _collect_image_sources(procedure_items, yaml_path.parent)
+        sources = _collect_image_sources(procedure_items, yaml_path.parent, cond_vars)
         if not _clear_image_dir(out_path.parent, image_dir_name, args, sources=sources):
             logging.error("clear-dir-before-merge: 確認が得られなかったため merge を中止しました。")
             return EXIT_FAILURE
@@ -97,6 +107,15 @@ def run(args: argparse.Namespace) -> int:
         if isinstance(item, str):
             parts.append(item)
             continue
+        if isinstance(item, VarInsert):
+            try:
+                parts.append(expand_var(
+                    item, yaml_path.parent, image_copier=image_copier, cond_vars=cond_vars,
+                ))
+            except ValueError as e:
+                logging.error("条件ブロック: %s", e)
+                return EXIT_FAILURE
+            continue
         p = item
         if not p.exists():
             if strict:
@@ -107,7 +126,7 @@ def run(args: argparse.Namespace) -> int:
         try:
             parts.append(expand_md(
                 p, strict=strict, yaml_dir=yaml_path.parent,
-                image_copier=image_copier,
+                image_copier=image_copier, cond_vars=cond_vars,
             ))
         except CircularIncludeError as e:
             logging.error("Circular include detected: %s", e.path)
@@ -115,6 +134,9 @@ def run(args: argparse.Namespace) -> int:
         except IncludeNotFoundError as e:
             logging.error("Include target not found: %s", e.path)
             return EXIT_NOT_FOUND
+        except ValueError as e:
+            logging.error("条件ブロック: %s", e)
+            return EXIT_FAILURE
 
     merged = "\n\n".join(parts)
     out_path.parent.mkdir(parents=True, exist_ok=True)
@@ -155,18 +177,24 @@ def _confirm_clear(target: Path, count: int, args: argparse.Namespace, *, ignore
     return ans in ("y", "yes")
 
 
-def _collect_image_sources(procedure_items: list, yaml_dir: Path) -> set[Path]:
+def _collect_image_sources(procedure_items: list, yaml_dir: Path, cond_vars: "dict | None" = None) -> set[Path]:
     """Return the resolved image paths referenced by the merge inputs (includes too).
 
     読み込みや include の不備はここでは無視し、後段の本処理のエラー処理に任せる。
     """
     collector = ImageSourceCollector()
     for item in procedure_items:
+        if isinstance(item, VarInsert):
+            try:
+                expand_var(item, yaml_dir, image_copier=collector, cond_vars=cond_vars)
+            except ValueError:
+                pass
+            continue
         if not isinstance(item, Path) or not item.exists():
             continue
         try:
-            expand_md(item, yaml_dir=yaml_dir, image_copier=collector)
-        except (CircularIncludeError, IncludeNotFoundError, OSError, UnicodeDecodeError):
+            expand_md(item, yaml_dir=yaml_dir, image_copier=collector, cond_vars=cond_vars)
+        except (CircularIncludeError, IncludeNotFoundError, OSError, UnicodeDecodeError, ValueError):
             continue
     return collector.sources
 
@@ -252,7 +280,10 @@ def preflight_clear_confirm(args: argparse.Namespace) -> int:
         return EXIT_OK
     cli_workdir = Path(args.workdir).resolve() if getattr(args, "workdir", None) else None
     workdir = resolve_workdir(recipe, yaml_path, cli_workdir)
-    _apply_recipe_merge_opts(args, recipe.get("merge", {}))
+    try:
+        _apply_recipe_merge_opts(args, recipe.get("merge", {}))
+    except CopyKeyConflictError:
+        return EXIT_OK  # 矛盾は後段の run() がエラーにする
     if not getattr(args, "clear_dir_before_merge", False):
         return EXIT_OK
     image_dir_name = getattr(args, "image_dir", None)
@@ -309,8 +340,11 @@ def _apply_recipe_merge_opts(args: argparse.Namespace, mc: dict) -> None:
     CLI flags (store_true) default to False; a True value means the flag was
     explicitly passed, so recipe values only fill in when the flag is False.
     """
+    # copy-images（既定 true）が標準。否定形 no-copy-images も許容し、矛盾はエラー。
+    no_copy_images = resolve_no_copy(mc, "copy-images", "no-copy-images")
+    no_copy_yamls = resolve_no_copy(mc, "copy-yamls", "no-copy-yamls")
     if not args.no_copy_images:
-        args.no_copy_images = bool(mc.get("no-copy-images", False))
+        args.no_copy_images = no_copy_images
     if not args.image_dir:
         # キー省略時は既定サブディレクトリ、空文字を明示したときは outputdir 直下（旧挙動）。
         val = mc.get("image-dir", None)
@@ -327,6 +361,16 @@ def _apply_recipe_merge_opts(args: argparse.Namespace, mc: dict) -> None:
         args.image_collision = str(
             mc.get("image-collision") or ("overwrite" if legacy else "rename")
         ).strip().lower()
+    # 本文の YAML ファイルへのリンク [text](x.yaml) のコピー（画像と独立した 4 キー）。
+    if not getattr(args, "no_copy_yamls", False):
+        args.no_copy_yamls = no_copy_yamls
+    if getattr(args, "yaml_dir", None) is None:
+        val = mc.get("yaml-dir", None)
+        args.yaml_dir = None if val is None else str(val)   # None → image-dir と同じ
+    if not getattr(args, "flatten_yamls", False):
+        args.flatten_yamls = bool(mc.get("flatten-yamls", False))
+    if not getattr(args, "overwrite_yamls", False):
+        args.overwrite_yamls = bool(mc.get("overwrite-yamls", False))
     if not getattr(args, "clear_dir_before_merge", False):
         # 既定 True。無効化するには recipe で clear-dir-before-merge: false を指定する。
         args.clear_dir_before_merge = bool(mc.get("clear-dir-before-merge", True))

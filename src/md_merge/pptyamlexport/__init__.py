@@ -24,7 +24,9 @@ from pathlib import Path
 import yaml
 from pptx import Presentation
 
+from md_merge._params import condition_vars
 from md_merge._filters import replace_slide_placeholders
+from md_merge._condblock import process_text
 from md_merge._note_parser import parse_note_image_directives, parse_note_yaml_blocks
 from md_merge._cropsrc import cropsrc_entries, resolve_cropsrc_path
 from md_merge._shapes import find_shape as _find_shape
@@ -434,6 +436,7 @@ def run(args: argparse.Namespace) -> int:
     force = getattr(args, "force", False) or bool(output_section.get("force"))
     dry_run = getattr(args, "dry_run", False)
     json_mode = getattr(args, "json", False)
+    cond_vars = condition_vars(recipe)
 
     if not entries:
         logging.error("input.cropsrc が指定されていません: %s", yaml_path)
@@ -486,6 +489,15 @@ def run(args: argparse.Namespace) -> int:
                 if block_idx:
                     where += f" (YAML ブロック {block_idx + 1})"
 
+                # 条件ブロック（{{#if:NAME}}）を YAML 解析の前に行単位で展開する
+                try:
+                    body = process_text(body, cond_vars, where=f"{pptx_path.name} {where}")
+                except ValueError as e:
+                    logging.error("条件ブロック: %s", e)
+                    errors += 1
+                    failures.append(f"{where}: 条件ブロック: {e}")
+                    continue
+
                 if not body.strip():
                     continue  # 空の YAML ブロックはプレースホルダとみなし黙ってスキップ
 
@@ -510,12 +522,11 @@ def run(args: argparse.Namespace) -> int:
                     failures.append(f"{where}: トップレベルがマッピングでない")
                     continue
 
+                # トップレベルの id は未指定でも警告に留めて処理を続ける
+                # （slot / region の id はシェイプ名として必須なので従来どおりエラー）。
                 doc_id = str(doc.get("id") or "").strip()
                 if not doc_id:
-                    logging.error("%s: id が指定されていません", where)
-                    errors += 1
-                    failures.append(f"{where}: id 未指定")
-                    continue
+                    logging.warning("%s: id が指定されていません", where)
 
                 baseframe = str(doc.get("baseframe") or "").strip()
                 base = None
@@ -569,7 +580,13 @@ def run(args: argparse.Namespace) -> int:
                     failures.extend(problems)
                     continue
 
-                export_val = str(doc.get("export-note") or "").strip() or f"{doc_id}.yaml"
+                export_val = str(doc.get("export-note") or "").strip()
+                if not export_val:
+                    detail = f"{where}: export-note が指定されていません（出力ファイル名は必須）"
+                    logging.error("%s", detail)
+                    errors += 1
+                    failures.append(detail)
+                    continue
                 if not export_val.lower().endswith((".yaml", ".yml")):
                     logging.warning(
                         "%s: export-note のファイル名が .yaml ではありません: %s", where, export_val

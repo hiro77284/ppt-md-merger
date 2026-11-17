@@ -4,7 +4,7 @@ import argparse
 import logging
 from pathlib import Path
 
-from md_merge._cropsrc import cropsrc_entries, resolve_cropsrc_path
+from md_merge._cropsrc import auto_cropsrc_pdf_path, cropsrc_entries, resolve_cropsrc_path
 from md_merge._output import EXIT_BAD_INPUT, EXIT_FAILURE, EXIT_NOT_FOUND, EXIT_OK, emit, setup_logging
 from md_merge._preprocess import cropsrc_read_path
 from md_merge.merge._recipe import load_yaml, resolve_input_path, resolve_workdir, setup_recipe_file_logging
@@ -88,7 +88,7 @@ def run(args: argparse.Namespace) -> int:
         if pdf_val:
             pdf_path = resolve_cropsrc_path(str(pdf_val), yaml_path, workdir)
         else:
-            pdf_path = _auto_pdf_path(str(pptx_val), output_section, yaml_path, workdir)
+            pdf_path = auto_cropsrc_pdf_path(str(pptx_val), output_section, yaml_path, workdir)
             logging.debug("%s.pdf: 自動生成 %s", label, pdf_path)
 
         # --preprocess: convert the preprocessed copy instead of the original.
@@ -189,13 +189,3 @@ def run(args: argparse.Namespace) -> int:
     return EXIT_OK if errors == 0 else EXIT_FAILURE
 
 
-def _auto_pdf_path(pptx_val: str, output_section: dict, yaml_path: Path, workdir: Path | None) -> Path:
-    """Auto-generate PDF path as output.outputdir/<pptx_stem>.pdf."""
-    base = resolve_base(yaml_path, workdir)
-    outdir_val = output_section.get("outputdir")
-    if outdir_val:
-        p = Path(str(outdir_val))
-        out_dir = p if p.is_absolute() else (base / p).resolve()
-    else:
-        out_dir = base
-    return out_dir / (Path(pptx_val).stem + ".pdf")

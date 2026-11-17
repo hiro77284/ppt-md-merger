@@ -14,6 +14,9 @@
 使い方:
     python tools/notecom_autopilot.py build/article_notecom.yaml --auth-state auth.json
     python tools/notecom_autopilot.py build/article_notecom.yaml --imagedir build --hashtags "#図解,#読解力"
+    python tools/notecom_autopilot.py build/article_notecom.yaml --close-wait 300   # 公開画面で 5 分待つ
+    python tools/notecom_autopilot.py build/article_notecom.yaml --record-video videos  # 操作を録画（webm）
+    python tools/notecom_autopilot.py build/article_notecom.yaml --record-video videos --viewport 1024x768  # 小さめの画面で録画
 
 auth.json は Playwright の storage_state（note.com にログイン済みの Cookie 等）。
 一度だけ `python -m playwright codegen --save-storage=auth.json https://note.com/login`
@@ -42,6 +45,7 @@ import argparse
 import os
 import sys
 import time
+from datetime import datetime
 from pathlib import Path
 
 import yaml
@@ -63,6 +67,23 @@ NOTE_COVER_IMAGE_HEIGHT = 670
 
 NOTE_NEW_URL = "https://note.com/notes/new"
 
+# ブラウザのビューポート（ページ描画領域）の既定値。--viewport で上書きできる。
+# --record-video の録画もこのサイズで行う
+VIEWPORT = {"width": 1280, "height": 1400}
+
+# ── タイムアウト設定（ミリ秒。要素の出現待ちなどの打ち切り時間） ──────────────
+# 回線や PC が遅くてタイムアウトする場合はここを調整する。
+# 操作の合間の固定待ち（page.wait_for_timeout(…)）は note エディタの挙動に合わせた調整値なので対象外。
+TIMEOUT_DEFAULT_MS = 30000          # 下記以外の click / fill / wait_for_function 等の既定値（Playwright の既定と同じ）
+TIMEOUT_COVER_UPLOAD_MS = 30000     # カバー画像の「保存」ボタン出現待ち・アップロード完了（eyecatch 表示）待ち
+TIMEOUT_URL_BOX_MS = 3000           # リンク設定の URL 入力欄の出現待ち
+TIMEOUT_APPLY_BUTTON_MS = 1500      # リンク設定の「適用」ボタン出現待ち（出なければ Enter で確定）
+TIMEOUT_IMAGE_LINK_BUTTON_MS = 3000 # 画像ツールバーの「リンク」ボタン出現待ち
+TIMEOUT_POPOVER_CLOSE_MS = 1000     # 起動直後の案内ポップオーバーを閉じるクリック
+
+# 公開直前の画面でブラウザを閉じるまでの待ち時間（秒）。--close-wait で上書きできる
+CLOSE_WAIT_SEC = 60
+
 # リンク設定の URL 入力欄（テキストの Ctrl+K と画像ツールバーの「リンク」で共通）。
 # note の実装では <textarea name="alt" placeholder="https://"> なので input だけを探すと見つからない。
 # 非表示の同種要素を掴まないよう :visible を付ける（.last で DOM 末尾の隠れた要素を取ると待ちがタイムアウトする）
@@ -73,7 +94,7 @@ def close_popovers(page) -> None:
     """起動直後に出る案内ポップオーバー（AI アシスタントの紹介など）を閉じる。放置すると操作を妨げることがある。"""
     for b in page.locator('[role="dialog"] button[aria-label="閉じる"]').all():
         try:
-            b.click(timeout=1000)
+            b.click(timeout=TIMEOUT_POPOVER_CLOSE_MS)
         except Exception:  # noqa: BLE001
             pass
 
@@ -82,7 +103,7 @@ def _fill_url_and_apply(page, url: str) -> None:
     """表示中の URL 入力欄に url を入れて「適用」で確定する（無ければ Enter）。"""
     box = page.locator(URL_BOX_SELECTOR).first
     try:
-        box.wait_for(state="visible", timeout=3000)
+        box.wait_for(state="visible", timeout=TIMEOUT_URL_BOX_MS)
     except Exception:
         n_all = page.locator('textarea[placeholder="https://"], input[type="url"], input[placeholder*="http"]').count()
         print(f"DEBUG: URL 入力欄が見つかりません（候補 {n_all} 件、可視 0 件）", file=sys.stderr)
@@ -90,7 +111,7 @@ def _fill_url_and_apply(page, url: str) -> None:
     box.fill(url)
     apply_btn = page.get_by_role("button", name="適用")
     try:
-        apply_btn.wait_for(state="visible", timeout=1500)
+        apply_btn.wait_for(state="visible", timeout=TIMEOUT_APPLY_BUTTON_MS)
         apply_btn.click()
     except Exception:  # noqa: BLE001
         page.keyboard.press("Enter")
@@ -159,13 +180,13 @@ def input_cover_image(page, image_path: str | Path, asset_root: Path, image_dir:
     fc_info.value.set_files(str(resized_path))
 
     save_button = page.get_by_role("button", name="保存")
-    save_button.wait_for(state="visible", timeout=30000)
+    save_button.wait_for(state="visible", timeout=TIMEOUT_COVER_UPLOAD_MS)
     page.wait_for_timeout(500)
     save_button.click(force=True)
     page.wait_for_timeout(1000)
 
     # 「eyecatch」画像が現れればアップロード完了
-    page.get_by_role("img", name="eyecatch").wait_for(state="visible", timeout=30000)
+    page.get_by_role("img", name="eyecatch").wait_for(state="visible", timeout=TIMEOUT_COVER_UPLOAD_MS)
     page.wait_for_timeout(500)
     print("カバー画像の設定が完了しました。")
 
@@ -249,7 +270,7 @@ def _set_image_link(page, url: str) -> bool:
         if page.locator(URL_BOX_SELECTOR).count() == 0:
             stage = "toolbar"
             btn = page.locator('button[aria-label="リンク"]:visible').last   # 画像ツールバー（リンク / 代替テキスト / 縮小 / 画像の配置 / 削除）
-            btn.wait_for(state="visible", timeout=3000)
+            btn.wait_for(state="visible", timeout=TIMEOUT_IMAGE_LINK_BUTTON_MS)
             btn.click()
         stage = "fill"
         _fill_url_and_apply(page, url)
@@ -417,12 +438,27 @@ def apply_note_blocks(page, blocks: list[dict], asset_root: Path, image_dir: Pat
         time.sleep(1)
 
 
+def _save_video(video, out_dir: Path, base: str) -> None:
+    """録画を {base}_{日時}.webm として保存し、Playwright が付けたランダム名の元ファイルを消す。"""
+    dest = out_dir / f"{base}_{datetime.now():%Y%m%d_%H%M%S}.webm"
+    try:
+        video.save_as(str(dest))   # 書き出し完了まで待つ
+        video.delete()
+    except Exception as e:  # noqa: BLE001
+        print(f"WARN: 録画の保存に失敗しました（{e.__class__.__name__}: {e}）", file=sys.stderr)
+        return
+    print(f"録画を保存しました: {dest}")
+
+
 def run_note_automation(
     note_yaml: Path,
     auth_state: Path,
     image_dir: Path | None = None,
     hashtags: list[str] | None = None,
     no_pause: bool = False,
+    close_wait_sec: float = CLOSE_WAIT_SEC,
+    record_video_dir: Path | None = None,
+    viewport: dict | None = None,
 ) -> None:
     if not note_yaml.is_file():
         raise FileNotFoundError(f"YAML が見つかりません: {note_yaml}")
@@ -440,31 +476,55 @@ def run_note_automation(
 
     with sync_playwright() as p:
         browser = p.chromium.launch(headless=False)
-        context = browser.new_context(storage_state=str(auth_state), viewport={"width": 1280, "height": 1400})
+        viewport = viewport or VIEWPORT
+        context_opts: dict = {"storage_state": str(auth_state), "viewport": viewport}
+        if record_video_dir is not None:
+            # Playwright の動画録画はページの描画領域だけを撮る（アドレスバーやタブは含まない）
+            record_video_dir.mkdir(parents=True, exist_ok=True)
+            context_opts.update(record_video_dir=str(record_video_dir), record_video_size=viewport)
+        context = browser.new_context(**context_opts)
         page = context.new_page()
-        page.goto(NOTE_NEW_URL)
-        page.wait_for_timeout(2000)
-        close_popovers(page)
+        try:
+            page.set_default_timeout(TIMEOUT_DEFAULT_MS)
+            page.goto(NOTE_NEW_URL)
+            page.wait_for_timeout(2000)
+            close_popovers(page)
 
-        print("apply_meta 開始")
-        apply_meta(page, meta, asset_root, resolved_image_dir)
-        print("apply_note_blocks 開始")
-        apply_note_blocks(page, blocks, asset_root, resolved_image_dir)
-        input_toc(page)
-        print("本文入力完了")
+            print("apply_meta 開始")
+            apply_meta(page, meta, asset_root, resolved_image_dir)
+            print("apply_note_blocks 開始")
+            apply_note_blocks(page, blocks, asset_root, resolved_image_dir)
+            input_toc(page)
+            print("本文入力完了")
 
-        if not no_pause:
-            print("Playwright Inspector で一時停止します。内容を確認して Resume してください。")
-            page.pause()
+            if not no_pause:
+                print("Playwright Inspector で一時停止します。内容を確認して Resume してください。")
+                page.pause()
 
-        page.wait_for_timeout(500)
-        page.get_by_role("button", name="公開に進む").click()
-        if tags:
-            page.get_by_role("combobox", name="ハッシュタグを追加する").fill(",".join(tags))
+            page.wait_for_timeout(500)
+            page.get_by_role("button", name="公開に進む").click()
+            if tags:
+                page.get_by_role("combobox", name="ハッシュタグを追加する").fill(",".join(tags))
 
-        print("投稿準備が完了しました。公開ボタンは手動で押してください（60 秒後にブラウザを閉じます）。")
-        page.wait_for_timeout(60000)
-        browser.close()
+            print(f"投稿準備が完了しました。公開ボタンは手動で押してください（{close_wait_sec:g} 秒後にブラウザを閉じます）。")
+            page.wait_for_timeout(close_wait_sec * 1000)
+        finally:
+            # 動画は context を閉じた時点で書き出される。途中で失敗してもそこまでの録画を残す
+            context.close()
+            if record_video_dir is not None and page.video is not None:
+                _save_video(page.video, record_video_dir, note_yaml.stem)
+            browser.close()
+
+
+def _parse_viewport(text: str) -> dict:
+    """'1024x768' 形式を {"width": 1024, "height": 768} にする。"""
+    try:
+        w, h = (int(v) for v in text.lower().replace("×", "x").split("x"))
+    except ValueError:
+        raise argparse.ArgumentTypeError(f"幅x高さ の形式で指定してください（例: 1024x768）: {text}") from None
+    if w <= 0 or h <= 0:
+        raise argparse.ArgumentTypeError(f"幅・高さは正の整数で指定してください: {text}")
+    return {"width": w, "height": h}
 
 
 def build_arg_parser() -> argparse.ArgumentParser:
@@ -477,6 +537,12 @@ def build_arg_parser() -> argparse.ArgumentParser:
     p.add_argument("--hashtags", type=str, default=None,
                    help="カンマ区切りのハッシュタグ。指定時は YAML の meta.hashtags を上書きする")
     p.add_argument("--no-pause", action="store_true", help="本文入力後の Inspector 一時停止を行わない")
+    p.add_argument("--close-wait", type=float, default=CLOSE_WAIT_SEC, metavar="SEC",
+                   help=f"公開直前の画面でブラウザを閉じるまでの秒数（既定: {CLOSE_WAIT_SEC}）")
+    p.add_argument("--viewport", type=_parse_viewport, default=None, metavar="WxH",
+                   help=f"ページ描画領域のサイズ（例: 1024x768）。録画サイズも同じになる（既定: {VIEWPORT['width']}x{VIEWPORT['height']}）")
+    p.add_argument("--record-video", type=Path, default=None, metavar="DIR",
+                   help="自動操作を録画して DIR に {YAML名}_{日時}.webm で保存する。録画範囲はページの描画領域（ビューポート）のみ")
     return p
 
 
@@ -486,12 +552,16 @@ def main() -> int:
     if auth is None:
         print("--auth-state か環境変数 NOTE_AUTH_STATE で storage_state を指定してください", file=sys.stderr)
         return 2
+    if args.close_wait < 0:
+        print("--close-wait には 0 以上の秒数を指定してください", file=sys.stderr)
+        return 2
     tags = None
     if args.hashtags is not None:
         tags = [t.strip() for t in args.hashtags.split(",") if t.strip()]
         tags = [t if t.startswith("#") else f"#{t}" for t in tags]
     try:
-        run_note_automation(args.note_yaml.resolve(), auth.resolve(), args.imagedir, tags, args.no_pause)
+        run_note_automation(args.note_yaml.resolve(), auth.resolve(), args.imagedir, tags, args.no_pause, args.close_wait,
+                            args.record_video.resolve() if args.record_video else None, args.viewport)
     except FileNotFoundError as e:
         print(e, file=sys.stderr)
         return 3

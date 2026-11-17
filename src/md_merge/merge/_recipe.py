@@ -3,10 +3,13 @@ import datetime
 import logging
 import re
 import tomllib
+from dataclasses import dataclass
 from pathlib import Path
 
 import yaml
 
+from md_merge._condblock import process_conditionals
+from md_merge._params import apply_params
 from md_merge._conditions import filter_procedure
 from md_merge._imagerefs import FrontmatterTracker
 from md_merge._procedure import normalize_recipe
@@ -19,9 +22,7 @@ _AUTO_FILENAMES: dict[str, str] = {
     "idcollectfilename":    "work_{base}_idcollect.yaml",
     "idresolvedfilename":   "work_{base}_idresolve.yaml",
     "renderedfilename":     "{base}_rendered.md",
-    "resourcepathfilename": "work_{base}_resourcepath.tex",
     "pdffilename":          "{base}.pdf",
-    "texfilename":          "{base}.tex",
     "htmlfilename":         "{base}.html",
     "revealfilename":       "{base}_reveal.html",
     "puremdfilename":       "{base}_puremd.md",
@@ -96,8 +97,8 @@ def _expand_mdfilename(val: str) -> list[str]:
 
 # ── public API ─────────────────────────────────────────────────────────────
 
-# パッケージ同梱の LaTeX テンプレート/ヘッダ/cover/マクロの正本ディレクトリ。
-# template / include-in-header / conditional-process-input などが data-dir・workdir で
+# パッケージ同梱のテンプレート/表紙/マクロの正本ディレクトリ。
+# defaults 内の template / include-in-header や表紙などが data-dir・workdir で
 # 見つからない場合、basename でここ(正本)にフォールバックする。
 _BUILTIN_TEMPLATES_DIR = Path(__file__).parent.parent / "templates"
 
@@ -139,36 +140,6 @@ def resolve_from_datadir(
     return local
 
 
-def resolve_condblock_output(
-    pandoc_section: dict,
-    recipe: dict,
-    yaml_path: Path,
-    workdir: Path | None,
-) -> Path | None:
-    """Resolve conditional-process-output path.
-
-    When conditional-process-output is absent/empty, auto-generates
-    outputdir/work_<basename(conditional-process-input)>.
-    Returns None when conditional-process-input is not set.
-    """
-    input_val = pandoc_section.get("conditional-process-input")
-    if not input_val:
-        return None
-    output_val = pandoc_section.get("conditional-process-output")
-    base = _base_dir(yaml_path, workdir)
-    if output_val:
-        p = Path(str(output_val))
-        return p if p.is_absolute() else base / p
-    out_section = recipe.get("output", {})
-    outdir_val = out_section.get("outputdir")
-    if outdir_val:
-        p = Path(str(outdir_val))
-        out_dir = p if p.is_absolute() else base / p
-    else:
-        out_dir = base
-    return out_dir / ("work_" + Path(str(input_val)).name)
-
-
 def get_targetbasefilename(out_section: dict) -> str | None:
     """Return output.targetbasefilename with extension stripped (warns if extension present)."""
     val = out_section.get("targetbasefilename")
@@ -189,6 +160,30 @@ def get_targetbasefilename(out_section: dict) -> str | None:
 
 _SESSION_CONSTANTS: dict[str, str] | None = None
 _CLI_CONSTANTS: dict[str, str] = {}
+# --var NAME=VALUE で指定された vars の上書き（load_yaml がレシピ vars: にマージする）
+_CLI_VARS: dict[str, str] = {}
+
+
+def cli_vars() -> "dict[str, str]":
+    """登録済みの --var の値（コピー）。"""
+    return dict(_CLI_VARS)
+
+
+def init_cli_vars(values: "dict[str, str]") -> None:
+    """--var の値を登録する（以後の load_yaml でレシピ ``vars:`` を上書きする）。"""
+    _CLI_VARS.update(values)
+    for k, v in values.items():
+        logging.debug("CLI var: %s=%r", k, v)
+
+
+def apply_cli_vars(recipe: dict) -> dict:
+    """レシピの ``vars:`` に --var の値を上書きマージする（CLI 優先）。
+
+    レシピに ``params:`` があれば、宣言の検査と既定値の反映も行う（_params.apply_params）。
+    """
+    if isinstance(recipe, dict):
+        recipe = apply_params(recipe, _CLI_VARS)
+    return recipe
 
 
 def _get_yaml_constants() -> dict[str, str]:
@@ -523,10 +518,15 @@ def load_yaml_text(text: str, base_dir: Path):
     return _load_yaml_doc(text, base_dir)
 
 
-def load_yaml(yaml_path: Path, normalize: bool = True) -> dict:
-    """レシピを読み込む。*normalize* が真なら procedure を内部表現（operation 記法）へ正規化する。"""
+def load_yaml(yaml_path: Path, normalize: bool = True, apply_vars: bool = True) -> dict:
+    """レシピを読み込む。*normalize* が真なら procedure を内部表現（operation 記法）へ正規化する。
+
+    *apply_vars* が偽なら ``--var`` / ``params:`` を反映しない（validate が自分で検査するため）。
+    """
     path = yaml_path.resolve()
     data = _load_yaml_file(path, frozenset({path}), {}, label="recipe")
+    if apply_vars:
+        data = apply_cli_vars(data)
     return normalize_recipe(data, yaml_path) if normalize else data
 
 
@@ -619,6 +619,70 @@ def iter_insertpptx_entries(recipe: dict, input_dirs: list[Path]) -> list[tuple[
     return result
 
 
+@dataclass(frozen=True)
+class VarInsert:
+    """procedure ``insertvar`` の挿入内容（変数名と、``vars:`` ＋ ``--var`` 反映後の値）。"""
+    name: str
+    text: str
+
+
+# insertvar の出所マーカー（`<!-- source: var:NAME -->`）の接頭辞。
+VAR_SOURCE_PREFIX = "var:"
+
+
+def lookup_insertvar(recipe: dict, name: object) -> "VarInsert | None":
+    """insertvar の変数名 *name* を ``vars:`` から引く。未定義・名前なしは警告して None。"""
+    if not name:
+        logging.warning("insertvar entry missing variable name — skipping")
+        return None
+    name = str(name)
+    vars_map = recipe.get("vars")
+    if not isinstance(vars_map, dict) or name not in vars_map:
+        logging.warning("insertvar: 変数 %r が vars: / params: / --var にありません — スキップします", name)
+        return None
+    value = vars_map[name]
+    if value is None:
+        value = ""
+    elif isinstance(value, (dict, list)):
+        logging.warning(
+            "insertvar: 変数 %r の値が文字列ではありません（| のブロック文字列で書いてください）— スキップします",
+            name,
+        )
+        return None
+    return VarInsert(name, str(value))
+
+
+def expand_var(
+    item: VarInsert,
+    yaml_dir: Path,
+    image_copier=None,
+    cond_vars: "dict | None" = None,
+) -> str:
+    """insertvar の値を merge 出力用のテキストにする。
+
+    ファイルの insertmd と同じく ``<!-- source: var:NAME -->`` を前置し、``{{#if}}`` を
+    評価し、画像参照（本文・frontmatter の画像キー）はレシピのディレクトリ基準で
+    コピー・書き換える。``!include`` は展開しない（値はそのまま本文になる）。
+    """
+    display = f"{VAR_SOURCE_PREFIX}{item.name}"
+    text = item.text.replace("\r\n", "\n").replace("\r", "\n")
+    lines = text.splitlines(keepends=True)
+    if lines and not lines[-1].endswith("\n"):
+        lines[-1] += "\n"
+    if cond_vars is not None:
+        lines = process_conditionals(lines, cond_vars, markdown=True, where=display)
+    parts: list[str] = [f"<!-- source: {display} -->\n"]
+    # 画像の相対パスはレシピのディレクトリ基準（擬似的な参照元パスを渡す）
+    pseudo_src = yaml_dir / f"__insertvar_{item.name}__"
+    fm_tracker = FrontmatterTracker()
+    for line in lines:
+        in_frontmatter = fm_tracker.feed(line)
+        if image_copier is not None:
+            line = image_copier.rewrite_line(line, pseudo_src, in_frontmatter=in_frontmatter)
+        parts.append(line)
+    return "".join(parts)
+
+
 # insertvspace の lines に単位付き長さ（5mm / 1.5cm / .5em 等）を許可するための判定。
 _VSPACE_UNIT_RE = re.compile(r"^[0-9]*\.?[0-9]+[a-zA-Z]+$")
 
@@ -646,8 +710,10 @@ def _normalize_vspace_arg(raw: object) -> str:
     return str(int(n)) if n == int(n) else repr(n)
 
 
-def collect_procedure_items(recipe: dict, in_dirs: list[Path], yaml_path: Path) -> list[Path | str]:
-    items: list[Path | str] = []
+def collect_procedure_items(
+    recipe: dict, in_dirs: list[Path], yaml_path: Path
+) -> "list[Path | str | VarInsert]":
+    items: "list[Path | str | VarInsert]" = []
     auto_id_counter = 0
     for item in recipe.get("procedure", []):
         op = item.get("operation")
@@ -671,6 +737,10 @@ def collect_procedure_items(recipe: dict, in_dirs: list[Path], yaml_path: Path) 
                     items.append(found if found is not None else (in_dirs[0] / fname).resolve())
                 else:
                     items.append(yaml_path.parent / p)
+        elif op == "insertvar":
+            var_item = lookup_insertvar(recipe, item.get("varname"))
+            if var_item is not None:
+                items.append(var_item)
         elif op in ("chapter", "section", "subsection"):
             value = str(item.get(op, "")).strip("\"'")
             title = item.get("title") or ""
@@ -712,8 +782,14 @@ def expand_md(
     yaml_dir: Path | None = None,
     image_copier=None,
     file_log: "list[Path] | None" = None,
+    cond_vars: "dict | None" = None,
 ) -> str:
     """Read *path* and recursively expand any ``!include`` directives.
+
+    If *cond_vars* is given (recipe ``vars:`` merged with ``--var``), the
+    ``{{#if:...}}`` condition blocks of each file are evaluated first, so an
+    ``!include`` or an image reference inside a false block is skipped too.
+    Syntax errors raise ``ValueError``.
 
     *chain* holds the resolved paths of all ancestors in the current call
     stack.  The same file may appear in sibling branches (parallel includes),
@@ -741,6 +817,8 @@ def expand_md(
         display = path.as_posix()
 
     lines = path.read_text(encoding="utf-8-sig").splitlines(keepends=True)
+    if cond_vars is not None:
+        lines = process_conditionals(lines, cond_vars, markdown=True, where=display)
     parts: list[str] = [f"<!-- source: {display} -->\n"]
     # frontmatter の範囲判定は _imagerefs に集約（先頭の `<!-- source: -->` /
     # `<!-- md_merge_rawtitle: -->` コメントと空行は開始 `---` の前に来うる）。
@@ -764,7 +842,7 @@ def expand_md(
         parts.append(expand_md(
             ref_path, new_chain,
             strict=strict, yaml_dir=yaml_dir,
-            image_copier=image_copier, file_log=file_log,
+            image_copier=image_copier, file_log=file_log, cond_vars=cond_vars,
         ))
     return "".join(parts)
 

@@ -100,6 +100,12 @@ indexer:
     default: '#SECTION#'
     description: 節番号操作を行うマーカー文字列
 
+  subsection_marker:
+    type: string
+    required: false
+    default: '#SUBSECTION#'
+    description: 小節番号操作を行うマーカー文字列
+
   stay_marker:
     type: string
     required: false
@@ -167,7 +173,9 @@ procedure:
   description: >
     結合処理の一覧。記載順に処理する。version 2 では各要素を「操作名: 主引数」で書き、
     その他の引数は同じ要素の兄弟キーに書く。引数のない操作は文字列 1 つ（- beginstay）でもよい。
-    1 要素に操作キーは 1 つだけ。operation キーは書けない（version 1 の記法）
+    1 要素に操作キーは 1 つだけ。operation キーは書けない（version 1 の記法）。
+    - group: [項目, ...] で複数の項目を束ね、同じ要素の when: を配下の全項目に掛けられる
+    （group / when / description 以外のキーは書けない。入れ子可。読み込み時に展開される）
 
   item:
     insertpptx:
@@ -177,6 +185,10 @@ procedure:
     insertmd:
       type: string
       description: 挿入する MD。input.dirs からの相対ファイル名、または絶対パス。[from-to] のレンジを 1 つ書ける
+
+    insertvar:
+      type: string
+      description: 値を挿入する変数名（vars: / params: / --var）。値（文字列）をそのまま MD として挿入する。frontmatter の挿入などに使う。merge 専用（pptmerge は無視）
 
     chapter:
       type: string | integer | null
@@ -245,7 +257,7 @@ procedure:
     when:
       type: mapping
       required: false
-      description: 条件付き適用（command / not_command / tag / not_tag）
+      description: 条件付き適用（command / not_command / var）
 
     description:
       type: string

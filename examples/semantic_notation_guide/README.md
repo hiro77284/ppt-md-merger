@@ -15,7 +15,7 @@ pptmdmerge crop_to_pdf semantic_notation_recipe.yaml --force
 
 | ファイル | 内容 |
 |---|---|
-| `semantic_notation_recipe.yaml` | レシピ（version 2、`engine: typst`、同梱の標準表紙） |
+| `semantic_notation_recipe.yaml` | レシピ（version 4、同梱の標準表紙 `cover-md: cover_standard.md`） |
 | `COVER_VARS.yaml` | 表紙用変数 |
 | `src/sn01_intro.md` | はじめに（記法の 4 カテゴリ・読み方・ビルド方法） |
 | `src/sn02_blocks.md` | ブロック記法（note / warning / leadline / widequote / largefontblock / blockindent / center / keep-together / 入れ子） |
@@ -24,6 +24,6 @@ pptmdmerge crop_to_pdf semantic_notation_recipe.yaml --force
 | `src/sn05_leaves.md` | リーフ記法（vspace / pagebreak / vfill / br） |
 | `src/sn06_procedure*.md` | レシピの insertvspace / insertpagebreak / insertvfill（レシピ側で実演） |
 | `src/sn07_raw.md` | escape hatch（`{=typst}` / `{=latex}` / 行内の生コード） |
-| `src/sn08_reference.md` | 出力形式別（Typst / LaTeX / HTML / GFM）の変換一覧 |
+| `src/sn08_reference.md` | 出力形式別（Typst / HTML / GFM）の変換一覧 |
 
 記法の正典は [`src/md_merge/semantics.yaml`](../../src/md_merge/semantics.yaml)、索引は [`docs/notation_reference.md`](../../docs/notation_reference.md)。

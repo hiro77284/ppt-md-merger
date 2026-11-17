@@ -33,6 +33,10 @@ FRONTMATTER_IMAGE_RE = re.compile(
     re.IGNORECASE,
 )
 
+# 本文の YAML ファイルへのリンク（画像ではない ``[text](path.yaml)``）。merge が画像と
+# 同じ規則でコピー＋パス書き換えする（merge.yaml-dir 等）。直前が ``!`` のもの（画像）は除く。
+BODY_YAML_LINK_RE = re.compile(r'(?<!!)(\[[^\]]*\]\()([^)\s]+\.ya?ml)(\))', re.IGNORECASE)
+
 # 書き換え対象外の参照（URL・プロトコル相対・絶対パス・アンカー・data URI）
 SKIP_RE = re.compile(r'^(?:[a-zA-Z][a-zA-Z0-9+\-.]*://|//|/|#|data:)')
 
@@ -52,7 +56,7 @@ class Ref:
     """走査で見つかった 1 件の画像参照。"""
 
     ref: str              # 原稿に書かれていた参照文字列
-    kind: str             # "body" | "frontmatter"
+    kind: str             # "body" | "frontmatter" | "yaml"（YAML ファイルへのリンク）
     key: str | None       # frontmatter のキー名（小文字化）。body では None
 
 
@@ -95,6 +99,21 @@ def rewrite_line(line: str, *, in_frontmatter: bool, resolve: Resolver) -> str:
     return BODY_IMAGE_RE.sub(lambda m: _sub_body(m, resolve), line)
 
 
+def rewrite_yaml_links(line: str, *, in_frontmatter: bool, resolve: Resolver) -> str:
+    """1 行分の YAML ファイルへのリンク ``[text](x.yaml)`` を *resolve* の戻り値で置き換える。
+
+    本文のみが対象（frontmatter 内は書き換えない）。Ref の kind は ``"yaml"``。
+    """
+    if in_frontmatter:
+        return line
+
+    def sub(m: "re.Match[str]") -> str:
+        new_ref = resolve(Ref(ref=m.group(2), kind="yaml", key=None))
+        return f"{m.group(1)}{new_ref or m.group(2)}{m.group(3)}"
+
+    return BODY_YAML_LINK_RE.sub(sub, line)
+
+
 def rewrite(content: str, resolve: Resolver) -> str:
     """MD 全体（frontmatter ＋ 本文）の画像参照を *resolve* の戻り値で置き換える。"""
     tracker = FrontmatterTracker()
@@ -103,6 +122,54 @@ def rewrite(content: str, resolve: Resolver) -> str:
         in_fm = tracker.feed(line)
         parts.append(rewrite_line(line, in_frontmatter=in_fm, resolve=resolve))
     return "".join(parts)
+
+
+# 画像参照と pandoc 属性の間に空白がある形（``![](a.png) {width=80%}``）。pandoc は
+# 属性を画像の直後（空白なし）にしか認めず、空白があると ``{width=80%}`` が本文の
+# 文字列として出てしまう。空白・タブのみを対象にし、改行を挟むものは結合しない。
+_SPACED_IMAGE_ATTR_RE = re.compile(r'(!\[[^\]]*\]\([^)\s]+\))[ \t]+(\{[^}\n]*\})')
+
+# コードフェンスの開始/終了行（行頭 0〜3 スペース＋ ``` / ~~~ 3 個以上）
+_FENCE_RE = re.compile(r'^ {0,3}(`{3,}|~{3,})')
+
+# インラインコード（同じ長さのバッククォート列で閉じる）
+_INLINE_CODE_RE = re.compile(r'(`+)(?:(?!\1).)+?\1')
+
+
+def join_image_attributes(text: str) -> tuple[str, int]:
+    """``![alt](ref) {attrs}`` の空白を除き ``![alt](ref){attrs}`` にする。
+
+    pandoc に渡す直前に使う。コードフェンス内とインラインコード内は変えない。
+    戻り値は (変換後のテキスト, 結合した件数)。
+    """
+    out: list[str] = []
+    count = 0
+    fence: str | None = None   # 開いているフェンスの記号列
+    for line in text.splitlines(keepends=True):
+        m = _FENCE_RE.match(line)
+        if fence is not None:
+            # 閉じフェンスは同じ記号で、開始以上の長さ（後ろは空白のみ）
+            if m and m.group(1)[0] == fence[0] and len(m.group(1)) >= len(fence) \
+                    and not line[m.end():].strip():
+                fence = None
+            out.append(line)
+            continue
+        if m:
+            fence = m.group(1)
+            out.append(line)
+            continue
+        pieces: list[str] = []
+        pos = 0
+        for cm in _INLINE_CODE_RE.finditer(line):
+            seg, n = _SPACED_IMAGE_ATTR_RE.subn(r'\1\2', line[pos:cm.start()])
+            pieces += [seg, cm.group(0)]
+            count += n
+            pos = cm.end()
+        seg, n = _SPACED_IMAGE_ATTR_RE.subn(r'\1\2', line[pos:])
+        pieces.append(seg)
+        count += n
+        out.append("".join(pieces))
+    return "".join(out), count
 
 
 # ── internals ──────────────────────────────────────────────────────────────

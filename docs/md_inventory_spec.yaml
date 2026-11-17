@@ -23,6 +23,7 @@ entries:
                       # <!-- md_merge_rawtitle: ... --> ディレクティブ経由で持ち越した原文。
                       # 参照展開・エスケープで加工されない。ディレクティブが無い場合は見出しテキスト
     numbering_op: string  # optional. 番号リセット値（整数文字列）。"+"（加算）の場合は省略
+    nonum: boolean        # optional. {{#id:}} 行に {{nonum}} がある場合のみ true（採番しない）
 
     source:
       pptx: string

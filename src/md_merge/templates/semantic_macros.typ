@@ -1,7 +1,7 @@
 // semantic_macros.typ
 // セマンティック記法（[text]{.term} / ::: {.note} 等）の Typst 関数定義。
-// semantic_macros.tex と report_header.tex の tcolorbox 定義の Typst 版。
-// pandoc の include-in-header で .typ のプリアンブルに取り込む（engine: typst 専用。
+// 旧 LaTeX 版の semantic_macros.tex と report_header.tex の tcolorbox 定義（撤去済み）を移したもの。
+// pandoc の include-in-header で .typ のプリアンブルに取り込む（
 // report_style.typ より先に読む）。変換は filters/semantic-spans.lua・divboxes.lua 等が行い、
 // 本ファイルは見た目だけを定義する（見た目は調整前提。色・余白は LaTeX 版に合わせている）。
 

@@ -117,7 +117,7 @@ class TestVersion1(unittest.TestCase):
 
 class TestVersionValue(unittest.TestCase):
     def test_unsupported_version(self):
-        for version in (3, "2", True):
+        for version in (5, "2", True):
             with self.subTest(version=version):
                 with self.assertRaises(ProcedureNotationError):
                     normalize_recipe(_recipe(version, {"insertpptx": "a.pptx"}))

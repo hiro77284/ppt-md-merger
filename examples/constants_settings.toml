@@ -22,40 +22,45 @@ __REVISION__     = 'Rev.A'
 # ─── 出力先・ビルド設定（インライン定数）─────────────────────────────────────
 
 
-# ─── LaTeX 複数行定数（行まるごと置換）───────────────────────────────────────
+# ─── 複数行定数（行まるごと置換）─────────────────────────────────────────────
 # シングルクォート ''' ''' でバックスラッシュをそのまま書ける
+#
+# procedure 用の定数（__NEWPAGE__ / __VSPACE1__〜__VSPACE3__ / __VFILL__）は、
+# レシピの procedure に並んだときに md の insert 文とはっきり区別できるよう
+# 大文字の特殊定数にしている。中身は semantic 記法の procedure なので
+# Typst/LaTeX どちらのエンジンでも使える。
 
 # 共通 LaTeX パッケージ群
 # 使用例（recipe yaml 内）:
 #   include-in-header:
 #     __LATEX_PACKAGES__
 
-# ページ送り（{{pagebreak}}。LaTeX/Typst 両対応）
-__TEX_NEWPAGE__ = '''
+# ページ送り（{{pagebreak}}）
+__NEWPAGE__ = '''
 - insertpagebreak:
   description: "ページ送り"
 '''
 
 # 1行送り（{{vspace:1}}）
-__TEX_1LINE__ = '''
+__VSPACE1__ = '''
 - insertvspace: 1
   description: "1行送り"
 '''
 
 # 2行送り（{{vspace:2}}）
-__TEX_2LINE__ = '''
+__VSPACE2__ = '''
 - insertvspace: 2
   description: "2行送り"
 '''
 
 # 3行送り（{{vspace:3}}）
-__TEX_3LINE__ = '''
+__VSPACE3__ = '''
 - insertvspace: 3
   description: "3行送り"
 '''
 
 # 残り高を埋める（{{vfill}}）
-__TEX_VFILL__ = '''
+__VFILL__ = '''
 - insertvfill:
   description: "残り高を埋める"
 '''

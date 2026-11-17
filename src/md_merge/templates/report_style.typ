@@ -1,8 +1,8 @@
 // report_style.typ
-// engine: typst のページ設計。report_header.tex（titlesec / fancyhdr / 目次）の Typst 版。
+// PDF（typst）のページ設計。旧 LaTeX 版の report_header.tex（titlesec / fancyhdr / 目次。撤去済み）を移したもの。
 // pandoc の include-in-header で semantic_macros.typ の後に読む（sem-fonts / sem-leading を使う）。
 // report_template.typst が #sem-cover / #sem-toc を呼ぶ。見た目は基準 PDF（lualatex 版）に合わせて
-// あるが調整前提。寸法の出典は report_header.tex と report_semantic_style.yaml（geometry）。
+// あるが調整前提。寸法の出典は旧 report_header.tex と report_semantic_style.yaml（geometry）。
 
 // ── 用紙・本文 ───────────────────────────────────────────────────────────
 // 用紙は A4（2026-10-25 決定。LaTeX 版＝report クラスの既定の US Letter とはページ送りが変わる）。

@@ -6,17 +6,27 @@ import logging
 import re
 from pathlib import Path
 
-from md_merge._conditions import WHEN_KEY, check_when
+from md_merge._conditions import WHEN_KEY, check_when, check_when_errors
 from md_merge._output import EXIT_BAD_INPUT, EXIT_FAILURE, EXIT_NOT_FOUND, EXIT_OK, setup_logging
 from md_merge._procedure import (
     DEFAULT_OP_V1,
+    GROUP_KEY,
+    INHERITED_WHEN_KEY,
     LATEST_VERSION,
     PROCEDURE_ITEM_KEYS,
     PROCEDURE_OPS,
+    ProcedureNotationError,
     check_procedure_notation,
     normalize_recipe,
+    recipe_version,
 )
-from md_merge.merge._recipe import _expand_mdfilename, load_yaml, resolve_input_path
+from md_merge._condblock import is_truthy
+from md_merge._pandoc_keys import deprecated_keys_warning, pandoc_key_errors, removed_latex_keys_warning
+from md_merge._typst_cover import select_typst_cover
+from md_merge._params import PARAMS_KEY, check_params_errors, param_domain
+from md_merge.merge._copy_keys import copy_key_errors
+from md_merge.merge._recipe import _expand_mdfilename, cli_vars, load_yaml, resolve_input_path
+from md_merge.validate._lint import lint
 
 
 # ── known key schemas ────────────────────────────────────────────────────────
@@ -24,7 +34,7 @@ from md_merge.merge._recipe import _expand_mdfilename, load_yaml, resolve_input_
 _TOP_LEVEL_KEYS = frozenset({
     "version",
     "workdir", "input", "output", "procedure",
-    "merge", "pandoc", "puremd", "indexer", "vars", "log",
+    "merge", "pandoc", "puremd", "indexer", "vars", "params", "log",
     "pptmerge", "pptmdexport", "separator", "transfer", "notecomexport",
 })
 
@@ -40,15 +50,16 @@ _OUTPUT_KEYS = frozenset({
     "outputdir", "force",
     "targetbasefilename",
     "mdfilename", "idcollectfilename", "idresolvedfilename",
-    "renderedfilename", "pdffilename", "texfilename", "htmlfilename",
+    "renderedfilename", "pdffilename", "htmlfilename",
     "revealfilename", "puremdfilename", "notecomyamlfilename", "pptxfilename",
-    "resourcepathfilename", "checkfilename", "insertsamplefilename",
+    "checkfilename", "insertsamplefilename",
 })
 
 _MERGE_KEYS = frozenset({
-    "strict", "no-copy-images", "image-dir", "flatten-images",
+    "strict", "copy-images", "no-copy-images", "image-dir", "flatten-images",
     "image-naming", "image-collision", "clear-dir-before-merge",
     "overwrite-images",   # 非推奨: image-collision: overwrite のエイリアス
+    "copy-yamls", "no-copy-yamls", "yaml-dir", "flatten-yamls", "overwrite-yamls",
 })
 
 _PANDOC_KEYS = frozenset({
@@ -67,6 +78,7 @@ _PUREMD_KEYS = frozenset({
 
 _INDEXER_KEYS = frozenset({
     "delimiter", "separator", "pptxnumbering", "deletecsl", "deletecsp",
+    "chapter_marker", "section_marker", "subsection_marker", "stay_marker",
 })
 
 _LOG_KEYS = frozenset({
@@ -146,6 +158,29 @@ def validate_recipe(recipe: dict) -> list[str]:
             "例: - insertpptx: a.pptx)"
         )
 
+    # PDF（typst）の表紙（version 2 以前の暗黙の標準表紙 / version 3 で使われない LaTeX 表紙）
+    pandoc_section = recipe.get("pandoc")
+    if isinstance(pandoc_section, dict):
+        try:
+            _ver = recipe_version(recipe)
+        except ProcedureNotationError:
+            _ver = None
+        if _ver is not None:
+            _cover_warn = select_typst_cover(pandoc_section, _ver)[2]
+            if _cover_warn:
+                warnings.append(_cover_warn)
+    if isinstance(pandoc_section, dict):
+        try:
+            _ver = recipe_version(recipe)
+        except ProcedureNotationError:
+            _ver = None
+        _latex_warn = removed_latex_keys_warning(pandoc_section, _ver)
+        if _latex_warn:
+            warnings.append(_latex_warn)
+        _deprecated = deprecated_keys_warning(pandoc_section, _ver)
+        if _deprecated:
+            warnings.append(_deprecated)
+
     # トップレベル
     for k in _unknown(set(recipe.keys()), _TOP_LEVEL_KEYS):
         warnings.append(f"未知のトップレベルキー: {k!r}")
@@ -172,7 +207,7 @@ def validate_recipe(recipe: dict) -> list[str]:
                     f"  (有効値: {', '.join(sorted(_PROCEDURE_OPS))})"
                 )
                 continue
-            known_keys = _PROCEDURE_ITEM_KEYS.get(op, frozenset()) | {WHEN_KEY}
+            known_keys = _PROCEDURE_ITEM_KEYS.get(op, frozenset()) | {WHEN_KEY, INHERITED_WHEN_KEY}
             for k in _unknown(set(item.keys()), known_keys):
                 warnings.append(f"未知のキー: procedure[{i}]({op}).{k!r}")
             if WHEN_KEY in item:
@@ -189,6 +224,24 @@ def validate_recipe(recipe: dict) -> list[str]:
                     f"生 latex はセマンティックマーカー等へ移行してください）: {value!r}"
                 )
 
+    return warnings
+
+
+def check_group_when(procedure: object, prefix: str = "procedure") -> list[str]:
+    """未展開の procedure にある ``- group:`` の ``when:`` を検査し、警告一覧を返す。
+
+    group は正規化で展開されて validate_recipe からは見えないため、展開前に検査する。
+    """
+    warnings: list[str] = []
+    if not isinstance(procedure, list):
+        return warnings
+    for i, item in enumerate(procedure):
+        if not isinstance(item, dict) or GROUP_KEY not in item:
+            continue
+        label = f"{prefix}[{i}]"
+        if WHEN_KEY in item:
+            warnings.extend(f"{label}(group): {msg}" for msg in check_when(item[WHEN_KEY]))
+        warnings.extend(check_group_when(item[GROUP_KEY], f"{label}.{GROUP_KEY}"))
     return warnings
 
 
@@ -309,7 +362,7 @@ def run(args: argparse.Namespace) -> int:
         return EXIT_NOT_FOUND
 
     try:
-        recipe = load_yaml(yaml_path, normalize=False)
+        recipe = load_yaml(yaml_path, normalize=False, apply_vars=False)
     except Exception as exc:
         logging.error("YAML 読み込みエラー: %s", exc)
         return EXIT_FAILURE
@@ -318,38 +371,45 @@ def run(args: argparse.Namespace) -> int:
         logging.error("レシピのトップレベルは辞書である必要があります: %s", yaml_path)
         return EXIT_FAILURE
 
-    # version と procedure 記法の不整合はエラー（他のサブコマンドは読み込み時に停止する）
-    notation_errors = check_procedure_notation(recipe)
+    json_mode = getattr(args, "json", False)
+
+    if getattr(args, "list_params", False):
+        return _print_params(recipe, json_mode)
+
+    # version と procedure 記法の不整合・params: の誤りはエラー（他のサブコマンドは読み込み時に停止する）
+    notation_errors = (
+        check_procedure_notation(recipe) + check_when_errors(recipe)
+        + check_params_errors(recipe, cli_vars()) + _pandoc_errors(recipe)
+        + copy_key_errors(recipe.get("merge"))
+    )
     if notation_errors:
-        if getattr(args, "json", False):
-            print(json.dumps({
-                "status": "error",
-                "command": "validate",
-                "input": str(yaml_path),
-                "errors": notation_errors,
-            }, ensure_ascii=False))
-        else:
-            for e in notation_errors:
-                logging.error("%s", e)
-            print(f"\n{len(notation_errors)} 件のエラーがあります: {yaml_path}")
-        return EXIT_FAILURE
-    recipe = normalize_recipe(recipe, warn_deprecated=False)  # 非推奨は validate_recipe が警告
+        return _report_errors(yaml_path, notation_errors, [], json_mode)
+    group_warnings = check_group_when(recipe.get("procedure"))
+    normalized = normalize_recipe(dict(recipe), warn_deprecated=False)  # 非推奨は validate_recipe が警告
 
-    warnings = validate_recipe(recipe)
-    cropsrc_usage = check_cropsrc_usage(recipe)
+    workdir = Path(args.workdir).resolve() if getattr(args, "workdir", None) else None
+    lint_result = lint(recipe, normalized, yaml_path, workdir)
 
-    if getattr(args, "json", False):
+    warnings = validate_recipe(normalized) + group_warnings + lint_result.warnings
+    cropsrc_usage = check_cropsrc_usage(normalized)
+    suggestions = lint_result.info
+
+    if lint_result.errors:
+        return _report_errors(yaml_path, lint_result.errors, warnings, json_mode)
+
+    if json_mode:
         print(json.dumps({
             "status": "ok" if not warnings else "warn",
             "command": "validate",
             "input": str(yaml_path),
             "warnings": warnings,
             "cropsrc_usage": cropsrc_usage,
+            "suggestions": suggestions,
         }, ensure_ascii=False))
         return EXIT_OK if not warnings else (EXIT_FAILURE if getattr(args, "strict", False) else EXIT_OK)
 
-    # cropsrc 使用状況は info（終了コードには影響しない）
-    for msg in cropsrc_usage:
+    # cropsrc 使用状況・提案は info（終了コードには影響しない）
+    for msg in cropsrc_usage + suggestions:
         logging.info("%s", msg)
 
     if not warnings:
@@ -363,4 +423,63 @@ def run(args: argparse.Namespace) -> int:
 
     if getattr(args, "strict", False):
         return EXIT_FAILURE
+    return EXIT_OK
+
+
+def _pandoc_errors(recipe: dict) -> list[str]:
+    """pandoc セクションの廃止キー（version 4）・engine の誤り。"""
+    try:
+        version = recipe_version(recipe)
+    except ProcedureNotationError:
+        return []  # version の誤りは check_procedure_notation が報告する
+    return pandoc_key_errors(recipe.get("pandoc"), version)
+
+
+def _report_errors(yaml_path: Path, errors: list[str], warnings: list[str], json_mode: bool) -> int:
+    if json_mode:
+        print(json.dumps({
+            "status": "error",
+            "command": "validate",
+            "input": str(yaml_path),
+            "errors": errors,
+            "warnings": warnings,
+        }, ensure_ascii=False))
+        return EXIT_FAILURE
+    for w in warnings:
+        logging.warning("%s", w)
+    for e in errors:
+        logging.error("%s", e)
+    print(f"\n{len(errors)} 件のエラーがあります: {yaml_path}")
+    return EXIT_FAILURE
+
+
+def _print_params(recipe: dict, json_mode: bool) -> int:
+    """``--list-params``: このレシピの切り替え（params:）の一覧を表示する。"""
+    params = recipe.get(PARAMS_KEY)
+    rows = []
+    if isinstance(params, dict):
+        for name, spec in params.items():
+            spec = spec if isinstance(spec, dict) else {}
+            domain = param_domain(spec)
+            default = spec.get("default")
+            if spec.get("type") == "bool" and default is not None:
+                default = "true" if is_truthy(default) else "false"
+            rows.append({
+                "name": str(name),
+                "values": list(domain) if domain is not None else None,
+                "default": default,
+                "description": spec.get("description", ""),
+            })
+    if json_mode:
+        print(json.dumps({"status": "ok", "command": "validate", "params": rows}, ensure_ascii=False))
+        return EXIT_OK
+    if not rows:
+        print("params: がありません（--var で切り替える変数は params: で宣言できます）")
+        return EXIT_OK
+    for r in rows:
+        values = " / ".join(r["values"]) if r["values"] is not None else "任意の文字列"
+        default = "（なし＝未定義）" if r["default"] is None else r["default"]
+        print(f"--var {r['name']}=…  値: {values}  既定: {default}")
+        if r["description"]:
+            print(f"    {r['description']}")
     return EXIT_OK

@@ -18,7 +18,6 @@
 
 
 
-<!-- source: defaults/common_assets/tex_newpage.md -->
 
 
 

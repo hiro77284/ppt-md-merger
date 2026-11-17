@@ -1,22 +1,16 @@
 -- filters/semantic-break.lua
 -- 見出し内の強制改行マーカー {{br}} を出力形式ごとに lower する（インライン）。
---   LaTeX: \hdbreak （semantic_macros.tex 定義のロバストマクロ。既定=空白、
---          見出しの組版時のみ \titleformat 側で \\ に上書きされ改行になる。
---          目次・柱・PDF しおりでは空白になり moving 引数エラーを起こさない）
 --   HTML : <br>
 --   Typst: #linebreak()（目次・柱・しおりでは semantic_macros.typ の show ルールで消える）
 --   その他: pandoc の LineBreak（素の改行）
 --
 -- {{br}} は Str の内部に埋め込まれる（例 "Part{{br}}Second"）ので、Str を分割して
--- 置換する。段落本文でも動くが、本文での \hdbreak は既定の空白になる（改行になるのは
--- \def\hdbreak{\\} を効かせている見出しのみ）。用途は主に章・節タイトルの改行位置指定。
+-- 置換する。用途は主に章・節タイトルの改行位置指定。
 
 local MARK = "{{br}}"
 
 local function break_inline()
-  if FORMAT:match("latex") then
-    return pandoc.RawInline("latex", "\\hdbreak ")
-  elseif FORMAT:match("html") or FORMAT:match("revealjs") then
+  if FORMAT:match("html") or FORMAT:match("revealjs") then
     return pandoc.RawInline("html", "<br>")
   elseif FORMAT == "typst" then
     -- pandoc.LineBreak は Typst では「\ ＋改行」になり、見出し（= …）がその改行で終わって

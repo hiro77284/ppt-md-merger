@@ -22,7 +22,6 @@ _WORK_FILE_KEYS = (
     "idcollectfilename",
     "idresolvedfilename",
     "renderedfilename",
-    "resourcepathfilename",
 )
 
 _STEPS: list[tuple[str, object]] = [

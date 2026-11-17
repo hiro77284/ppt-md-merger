@@ -1,6 +1,8 @@
 # 設計草案: セマンティック記述と lowering 層
 
 > **ステータス:** 草案（2026-06-30）。方針合意済み・実装は段階移行中。確定済みの部分と未決事項を本書で区別する。
+>
+> **2026-11-15 追記:** LaTeX は撤去した（[design_typst_migration.md](design_typst_migration.md) Phase 7）。`semantics.yaml` の `latex:` 列、Lua フィルタの latex 分岐、`semantic_macros.tex`、`tex_*.md` はもう無い。PDF は Typst（`typst:` 列）で出す。本書の `latex:` を含む記述は設計当時の記録として残す。divboxes の生成対象は `typst.box: true` のクラスになった。
 
 ## 1. 背景と問題
 
@@ -45,7 +47,7 @@
 | リーフ記法（案） | 意味 | LaTeX へ | HTML へ | GFM-md へ（puremd） | 由来 |
 |---|---|---|---|---|---|
 | **`{{vspace:N}}`** | 垂直スペース（N は数値=既定単位の倍、例 `0.5`。または単位付き長さ `5mm` / `1.5cm`） | 数値: `\vspace{N\baselineskip}` ／ 単位付き: `\vspace{5mm}` | 数値: `<div class="vspace" style="height:Nem">` ／ 単位付き: `height:5mm` ＋CSS | 空行 or 破棄 | `\par\vspace` / `tex_Nline` |
-| **`{{pagebreak}}`** | 改ページ | `\newpage` | `<div class="pagebreak">`（CSS `break-after:page`） | `---` or 破棄 | `tex_newpage` |
+| **`{{pagebreak}}`** | 改ページ | `\newpage` | `<div class="pagebreak">`（CSS `break-after:page`） | 破棄（当初は `---`。2026-11-03 に破棄へ変更） | `tex_newpage` |
 | **`{{vfill}}`** | 残り高を埋める | `\vspace*{\fill}`（* 付き=ページ先頭でも破棄されない） | flex spacer | 破棄 | `tex_vfill` |
 
 > リーフ記法の正確な綴り（`{{vspace:N}}` 等）は既存マーカー族（`{{#id:}}` / `{{v:}}` / `{{num:}}`）と衝突しない前提の**提案**。`render` / `idcollect` 段がこれらを処理対象外として素通しすること、pandoc 側は `FORMAT` を見て RawBlock を出し分ける Lua フィルタ（`semantic-leaf.lua`）で lower することを想定。最終綴りは §8 で確定する。

@@ -1,5 +1,5 @@
 # MD, PowerPointファイルの結合指示書のサンプル
-version: 2
+version: 4
 _constants: ../constants_settings.toml
 
 vars: # mdファイルとpptxファイルの双方で変数置換に使用する変数の定義
@@ -35,8 +35,6 @@ output:
   renderedfilename:     # 結合後のmdファイルに対してタイトル置換・参照置換を行ったレンダー済みmdファイルのファイル名
   puremdfilename:         # rendered.mdファイルからlatex命令を削除した純粋なmdファイルのファイル名。MD自体でプレビューを見るときはこれを使う
   pdffilename:           # 結合後のmdファイルをPandocでレンダーして生成されるpdfファイルのファイル名
-  texfilename:           # 結合後のmdファイルをPandocでレンダーして生成されるtexファイルのファイル名
-  resourcepathfilename:  # 結合後のmdファイルで使用するリソースパスを書き込むtexファイルのファイル名
   htmlfilename:         # 結合後のmdファイルをPandocでレンダーして生成されるhtmlファイルのファイル名
   revealfilename:         # 結合後のmdファイルをPandocでレンダーして生成されるhtmlファイルのファイル名
 
@@ -49,7 +47,7 @@ indexer:
 
 # merge サブコマンドのオプション
 merge:
-  no-copy-images: false # trueなら画像ファイルのコピーおよびパス書き換えを行わない。（既定値 false は画像ファイルのコピーおよびパス書き換えを行う）
+  copy-images: true # falseなら画像ファイルのコピーおよびパス書き換えを行わない。（既定値 true は画像ファイルのコピーおよびパス書き換えを行う。旧キー no-copy-images も可）
   image-dir: figures         # 画像コピー先サブディレクトリ名（既定: 空値。結合後のmdファイルでもソースのmdファイルの相対パスを維持するように画像ファイルをコピーする）
   flatten-images: true # trueならすべての画像を<outputdir>/<image-dir>/ にフラット集約する。同名ファイルは _1, _2 … のサフィックスを付けて上書きを回避する（既定: false）
   strict: false         # 警告をエラーとして扱う（既定: false）
@@ -96,11 +94,11 @@ procedure:
     title: 大きなPowerPointファイルを作る時の悩みとは？
   - insertmd: ppt_md_merger_overview_slide2_md.md
   # yaml-language-server-disable
-  __TEX_NEWPAGE__
+  __NEWPAGE__
   # yaml-language-server-disable
   - insertmd: ppt_md_merger_overview_slide3_md.md
   # yaml-language-server-disable
-  __TEX_NEWPAGE__
+  __NEWPAGE__
 
   # yaml-language-server-disable
   - insertmd: ppt_md_merger_overview_slide4_md.md
@@ -123,12 +121,12 @@ procedure:
   - insertvspace: 2
   - insertmd: ppt_md_merger_overview_slide9_md.md
   # yaml-language-server-disable
-  __TEX_NEWPAGE__
+  __NEWPAGE__
 
   # yaml-language-server-disable
   - insertmd: ppt_md_merger_overview_slide10_md.md
   # yaml-language-server-disable
-  __TEX_NEWPAGE__
+  __NEWPAGE__
 
   # yaml-language-server-disable
   - insertmd: ppt_md_merger_overview_slide11_md.md
@@ -154,14 +152,14 @@ procedure:
   - insertmd: ppt_md_merger_overview_slide13_md.md
     description: "システム要件"
   # yaml-language-server-disable
-  __TEX_NEWPAGE__
+  __NEWPAGE__
 
   # yaml-language-server-disable
   - insertmd: ppt_md_merger_overview_slide14_md.md
     description: "インストール方法"
 
   # yaml-language-server-disable
-  __TEX_NEWPAGE__
+  __NEWPAGE__
   # yaml-language-server-disable
   - insertmd: ppt_md_merger_overview_slide15_md.md
     description: "Quick Start"
@@ -169,7 +167,7 @@ procedure:
   - insertmd: ppt_md_merger_overview_slide17_md.md
 
   # yaml-language-server-disable
-  __TEX_NEWPAGE__
+  __NEWPAGE__
   # yaml-language-server-disable
   - insertmd: ppt_md_merger_overview_slide18_md.md
     description: "Examples"

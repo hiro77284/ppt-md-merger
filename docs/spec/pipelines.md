@@ -25,7 +25,6 @@ pptmdmerge crop_to_pdf recipe.yaml --dry-run
 | オプション | 説明 | 必須 |
 | ---------- | ---- | ---- |
 | `--no-check` | merge 直前の insertmd ドリフトゲート（後述）をスキップする | 任意 |
-| `--engine latex\|typst` | pandoc 段の PDF 組版エンジン（[pandoc の Typst エンジン](output_formats.md#typst-エンジンengine-typst)）。レシピの `pandoc.engine` より優先 | 任意 |
 
 その他は共通オプション（`--log-level`, `--dry-run`, `--json`, `--workdir`, `--force`）のみ。各ステップ固有のオプション（`--strict`, `--no-copy-images` 等）はレシピ YAML の該当セクションで指定する。
 
@@ -61,7 +60,7 @@ pptmdmerge crop_to_pdf recipe.yaml --dry-run
 
 ### 概要
 
-`pptpdfexport` → `pptimgexport` → `pptmdexport` → `merge` → `idcollect` → `idresolve` → `render` → `condblockprocess` → `pandoc` の 9 ステップを 1 コマンドで順に実行するパイプラインサブコマンド。いずれかのステップが非ゼロ終了コードを返した時点で停止する。
+`pptpdfexport` → `pptimgexport` → `pptmdexport` → `merge` → `idcollect` → `idresolve` → `render` → `pandoc` の 8 ステップを 1 コマンドで順に実行するパイプラインサブコマンド。いずれかのステップが非ゼロ終了コードを返した時点で停止する。
 
 ### 使用例
 
@@ -84,7 +83,6 @@ pptmdmerge ppt_to_pdf recipe.yaml --dry-run
 | `--closepptx` | `pptpdfexport` / `pptimgexport` / `pptmdexport` で処理完了後にファイルを close する（**省略時も close する**。COM ファイルロックを解放するため `ppt_to_pdf` ではデフォルト有効） | 任意 |
 | `--ppquit` | `pptpdfexport` で PowerPoint アプリケーションを終了する | 任意 |
 | `--no-check` | merge 直前の insertmd ドリフトゲート（[crop_to_pdf の insertmd ドリフトゲート](#insertmd-ドリフトゲート)と同仕様）をスキップする | 任意 |
-| `--engine latex\|typst` | pandoc 段の PDF 組版エンジン（[pandoc の Typst エンジン](output_formats.md#typst-エンジンengine-typst)）。レシピの `pandoc.engine` より優先 | 任意 |
 
 各ステップ固有のオプション（`--strict`, `--no-copy-images` 等）はレシピ YAML の該当セクションで指定する。`output.checkfilename` がある場合、merge ステップの直前に insertmd ドリフトゲートが動作し、大きな変化を検出すると確認を求める（`pptmdexport` で生成された MD を照合）。
 
@@ -94,7 +92,7 @@ pptmdmerge ppt_to_pdf recipe.yaml --dry-run
 
 | 項目 | 内容 |
 | ---- | ---- |
-| 前処理の内容 | 単一ファイルに対する pptmerge。レシピの `procedure` は無視し、対象 pptx を `insertpptx`（`slides: all`）1 件として処理する。**一般マーカー処理のみ**（`--deletecsp`、`#TEMP#`/`#MEMO#`、`#CHAPT#`/`#SECTION#`/`#STAY#` 等）と、レシピ `vars` による `{{v:..}}` 置換を適用する。`pptmerge.stylebase` は適用しない |
+| 前処理の内容 | 単一ファイルに対する pptmerge。レシピの `procedure` は無視し、対象 pptx を `insertpptx`（`slides: all`）1 件として処理する。**一般マーカー処理のみ**（`--deletecsp`、`#TEMP#`/`#MEMO#`、`#CHAPT#`/`#SECTION#`/`#SUBSECTION#`/`#STAY#` 等）と、レシピ `vars` による `{{v:..}}` 置換を適用する。`pptmerge.stylebase` は適用しない |
 | CSL マーカーの扱い | **一切処理しない**（後述） |
 | 出力ファイル名 | 元の pptx 名に `_preprocessed` を付加（例 `deck.pptx` → `deck_preprocessed.pptx`） |
 | 出力先 | `output.outputdir` |
@@ -114,8 +112,7 @@ Windows 専用（pptmerge が PowerPoint COM を使用する）。`--dry-run` �
 | 5 | ID 収集 | `idcollect` |
 | 6 | ID 解決 | `idresolve` |
 | 7 | 参照レンダー | `render` |
-| 8 | 条件ブロック・変数展開 | `condblockprocess` |
-| 9 | PDF 変換 | `pandoc` |
+| 8 | PDF 変換 | `pandoc` |
 
 ### 進捗・完了メッセージ
 
@@ -132,10 +129,13 @@ OK: slides/deck.pptx
 
 ========================================
   ppt_to_pdf 完了
+  所要時間: 1分23.4秒
 ========================================
 ```
 
-`--json` モード時は進捗行も JSON 形式で出力する（`{"command": "ppt_to_pdf", "step": "...", "status": "..."}`）。完了ブロックは `--json` 時は出力しない。
+完了行の直後に、コマンド開始（引数解析前）から完了までの所要時間を表示する。他のパイプライン（`ppt_to_puremd` / `ppt_to_transfer` / `ppt_to_notecom` 等）の完了ブロックも同じ形式。
+
+`--json` モード時は進捗行も JSON 形式で出力する（`{"command": "ppt_to_pdf", "step": "...", "status": "..."}`）。完了ブロック（所要時間を含む）は `--json` 時は出力しない。
 
 出力がリアルタイムに表示されるよう、`run()` 開始時に `sys.stdout.reconfigure(line_buffering=True)` でラインバッファリングに切り替える。
 
@@ -154,7 +154,7 @@ OK: slides/deck.pptx
 
 ### 概要
 
-`pptpdfexport` → `pptimgexport` → `pptmdexport` → `merge` → `idcollect` → `idresolve` → `render` → `puremd` → `transfer` の 9 ステップを 1 コマンドで順に実行するパイプラインサブコマンド。PPTX 群から静的サイト生成システム（Astro 等）の投入用ディレクトリへ MD と画像を転送するところまでを一気通貫で行う。`ppt_to_pdf` が `pandoc` で PDF を生成するのに対し、こちらは最終段が `transfer` である点が異なる。`render` の後に `puremd`（LaTeX rawblock 等の除去）を挟み、`transfer` はレンダー済み MD ではなく puremd 処理済み MD（`output.puremdfilename`）を転送対象とする。いずれかのステップが非ゼロ終了コードを返した時点で停止する。
+`pptpdfexport` → `pptimgexport` → `pptmdexport` → `merge` → `idcollect` → `idresolve` → `render` → `puremd` → `transfer` の 9 ステップを 1 コマンドで順に実行するパイプラインサブコマンド。PPTX 群から静的サイト生成システム（Astro 等）の投入用ディレクトリへ MD と画像を転送するところまでを一気通貫で行う。`ppt_to_pdf` が `pandoc` で PDF を生成するのに対し、こちらは最終段が `transfer` である点が異なる。`render` の後に `puremd`（raw ブロック等の除去）を挟み、`transfer` はレンダー済み MD ではなく puremd 処理済み MD（`output.puremdfilename`）を転送対象とする。いずれかのステップが非ゼロ終了コードを返した時点で停止する。
 
 ### 使用例
 
@@ -195,7 +195,7 @@ pptmdmerge ppt_to_transfer recipe.yaml --dry-run
 | 8 | rawblock 除去 | `puremd` |
 | 9 | dataentry へ転送 | `transfer` |
 
-`puremd` ステップはレンダー済み MD（`output.renderedfilename`）から LaTeX rawblock 等を除去し `output.puremdfilename` を生成する（生 raw ブロックの除去は組み込み、追加パターンは `puremd.strip_config`。[puremd](output_formats.md#puremd別名-githubmd) を参照）。
+`puremd` ステップはレンダー済み MD（`output.renderedfilename`）から raw ブロック等を除去し `output.puremdfilename` を生成する（生 raw ブロックの除去は組み込み、追加パターンは `puremd.strip_config`。[puremd](output_formats.md#puremd別名-githubmd) を参照）。
 
 最終段の `transfer` は `transfer.dataentry_input`・`transfer.slug` 等のレシピキーを必要とする（[transfer](output_formats.md#transfer) を参照）。転送対象 MD の優先順位は `--source` > `transfer.inputmd` > パイプライン既定（`output.puremdfilename`）。すなわち `--source` も `transfer.inputmd` も未指定の場合、このパイプラインでは `output.puremdfilename`（puremd 処理済み MD）を転送対象とする（単体 `transfer` の既定である `output.renderedfilename` とは異なる）。`--source` を指定すると `transfer.inputmd` を上書きして対象を選択できる。
 
@@ -208,7 +208,6 @@ pptmdmerge ppt_to_transfer recipe.yaml --dry-run
 * `output.idresolvedfilename`（resolved YAML）
 * `output.renderedfilename`（レンダー済み MD）
 * `output.puremdfilename`（puremd 処理済み MD）
-* `output.resourcepathfilename`（graphicspath TeX）
 * `--preprocess` で生成した前処理済み pptx（`<stem>_preprocessed.pptx`）
 
 削除を1件以上行った場合は「`--keep-work` で残せる」旨を案内する。
@@ -243,7 +242,7 @@ WARNING: ...
 `ppt_to_transfer` との差分は次の 2 点のみ。
 
 * **`transfer` ステップを実行しない。** したがって `transfer.dataentry_input` / `transfer.slug` 等の `transfer:` セクションや `--source` オプションは不要（持たない）。
-* **中間生成ファイルの削除対象から `output.puremdfilename` を除外する。** puremd 処理済み MD はこのパイプラインの成果物なので、`--keep-work` を付けなくても削除されない。それ以外（`mdfilename` / `idcollectfilename` / `idresolvedfilename` / `renderedfilename` / `resourcepathfilename`、および `--preprocess` 生成物）は `ppt_to_transfer` と同様に完了後に削除する。
+* **中間生成ファイルの削除対象から `output.puremdfilename` を除外する。** puremd 処理済み MD はこのパイプラインの成果物なので、`--keep-work` を付けなくても削除されない。それ以外（`mdfilename` / `idcollectfilename` / `idresolvedfilename` / `renderedfilename`、および `--preprocess` 生成物）は `ppt_to_transfer` と同様に完了後に削除する。
 
 固有オプションは `--workdir` / `--force` / `--rebuild` / `--preprocess` / `--deletecsl`（無視）/ `--deletecsp` / `--no-check` / `--keep-work`（`--source` を除き `ppt_to_transfer` と同じ）。
 
@@ -283,7 +282,7 @@ python tools/notecom_autopilot.py build/<base>_notecom.yaml --auth-state auth.js
 
 | 項目 | 挙動 |
 | ---- | ---- |
-| `--preprocess` での個別 pptx 処理 | 一般マーカー（`#CSP#` / `#TEMP#` / `#MEMO#` / `#CHAPT#` / `#SECTION#` / `#STAY#` 等）のみ処理する |
+| `--preprocess` での個別 pptx 処理 | 一般マーカー（`#CSP#` / `#TEMP#` / `#MEMO#` / `#CHAPT#` / `#SECTION#` / `#SUBSECTION#` / `#STAY#` 等）のみ処理する |
 | `#CSL#` | スライド削除・マーカー消去のいずれも行わない。マーカー文字列はそのまま残る |
 | `indexer.deletecsl` | 参照しない（設定されていれば info ログを出す） |
 | `--deletecsl` | 無視する（指定されていれば警告を出す） |

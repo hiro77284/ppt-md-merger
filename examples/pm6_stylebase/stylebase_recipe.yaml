@@ -1,4 +1,4 @@
-version: 2
+version: 4
 _constants: ../constants_settings.toml
 # PowerPointファイル結合指示サンプル
 

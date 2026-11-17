@@ -9,13 +9,16 @@ from pathlib import Path
 import yaml
 from pptx import Presentation
 
+from md_merge._params import condition_vars
 from md_merge._filters import escape_backslash_smart, replace_slide_placeholders
 from md_merge._fingerprint import extract_headings
-from md_merge._note_parser import parse_note_md_blocks
+from md_merge._condblock import process_text
+from md_merge._note_parser import parse_note_image_directives, parse_note_md_blocks
 from md_merge._cropsrc import cropsrc_entries, resolve_cropsrc_path
 from md_merge._output import EXIT_BAD_INPUT, EXIT_FAILURE, EXIT_NOT_FOUND, EXIT_OK, emit, setup_logging
 from md_merge._preprocess import cropsrc_read_path
 from md_merge._procedure import LATEST_VERSION, recipe_version, to_notation
+from md_merge._steps import count_click_steps, expand_steps_sections
 from md_merge.merge._recipe import load_yaml, resolve_input_path, resolve_out_file, resolve_workdir, setup_recipe_file_logging
 
 _VAR_RE = re.compile(r"\{\{v:([A-Za-z0-9_]+)\}\}")
@@ -39,7 +42,9 @@ _LATEX_CHECK_DEFAULT = "warn"
 # 効かず文字どおり表示される。Markdown のエスケープ（\* \_ \\ など）は英字が続かないので
 # 当たらない。fenced div / span の属性（{.widequote width="0.6\linewidth"} 等）は
 # フィルタが読み替えるので対象外にする。
-_BARE_LATEX_RE = re.compile(r"\\[A-Za-z]+")
+# 英数字・`_` `.` `:` `~` `-` の直後のバックスラッシュは Windows 等のパス区切り
+# （PROJECT_ROOT\examples\pm1 / C:\Users / ..\images）とみなして対象外にする。
+_BARE_LATEX_RE = re.compile(r"(?<![A-Za-z0-9_.:~-])\\[A-Za-z]+")
 _ATTR_GROUP_RE = re.compile(r"\{[.#][^{}]*\}|\{[^{}]*=[^{}]*\}")
 _INLINE_CODE_RE = re.compile(r"`[^`]*`")
 
@@ -61,8 +66,9 @@ def _find_raw_blocks(md_text: str) -> list[tuple[int, str]]:
 def _find_bare_latex(md_text: str) -> list[tuple[int, str]]:
     """Return (line_number, command) for LaTeX commands written without a raw fence.
 
-    Code blocks (``` … ```), inline code and pandoc attribute groups are skipped.
-    Line numbers are 1-based within md_text.
+    Code blocks (``` … ```), inline code and pandoc attribute groups are skipped,
+    as are path separators (a backslash directly after an ASCII word character
+    or ``. : ~ -``, e.g. ``PROJECT_ROOT\\examples``). Line numbers are 1-based within md_text.
     """
     found: list[tuple[int, str]] = []
     in_code = False
@@ -250,6 +256,7 @@ def run(args: argparse.Namespace) -> int:
     dry_run = getattr(args, "dry_run", False)
     json_mode = getattr(args, "json", False)
     vars_map = {str(k): str(v) for k, v in (recipe.get("vars") or {}).items()}
+    cond_vars = condition_vars(recipe)
     sample_path = resolve_out_file(recipe, "insertsamplefilename", yaml_path, workdir)
     latex_check = _resolve_latex_check(args, recipe)
     logging.debug("pptmdexport: latex_check=%s", latex_check)
@@ -313,9 +320,24 @@ def run(args: argparse.Namespace) -> int:
             md_entries_for_slide: list[dict] = []
 
             note_text = replace_slide_placeholders(note_text, pptx_path, slide_title, slide_idx)
+            # <!-- #steps --> の [all] 等を展開するための、同じスライドの IMAGE ブロック
+            image_directives = parse_note_image_directives(note_text)
 
             for body in parse_note_md_blocks(note_text):
+                # 条件ブロック（{{#if:NAME}}）を先に展開する。export-note 行ごと
+                # 囲めばブロック全体を出力しないこともできる。
+                try:
+                    body = process_text(
+                        body, cond_vars, markdown=True,
+                        where=f"{pptx_path.name} スライド {slide_idx}",
+                    )
+                except ValueError as exc:
+                    logging.error("条件ブロック: %s", exc)
+                    errors += 1
+                    continue
                 lines = body.splitlines()
+                while lines and not lines[0].strip():
+                    lines.pop(0)
                 if not lines:
                     continue
 
@@ -339,6 +361,9 @@ def run(args: argparse.Namespace) -> int:
 
                 # 2行目以降: MD テキスト。ノート専用参照マーカーは MD から除去する。
                 md_text = _strip_note_ref_markers("\n".join(lines[1:]))
+                md_text = expand_steps_sections(
+                    md_text, image_directives, lambda s=slide: count_click_steps(s), slide_idx,
+                )
                 md_lines = md_text.splitlines()
                 display_line = md_lines[0] if md_lines else ""
 

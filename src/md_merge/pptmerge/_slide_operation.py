@@ -9,6 +9,7 @@ from pptx import Presentation
 from pptx.enum.shapes import MSO_SHAPE_TYPE
 
 from ._config import ConfigError
+from ._xmltext import single_line_text
 
 
 @dataclass
@@ -49,7 +50,7 @@ def slide_all_text(slide: object) -> str:
 
 def _slide_title_text(slide: object) -> str:
     if slide.shapes.title is not None:
-        return (slide.shapes.title.text or "").strip()
+        return single_line_text(slide.shapes.title.text or "")
     return ""
 
 

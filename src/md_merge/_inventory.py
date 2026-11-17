@@ -13,6 +13,9 @@ _MD_MERGE_DIRECTIVE_RE = re.compile(r'^<!--\s*md_merge\s+\{\{(chapter|section|su
 # Raw slide title carried from pptmdexport (the slide's title placeholder text).
 _RAWTITLE_DIRECTIVE_RE = re.compile(r'^<!--\s*md_merge_rawtitle:\s?(.*?)\s*-->\s*$')
 _HEADING_RE = re.compile(r'^(#{1,3})\s+(.*)')
+# {{nonum}} on the {{#id:}} line: the entry is registered (referable) but takes
+# no number and does not advance any numbering counter.
+_NONUM_RE = re.compile(r'\{\{nonum\}\}')
 _KNOWN_TYPES = frozenset({"chapter", "section", "subsection", "image", "var"})
 
 _EXPECTED_HEADING_LEVEL = {"chapter": 1, "section": 2, "subsection": 3}
@@ -80,6 +83,7 @@ def extract_entries(
 
         next_line = lines[i + 1] if i + 1 < len(lines) else ""
         heading_text, heading_level = _extract_heading(next_line)
+        nonum = bool(_NONUM_RE.search(line))
 
         for m in matches:
             id_type, part_id, local_id = m.group(1), m.group(2), m.group(3)
@@ -133,6 +137,8 @@ def extract_entries(
                     and pending_numbering_op[0] == id_type
                     and pending_numbering_op[1] not in ("", "+")):
                 entry["numbering_op"] = pending_numbering_op[1]
+            if nonum:
+                entry["nonum"] = True
             entries.append(entry)
 
         pending_numbering_op = None

@@ -51,13 +51,7 @@ def _lua_key(name: str) -> str:
 
 
 def _spans_body(sem) -> list[str]:
-    lines = ["local LATEX_MACRO = {"]
-    for name, rule in sem.inlines.items():
-        macro = (rule.get("latex") or {}).get("macro")
-        if macro:
-            lines.append(f"  {name} = {_lua_str(str(macro))},")
-    lines.append("}")
-    lines.append("local TYPST_FUNC = {")
+    lines = ["local TYPST_FUNC = {"]
     for name, rule in sem.inlines.items():
         func = (rule.get("typst") or {}).get("func")
         if func:
@@ -73,7 +67,7 @@ def _spans_body(sem) -> list[str]:
 
 
 def _leaf_tmpl(rule, fmt: str):
-    """Return (template, default_unit) for a leaf's rule in *fmt* (``latex`` / ``typst``).
+    """Return (template, default_unit) for a leaf's rule in *fmt* (``typst``).
 
     The rule is either a plain template string (no unit) or a mapping
     ``{tmpl, unit}`` where ``unit`` is appended to a bare-number ``%{arg}``.
@@ -103,7 +97,7 @@ def _leaf_tables(sem, fmt: str, prefix: str) -> list[str]:
 
 
 def _leaf_body(sem) -> list[str]:
-    lines = _leaf_tables(sem, "latex", "LEAF_LATEX") + _leaf_tables(sem, "typst", "LEAF_TYPST")
+    lines = _leaf_tables(sem, "typst", "LEAF_TYPST")
     lines.append("local LEAF_HTML = {")
     for name, rule in sem.leaves.items():
         html = rule.get("html")
@@ -119,17 +113,17 @@ def _leaf_body(sem) -> list[str]:
 
 
 def _divboxes_body(sem) -> list[str]:
-    """class -> tcolorbox env for the box-family blocks (latex.box == true).
+    """The box-family block classes (typst.box == true) as a set.
 
-    Only these classes are owned by divboxes.lua; other env-based blocks
+    Only these classes are owned by divboxes.lua; other blocks
     (largefontblock / blockindent / center) are handled by their own filters,
-    so restricting to latex.box avoids double-wrapping.
+    so restricting to typst.box avoids double-wrapping.
     """
-    lines = ["local BLOCK_ENV = {"]
+    lines = ["local BOX_CLASS = {"]
     for name, rule in sem.blocks.items():
-        latex = rule.get("latex") or {}
-        if latex.get("box") and latex.get("env"):
-            lines.append(f"  {_lua_key(name)} = {_lua_str(str(latex['env']))},")
+        typst = rule.get("typst") or {}
+        if typst.get("box"):
+            lines.append(f"  {_lua_key(name)} = true,")
     lines.append("}")
     return lines
 

@@ -1,4 +1,5 @@
 -- largefontblock.lua
+-- Div .largefontblock を大きめの文字のブロックに lower する（Typst のみ。他の形式は素通り）。
 function Div(el)
   if el.classes:includes("largefontblock") then
     if FORMAT == "typst" then
@@ -8,8 +9,5 @@ function Div(el)
       out[#out + 1] = pandoc.RawBlock("typst", "]")
       return out
     end
-    table.insert(el.content, 1, pandoc.RawBlock("latex", "\\begin{largefontblock}"))
-    table.insert(el.content, pandoc.RawBlock("latex", "\\end{largefontblock}"))
-    return el
   end
 end

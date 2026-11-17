@@ -8,7 +8,7 @@
 
 | 欄 | 意味 |
 | -- | ---- |
-| 書く場所 | **原稿MD** = 結合対象の MD / **ノート** = PPTX スライドのノート / **スライド** = PPTX のシェイプ本文 / **テンプレ** = LaTeX/HTML テンプレート / **レシピ** = レシピ YAML |
+| 書く場所 | **原稿MD** = 結合対象の MD / **ノート** = PPTX スライドのノート / **スライド** = PPTX のシェイプ本文 / **テンプレ** = 表紙 Markdown（`cover-md` / `htmlcover`） / **レシピ** = レシピ YAML |
 | 処理する段 | その記法を解釈・除去するサブコマンドやフィルタ |
 
 ---
@@ -22,10 +22,12 @@
 | `{{title:FULL_ID}}` | 原稿MD | render | タイトル参照 | 同上 |
 | `{{label:FULL_ID}}` | 原稿MD | render | ラベル（番号＋タイトル）参照 | 同上 |
 | `{{rawtitle:FULL_ID}}` | 原稿MD | render | pptx のタイトル枠の原文を参照（加工されない） | 同上 |
-| `{{v:NAME}}` | 原稿MD / ノート / スライド / テンプレ | render（MD）・pptmerge（pptx）・condblockprocess（テンプレ） | レシピ `vars:` の値に置換 | [md_pipeline](spec/md_pipeline.md#3-変数置換) |
+| `{{v:NAME}}` | 原稿MD / ノート / スライド / テンプレ | render（MD）・pptmerge（pptx）・pandoc 表紙（テンプレ） | レシピ `vars:` の値に置換（`--var` で上書き可） | [md_pipeline](spec/md_pipeline.md#3-変数置換) |
+| `{{#if:NAME}}` / `{{#if:!NAME}}` / `{{#if:NAME=VALUE}}` / `{{#if:NAME!=VALUE}}` … `{{#else:NAME}}` … `{{#endif:NAME}}` | 原稿MD / ノート（MD・YAML ブロック） / テンプレ | merge・pptmdexport・pptyamlexport・pandoc 表紙 | 条件ブロック。単独行のタグで囲んだ行を変数の値で残す／削る（ネスト可。`--var` で起動時に切替）。`{{#elseif}}` はない（エラー） | [conditional_block_process](conditional_block_process.md#32-条件ブロック) |
 | `{{sectionlist}}` / `{{sectionlist:chapter:PART:LOCAL}}` | 原稿MD | render | 章に属するセクション一覧を箇条書きに展開（章とびら用） | [md_pipeline](spec/md_pipeline.md#4-セクション一覧展開sectionlist) |
 | `{{nolabel}}` | 原稿MD（`{{#id:}}` と同じ行） | render | その見出しの label 置換をスキップ（**採番はされる**） | [md_pipeline](spec/md_pipeline.md#インライン制御マーカー) |
 | `{{noref}}` | 原稿MD（`{{#id:}}` と同じ行） | render | その行と直後の見出しの参照変換・変数置換をスキップ | 同上 |
+| `{{nonum}}` | 原稿MD / ノート（`{{#id:}}` と同じ行） | idcollect → idresolve → render・pptmerge | ID は登録するが**採番しない**（番号を消費せず後続は連番のまま）。見出し・スライドタイトルは書いたまま | 同上 |
 | `{{enclosenum:FULL_ID}}` | ノート | pptmerge（idresolve モード） | スライドタイトルの先頭に `(番号) ` を前置。ID を定義しないので複数スライドで使える | [pptx](spec/pptx.md#idresolve-モードの動作詳細) |
 | `{{titlelabel:FULL_ID}}` | ノート | pptmerge（idresolve モード） | スライドタイトルを label で置換。ID を定義しない | 同上 |
 
@@ -38,7 +40,7 @@
 | `!include path/to/file.md` | 原稿MD | merge | MD を再帰的に取り込む（行頭）。**コードフェンス内でも展開される** | [md_pipeline](spec/md_pipeline.md#インクルード展開) |
 | `<!-- md_merge {{chapter\|section\|subsection:VALUE}} {{title:TITLE}} -->` | 原稿MD | idcollect → idresolve | 直後のマーカーの採番を制御。`+`/省略 = +1、整数 = その値へリセット | [md_pipeline](spec/md_pipeline.md#value-による番号の加算リセット) |
 | `<!-- md_merge_rawtitle: ... -->` | 自動生成 | pptmdexport が挿入、idcollect が読む | pptx のタイトル原文を inventory の `rawtitle` へ運ぶ | — |
-| `<!-- source: ... -->` | 自動生成 | merge が挿入、idcollect / transfer が読む | 結合済み MD 内でのソースファイル境界 | — |
+| `<!-- source: ... -->` | 自動生成 | merge が挿入、idcollect / transfer が読む | 結合済み MD 内でのソースファイル境界。procedure の `insertvar` で挿入した値は `<!-- source: var:NAME -->` | [md_pipeline](spec/md_pipeline.md#変数の値の挿入insertvar) |
 | `{{#id:...}}` 等を**コードフェンス内**に書いた場合 | — | — | merge / render はフェンス非対応のため**展開・置換される** | [pandoc_filters](pandoc_filters.md#コードブロック内でもマーカーは置換される) |
 
 ## 3. セマンティック構造（原稿 MD）
@@ -47,38 +49,38 @@
 
 ### 3.1 ブロック（fenced div）
 
-| 記法 | 意味 | LaTeX | HTML | GFM（puremd） |
+| 記法 | 意味 | PDF（Typst） | HTML | GFM（puremd） |
 |---|---|---|---|---|
-| `::: {.note}` | 補足情報ボックス | `notebox` | `<div class>`＋CSS | `> [!NOTE]` |
-| `::: {.warning}` | 注意喚起ボックス | `warningbox` | 同上 | `> [!WARNING]` |
-| `::: {.leadline}` | 擬似見出し・リード行 | `leadlinebox` | 同上 | `> [!IMPORTANT]` |
-| `::: {.widequote}` | 幅広引用 | `widequotebox` | 同上 | 素の blockquote |
-| `::: {.largefontblock}` | 大きい文字ブロック | 専用環境 | 同上 | ラベル付き blockquote |
-| `::: {.blockindent}` | 字下げブロック（`indent=3em`） | 専用環境 | 同上 | ラベル付き blockquote |
-| `::: {.keep-together}` | 改ページ抑制 | minipage / `\Needspace` | `break-inside:avoid` | unwrap |
-| `::: {.center}` | 中央寄せ | `center` 環境 | `text-align:center` | unwrap |
+| `::: {.note}` | 補足情報ボックス | `#sem-box("note")` | `<div class>`＋CSS | `> [!NOTE]` |
+| `::: {.warning}` | 注意喚起ボックス | `#sem-box("warning")` | 同上 | `> [!WARNING]` |
+| `::: {.leadline}` | 擬似見出し・リード行 | `#sem-box("leadline")` | 同上 | `> [!IMPORTANT]` |
+| `::: {.widequote}` | 幅広引用 | `#sem-box("widequote")` | 同上 | 素の blockquote |
+| `::: {.largefontblock}` | 大きい文字ブロック | `#semlargefontblock` | 同上 | ラベル付き blockquote |
+| `::: {.blockindent}` | 字下げブロック（`indent=3em`） | `#semblockindent` | 同上 | ラベル付き blockquote |
+| `::: {.keep-together}` | 改ページ抑制 | `#semkeeptogether` | `break-inside:avoid` | unwrap |
+| `::: {.center}` | 中央寄せ | `#semcenter` | `text-align:center` | unwrap |
 
-属性（`frame` / `colback` / `fontsize` / `left` / `width` / `center` ほか）は box 系で LaTeX のみ有効。一覧は [pandoc_filters](pandoc_filters.md#divboxeslua-の属性)。
+属性（`frame` / `colback` / `fontsize` / `left` / `width` / `center` ほか）は box 系の PDF（Typst）でのみ有効（値の書き方は旧 LaTeX 版と同じ）。一覧は [pandoc_filters](pandoc_filters.md#divboxeslua-の属性)。
 
 ### 3.2 インライン（bracketed span）
 
-| 記法 | 意味 | LaTeX | HTML | GFM |
+| 記法 | 意味 | PDF（Typst） | HTML | GFM |
 |---|---|---|---|---|
-| `[語句]{.term}` | 用語 | `\semterm` | span＋CSS | `**語句**` |
-| `[語句]{.keyword}` | キーワード | `\semkeyword` | 同上 | `**語句**` |
-| `[path]{.path}` | パス・コマンド名 | `\sempath` | `<code>` | `` `path` `` |
-| `[Ctrl+C]{.kbd}` | キー入力 | `\semkbd` | `<kbd>` | `<kbd>` |
-| `[語句]{.emph}` | 強調 | `\emph` | span | `*語句*` |
-| `[語句]{.rightlabel}` | 行末右寄せラベル | `\semrightlabel` | float:right | 素通し |
+| `[語句]{.term}` | 用語 | `#semterm` | span＋CSS | `**語句**` |
+| `[語句]{.keyword}` | キーワード | `#semkeyword` | 同上 | `**語句**` |
+| `[path]{.path}` | パス・コマンド名 | `#sempath` | `<code>` | `` `path` `` |
+| `[Ctrl+C]{.kbd}` | キー入力 | `#semkbd` | `<kbd>` | `<kbd>` |
+| `[語句]{.emph}` | 強調 | `#emph` | span | `*語句*` |
+| `[語句]{.rightlabel}` | 行末右寄せラベル | `#semrightlabel` | float:right | 素通し |
 
 ### 3.3 リーフ記法
 
-| 記法 | 意味 | LaTeX | HTML | GFM |
+| 記法 | 意味 | PDF（Typst） | HTML | GFM |
 |---|---|---|---|---|
-| `{{vspace:N}}` / `{{vspace:5mm}}` | 垂直スペース（数値=行数、単位付き=その長さ） | `\vspace` | `div.vspace` | 破棄 |
-| `{{pagebreak}}` | 改ページ | `\newpage` | `div.pagebreak` | `---` |
-| `{{vfill}}` | 残り高を埋める | `\vspace*{\fill}` | `div.vfill` | 破棄 |
-| `{{br}}` | 見出し内の強制改行 | `\hdbreak` | `<br>` | 破棄 |
+| `{{vspace:N}}` / `{{vspace:5mm}}` | 垂直スペース（数値=行数、単位付き=その長さ） | `#v` | `div.vspace` | 破棄 |
+| `{{pagebreak}}` | 改ページ | `#pagebreak(weak: true)` | `div.pagebreak` | 破棄 |
+| `{{vfill}}` | 残り高を埋める | `#v(1fr)` | `div.vfill` | 破棄 |
+| `{{br}}` | 見出し内の強制改行 | `#linebreak()` | `<br>` | 破棄 |
 
 > リーフ記法はレシピの `procedure` に `insertvspace` / `insertpagebreak` / `insertvfill` 操作を書いても挿入できる（[md_pipeline](spec/md_pipeline.md#行空け改ページの挿入insertvspace--insertpagebreak--insertvfill)）。
 
@@ -86,7 +88,7 @@
 
 | 記法 | 意味 |
 |---|---|
-| ` ```{=latex} ` / ` ```{=html} ` | 生コードの passthrough。非対象形式では警告して破棄、puremd は `=latex` を破棄 |
+| ` ```{=typst} ` / ` ```{=html} ` | 生コードの passthrough。非対象形式では警告して破棄、puremd は `=typst` / `=latex` を破棄。`{=latex}` はどの出力でも破棄（LaTeX は撤去済み） |
 
 ## 4. コードブロック・画像（原稿 MD）
 
@@ -126,6 +128,7 @@
 | `export-image-inset:` | IMAGE | 切り出し枠の拡大（正）/ 縮小（負）ピクセル | 同上 |
 | `export-image-step:` | IMAGE | アニメーションの途中ステップを切り出す（`2` / `0-3, 5` / `all` / `last`）。省略時は PDF から最終状態。Windows 専用 | [pptx](spec/pptx.md#アニメーションのステップ切り出しexport-image-step) |
 | `<__STEP__>` | IMAGE の `export-image:` 内 | ステップ番号に展開。複数ステップ指定時は必須 | 同上 |
+| `<!-- #steps -->` … `<!-- /steps -->` | MD ブロック | 囲んだ範囲の画像パスの `[all]` / `[last]` / `[1-3]` を、パスが一致する IMAGE ブロックで書き出されるステップ番号へ行ごと展開（pptmdexport） | [pptx](spec/pptx.md#ステップ画像の展開steps-セクション) |
 
 > **基準ディレクトリの注意**: `export-image:` は pptx 基準、MD ブロック内の `![](...)` は切り出された MD 基準。両方を `../images/…` と書けるのは `src/` と `mds/` を同階層に置く規約の帰結。詳細は [design_image_refs](design_image_refs.md)。
 
@@ -149,18 +152,19 @@
 | `#TEMP#` / `#MEMO#` | 一般 | そのシェイプを**常に削除** | 同上 |
 | `#CHAPT#` | 一般 | チャプタースライド（`pptxnumbering: chapt_section`） | [pptx](spec/pptx.md#タイトル後処理アルゴリズム) |
 | `#SECTION#` | 一般 | セクションスライド（同上） | 同上 |
+| `#SUBSECTION#` | 一般 | サブセクションスライド（同上）。番号 `章.節.小節` を付ける | [pptx](spec/pptx.md#chapt_section-モードの動作詳細) |
 | `#STAY#` | 一般 | 章・節カウンタのインクリメントを抑制（同上） | [pptx](spec/pptx.md#stay-マーカーの動作chapt_section-モード) |
 | `#NONUMBERING#` | 一般 | `chapt_section` の番号付きタイトル書き換えをスキップ（**カウンタは進む**） | [pptx](spec/pptx.md#nonumbering-マーカーの動作) |
 | `#NOREPLACE#` | 一般 | そのスライドのタイトル置換・プレースホルダー置換をスキップ | [pptx](spec/pptx.md#noreplace-マーカーの動作) |
 
 マーカー名は `indexer.chapter_marker` 等で変更できる（[recipe_key_reference](recipe_key_reference.md)）。
 
-## 6. テンプレート（condblockprocess）
+## 6. テンプレート（表紙 Markdown）
 
 | 記法 | 意味 | 詳細 |
 |---|---|---|
 | `{{v:NAME}}` | レシピ `vars:` の値に置換 | [conditional_block_process](conditional_block_process.md) |
-| `{{#if:NAME}}` … `{{#endif:NAME}}` | 変数が定義されていればブロックを残す。未定義でもエラーにしない | 同上 |
+| `{{#if:NAME}}` … `{{#endif:NAME}}` | 条件ブロック（比較・否定・`{{#else:NAME}}`・ネスト可）。変数が真ならブロックを残す。未定義でもエラーにしない（偽扱い）。原稿MD・ノートにも書ける（§1） | 同上 |
 
 ## 7. レシピ YAML / ファイル名の記法
 
@@ -183,7 +187,7 @@
 | [recipe_key_reference.md](recipe_key_reference.md) | レシピ YAML の全キー一覧（キーの正典） |
 | [spec/md_pipeline.md](spec/md_pipeline.md) | merge / idcollect / idresolve / render の挙動 |
 | [spec/pptx.md](spec/pptx.md) | pptmerge / pptimgexport / pptmdexport / pptyamlexport の挙動 |
-| [spec/output_formats.md](spec/output_formats.md) | pandoc / puremd / condblockprocess / transfer の挙動 |
+| [spec/output_formats.md](spec/output_formats.md) | pandoc / puremd / transfer の挙動 |
 | [note_content_format.md](note_content_format.md) | PPTX ノートのブロック構造の文法 |
 | [pandoc_filters.md](pandoc_filters.md) | ビルトイン Lua filter と fenced div クラス・属性 |
 | [design_semantic_lowering.md](design_semantic_lowering.md) | セマンティック記法と lowering の設計 |

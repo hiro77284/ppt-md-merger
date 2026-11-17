@@ -16,7 +16,7 @@ import logging
 import sys
 from pathlib import Path
 
-from md_merge._output import EXIT_OK, setup_logging
+from md_merge._output import EXIT_OK, print_done, setup_logging
 from md_merge._preprocess import apply_preprocess, cleanup_preprocessed
 from md_merge.checkverify import gate as checkverify_gate
 from md_merge.merge import preflight_clear_confirm
@@ -35,7 +35,6 @@ _ALL_WORK_FILE_KEYS = (
     "idresolvedfilename",
     "renderedfilename",
     "puremdfilename",
-    "resourcepathfilename",
 )
 
 
@@ -197,8 +196,6 @@ def run_pipeline(
             print("============================\n")
 
     if not getattr(args, "json", False):
-        print("\n========================================")
-        print(f"  {command} 完了")
-        print("========================================\n")
+        print_done(command)
 
     return EXIT_OK

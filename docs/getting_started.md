@@ -15,7 +15,7 @@
 | Python 3.11 以上 | 本体 | 不可 |
 | Windows + PowerPoint | pptx → PDF 変換（`pptpdfexport`）に COM を使う | 不可（この一本道では） |
 | pandoc | PDF / HTML 生成 | MD だけなら不要 |
-| LuaLaTeX（TeX Live 等） | PDF 生成 | MD だけなら不要 |
+| typst | PDF 生成 | MD だけなら不要 |
 
 ```bash
 pip install -e .
@@ -93,7 +93,7 @@ export-note: ../mds/<__BASEFILENAME__>_slide<__SLIDENUM__>.md
 `myproject/sample_recipe.yaml`:
 
 ```yaml
-version: 2
+version: 4
 
 output:
   outputdir: build
@@ -111,7 +111,7 @@ merge:
   flatten-images: true             # 画像を build/images/ に平らに集める
 
 pandoc:
-  defaults: pandoc_defaults.yaml   # PDF を出さないなら不要
+  cover-md: cover_standard.md      # 同梱の標準表紙（vars の COVER_* を使う）。PDF を出さないなら不要
 
 indexer:
   pptxnumbering: idresolve         # 章・節番号を付ける
@@ -124,27 +124,11 @@ procedure:
 
 `procedure` が文書の構成そのもので、**ここに書いた順**に結合される。`sample_slide[1-2].md` はレンジ展開で `sample_slide1.md` と `sample_slide2.md` になる。
 
-PDF を出すなら `myproject/pandoc_defaults.yaml` も作る。
-
-```yaml
-pdf-engine: lualatex
-standalone: true
-toc: true
-variables:
-  papersize: a4
-  documentclass: report
-  mainfont: "BIZ UDPMincho"
-  sansfont: "BIZ UDPGothic"
-  geometry:
-    - top=20mm
-    - bottom=20mm
-    - left=20mm
-    - right=20mm
-```
+PDF の体裁（A4・フォント・目次・見出し）は同梱の設定（`report_base_defaults.yaml`）が既定で入るので、pandoc の defaults ファイルは要らない。目次の深さなどを変えたいときだけ `pandoc.defaults` に `[report_base_defaults.yaml, 上書き用.yaml]` と書く。
 
 ## 4. 実行する
 
-Markdown だけなら pandoc も LaTeX も要らない。まずはこちらで一周するのがよい。
+Markdown だけなら pandoc も typst も要らない。まずはこちらで一周するのがよい。
 
 ```bash
 pptmdmerge ppt_to_puremd sample_recipe.yaml --force

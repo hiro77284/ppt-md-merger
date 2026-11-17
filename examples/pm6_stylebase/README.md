@@ -31,7 +31,6 @@ pptxをマージする際、基準とするスタイルをコンテンツとは�
 
 スタイルが合わないとレイアウト崩れ、配色崩れなどが起きるため、スタイル情報はコンテンツとは別に管理することが望ましいのです。
 
-<!-- source: defaults/common_assets/tex_newpage.md -->
 
 
 
@@ -60,7 +59,6 @@ different_style_sample.pptx は simple_stylebase.pptx とは違うスタイル�
 ![](build/figures/stylebase_guide_slide4_fig.png)
 
 
-<!-- source: defaults/common_assets/tex_newpage.md -->
 
 
 

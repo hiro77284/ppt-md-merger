@@ -7,6 +7,7 @@ _VAR_RE = re.compile(r'\{\{v:([A-Za-z0-9_]+)\}\}')
 _HEADING_RE = re.compile(r'^(#{1,3})\s+(.*)')
 _NOLABEL_RE = re.compile(r'\s*\{\{nolabel\}\}')
 _NOREF_RE = re.compile(r'\s*\{\{noref\}\}')
+_NONUM_RE = re.compile(r'\s*\{\{nonum\}\}')
 # {{sectionlist}} = 現在の chapter のセクション一覧。
 # {{sectionlist:chapter:PART:LOCAL}} = 指定 chapter のセクション一覧（明示形）。
 _SECTIONLIST_RE = re.compile(r'\{\{sectionlist(?::([^:}]+):([^:}]+):([^}]+))?\}\}')
@@ -45,7 +46,9 @@ def render_content(
                 if m.group(1) == "chapter":
                     current_chapter_full_id = f"{m.group(1)}:{m.group(2)}:{m.group(3)}"
                     break
-            nolabel = bool(_NOLABEL_RE.search(raw))
+            # {{nonum}} entries have no number, so the heading is left as written
+            # (label replacement is skipped just like {{nolabel}}).
+            nolabel = bool(_NOLABEL_RE.search(raw)) or bool(_NONUM_RE.search(raw))
             noref = bool(_NOREF_RE.search(raw))
             # Convert all {{#id:...}} markers on this line to HTML comments
             comment_line = _ID_RE.sub(
@@ -54,6 +57,7 @@ def render_content(
             )
             comment_line = _NOLABEL_RE.sub("", comment_line)
             comment_line = _NOREF_RE.sub("", comment_line)
+            comment_line = _NONUM_RE.sub("", comment_line)
             if not noref:
                 comment_line = _resolve_refs(comment_line, resolved_map)
                 comment_line = _resolve_vars(comment_line, vars_map)

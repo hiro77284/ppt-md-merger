@@ -28,6 +28,65 @@ def _frontmatter_end(lines: list[str]) -> int:
     return -1
 
 
+_SOURCE_MARKER_PREFIX = "<!-- source:"
+
+
+def _is_leadin(stripped: str) -> bool:
+    """frontmatter の開始 ``---`` の前に来てよい行（空行・1 行の HTML コメント）か。"""
+    return stripped == "" or (stripped.startswith("<!--") and stripped.endswith("-->"))
+
+
+def strip_frontmatter(text: str) -> tuple[str, int]:
+    """MD から YAML frontmatter ブロックを取り除き、(本文, 取り除いた数) を返す。
+
+    対象は「文書の先頭」と「``<!-- source: ... -->`` 行（merge が各ファイル・include の
+    先頭に挿入する）の直後」に現れる ``---`` … ``---`` ブロック。開始 ``---`` の前には
+    空行と 1 行の HTML コメント（``<!-- md_merge_rawtitle: ... -->`` 等）を許容する。
+    中身が YAML のマッピングとして読めるものだけを frontmatter とみなす（本文の水平線
+    ``---`` を誤って消さないため）。コメント行・空行はそのまま残し、ブロックは空行 1 行に置き換える。
+
+    pandoc は frontmatter の直前に空行が無いとメタデータとして読まず本文に出してしまう
+    （merge 後は ``<!-- source: -->`` などのコメントが直前に来る）うえ、2 ファイル目以降の
+    frontmatter は文書の途中に来るため、PDF 等の出力前にここで落とす。
+    """
+    import yaml  # 遅延 import（_filters は軽量に保つ）
+
+    lines = text.splitlines(keepends=True)
+    out: list[str] = []
+    removed = 0
+    seeking = True  # 文書先頭 or source マーカー直後で、まだ開始 --- を探している
+    i = 0
+    n = len(lines)
+    while i < n:
+        line = lines[i]
+        stripped = line.strip()
+        if stripped.startswith(_SOURCE_MARKER_PREFIX) and stripped.endswith("-->"):
+            out.append(line)
+            seeking = True
+            i += 1
+            continue
+        if seeking:
+            if stripped == "---":
+                end = next((j for j in range(i + 1, n) if lines[j].strip() == "---"), -1)
+                if end >= 0:
+                    try:
+                        data = yaml.safe_load("".join(lines[i + 1 : end]))
+                    except yaml.YAMLError:
+                        data = None
+                    if isinstance(data, dict) and data:
+                        removed += 1
+                        out.append("\n")  # 前後の行がくっついて段落化しないよう空行で置き換える
+                        i = end + 1
+                        seeking = False
+                        continue
+                seeking = False
+            elif not _is_leadin(stripped):
+                seeking = False
+        out.append(line)
+        i += 1
+    return "".join(out), removed
+
+
 def escape_backslash_smart(text: str) -> str:
     """LaTeX 向けに ``\\`` と ``&`` をエスケープする。
 

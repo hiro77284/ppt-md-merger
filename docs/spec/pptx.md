@@ -42,7 +42,7 @@ pptmdmerge pptmerge recipe.yaml --pptxnumbering idresolve
 | スキップ条件 | 出力が存在し、上記すべての mtime 以上（`出力mtime >= 各入力mtime`）。入力のいずれかが欠けている場合はスキップしない（マージ側でエラーにする） |
 | スキップ時 | マージを行わず終了コード 0。`最新のためスキップ (--rebuild で再生成)` をログ出力（`--json` 時は `status: "skip"`） |
 | `--rebuild` | 上記スキップを無効化し、常に再マージする |
-| `--tag` / `when:` との関係 | 比較対象は `when:` 適用後の `insertpptx` ソースだが、`--tag` や起動コマンドの違い自体は判定に入らない。条件を変えて同じ出力先に作り直すときは `--rebuild` を付ける |
+| `--var` / `when:` との関係 | 比較対象は `when:` 適用後の `insertpptx` ソースだが、`--var` の値や起動コマンドの違い自体は判定に入らない。条件を変えて同じ出力先に作り直すときは `--rebuild` を付ける |
 | `--preprocess` との関係 | `--preprocess` 指定時は前処理済みソースを毎回生成するため、増分スキップは行わず常に再マージする（`ppt_to_*` パイプラインと同仕様） |
 | `--force` との関係 | 増分スキップは `--force` の有無に関わらず判定する。スキップされず実際に上書きが必要な場合は従来どおり `--force` が必要（未指定かつ出力が存在すればエラー） |
 
@@ -55,7 +55,7 @@ pptmdmerge pptmerge recipe.yaml --pptxnumbering idresolve
 | 項目 | 内容 |
 | ---- | ---- |
 | 前処理対象 | `procedure` 内の各 `insertpptx` に指定した pptx（`input` のディレクトリ基準で解決。同一 pptx は 1 回だけ前処理） |
-| 前処理の内容 | 単一ファイルに対する pptmerge。対象 pptx を `insertpptx`（`slides: all`）1 件として処理する。**一般マーカー処理のみ**（`--deletecsp`、`#TEMP#`/`#MEMO#`、`#CHAPT#`/`#SECTION#`/`#STAY#` 等）と、レシピ `vars` による `{{v:..}}` 置換を適用する。`pptmerge.stylebase` は適用しない |
+| 前処理の内容 | 単一ファイルに対する pptmerge。対象 pptx を `insertpptx`（`slides: all`）1 件として処理する。**一般マーカー処理のみ**（`--deletecsp`、`#TEMP#`/`#MEMO#`、`#CHAPT#`/`#SECTION#`/`#SUBSECTION#`/`#STAY#` 等）と、レシピ `vars` による `{{v:..}}` 置換を適用する。`pptmerge.stylebase` は適用しない |
 | CSL マーカーの扱い | **一切処理しない**（`#CSL#` はそのまま残す）。`indexer.deletecsl` / `--deletecsl` を指定しても前処理の挙動は変わらない。CSL 処理は結合後にのみ行う |
 | 出力ファイル名 | 元の pptx 名に `_preprocessed` を付加（例 `deck.pptx` → `deck_preprocessed.pptx`） |
 | 出力先 | `output.outputdir` |
@@ -87,6 +87,7 @@ indexer:
   pptxnumbering: no           # タイトル連番アルゴリズム（no / chapt_section / idresolve。省略時は no）
   chapter_marker: "#CHAPT#"   # チャプタースライドを示すテキストマーカー（chapt_section モードのみ）
   section_marker: "#SECTION#" # セクションスライドを示すテキストマーカー（chapt_section モードのみ）
+  subsection_marker: "#SUBSECTION#" # サブセクションスライドを示すテキストマーカー（chapt_section モードのみ）
   stay_marker: "#STAY#"       # 章・節カウンタのインクリメントを抑制するテキストマーカー（chapt_section モードのみ）
   delimiter: "."              # 節番号の区切り文字（例: 1.2）
   separator: ") "             # 番号とタイトルの区切り文字（例: 1) タイトル）
@@ -96,7 +97,7 @@ indexer:
 procedure:
   - chapter: 1          # チャプターカウンタを設定する値
   - section: 1          # セクションカウンタを設定する値
-  - subsection: 1
+  - subsection: 1       # サブセクションカウンタを設定する値（chapt_section では次の #SUBSECTION# スライドから反映）
   - beginstay  # この行以降、連番カウンタを凍結する
   - endstay  # 連番カウンタ凍結を解除する
   - insertpptx: doc_a.pptx   # input.pptxdir 基準のファイル名
@@ -157,8 +158,30 @@ log:
 | `indexer.pptxnumbering` | 動作 |
 | ----------------------- | ---- |
 | `no`（省略時の既定） | スライドタイトルを変更しない |
-| `chapt_section` | `chapter` / `section` カウンタに従い、`#CHAPT#` / `#SECTION#` / `#STAY#` マーカーでスライドタイトルを連番付与形式に書き換える。`#NOREPLACE#` があるスライドも連番タイトル書き換えは実行される |
+| `chapt_section` | `chapter` / `section` / `subsection` カウンタに従い、`#CHAPT#` / `#SECTION#` / `#SUBSECTION#` / `#STAY#` マーカーでスライドタイトルを連番付与形式に書き換える（[chapt_section モードの動作詳細](#chapt_section-モードの動作詳細)）。`#NOREPLACE#` があるスライドも連番タイトル書き換えは実行される |
 | `idresolve` | `output.idresolvedfilename` を読み込み、各スライドのノートから `{{#id:<TYPE>:<PART>:<LOCAL>}}` を検出して、一致する `full_id` の `label` でスライドタイトルを置き換える |
+
+#### chapt_section モードの動作詳細
+
+結合後のスライドを順に走査し、スライド上のマーカーと `procedure` の `chapter` / `section` / `subsection` 操作でカウンタ（`chapter` / `section` / `subsection`、初期値 0）を進め、タイトルを下表の書式に書き換える。
+
+| スライド | カウンタ操作 | タイトル書式（既定の `delimiter` / `separator`） |
+| -------- | ------------ | ------------------------------------------------ |
+| `#CHAPT#` あり | chapter +1、section → 0、subsection → 0 | `{chapter}) タイトル`（例 `2) 概要`） |
+| `#SECTION#` あり | section → 1、subsection → 0 | `{chapter}.{section}) タイトル` |
+| `#SUBSECTION#` あり | subsection +1 | `{chapter}.{section}.{subsection}) タイトル`（例 `2.3.1) 詳細`） |
+| マーカーなし（通常スライド） | section +1、subsection → 0 | `{chapter}.{section}) タイトル` |
+
+| procedure 操作 | カウンタ操作 |
+| -------------- | ------------ |
+| `chapter` | chapter を値に従い設定、section → 0、subsection → 0 |
+| `section` | section を値に従い設定、subsection → 0 |
+| `subsection` | subsection を値に従い設定（通常スライドは引き続き節として数えるため、反映されるのは次の `#SUBSECTION#` スライド以降） |
+
+- `#SUBSECTION#` は 3 階層目にしたいスライドにだけ付ける。通常スライドの扱い（節 +1）は従来どおりなので、`#SUBSECTION#` を使わないレシピの番号は変わらない。
+- 同じスライドに `#CHAPT#` / `#SECTION#` と `#SUBSECTION#` が同居する場合は `#CHAPT#` / `#SECTION#` を優先し、`#SUBSECTION#` は無視する。
+- `#STAY#` を含むスライドと `beginstay`〜`endstay` 区間のスライドはカウンタを進めず、直前のスライドと同じ階層・番号でタイトルを付ける（`#SUBSECTION#` スライドの続きに `#STAY#` を付けると同じ小節番号になる）。
+- マーカー文字列は `indexer.chapter_marker` / `section_marker` / `subsection_marker` / `stay_marker` で変更できる。
 
 #### idresolve モードの動作詳細
 
@@ -184,9 +207,12 @@ idresolve モードのタイトル後処理は、**定義マーカー**と**参�
 
 同一スライドに label 置換系（`{{#id:}}` / `{{titlelabel:}}`）と番号前置（`{{enclosenum:}}`）が混在する場合、**ノート上の記述順に関わらず** label 置換を先に適用し、番号前置を最後に適用する。したがって両方ある場合の結果は常に `"(number) label"`（label 置換がなければ `"(number) 元タイトル"`）となる。
 
+1 スライドのノートに `{{enclosenum:}}` が複数ある場合（同一 FULL_ID の重複を含む）、番号前置は**最初に resolved と一致した 1 件だけ**を適用し、以降の `{{enclosenum:}}` は無視する（`"(1) (1) タイトル"` のような二重前置を防ぐ）。一致しなかった（0 件・2 件以上で警告となった）マーカーは適用済みとみなさず、次の `{{enclosenum:}}` を試す。
+
 補足:
 
 - `{{#id:}}` 行に `{{nolabel}}` がある場合は、その定義による label 置換をスキップする（参照マーカーには適用しない）
+- `{{#id:}}` 行に `{{nonum}}` がある場合は、その ID を採番せず（番号を消費しない）、定義による label 置換もスキップする。`{{enclosenum:}}` でこの ID を参照した場合は何も前置しない
 - `#NOREPLACE#` を含むスライドは全マーカーのタイトル置換をスキップする
 - タイトルの書き換えは XML 直接操作で行い、段落配置・ランのフォント書式を保持する（[タイトル書式の保持](#タイトル書式の保持) 参照）
 
@@ -269,9 +295,10 @@ procedure:
 
 | 状況 | `#STAY#` なし | `#STAY#` あり |
 | ---- | ------------ | ------------ |
-| `#CHAPT#` あり | chapter +1、section → 0 | chapter・section 変化なし |
-| `#SECTION#` あり | section → 1（セクション先頭リセット） | section 変化なし |
-| マーカーなし（通常スライド） | section +1 | section 変化なし |
+| `#CHAPT#` あり | chapter +1、section → 0、subsection → 0 | chapter・section・subsection 変化なし |
+| `#SECTION#` あり | section → 1（セクション先頭リセット）、subsection → 0 | section・subsection 変化なし |
+| `#SUBSECTION#` あり | subsection +1 | subsection 変化なし |
+| マーカーなし（通常スライド） | section +1、subsection → 0 | section・subsection 変化なし |
 
 `beginstay` / `endstay` 操作によるカウンタ凍結（`chapsectfreeze_flag`）も同様にインクリメントを抑制するが、`#STAY#` はスライド単位・テキストマーカー方式で機能する。
 
@@ -286,7 +313,7 @@ procedure:
 | `<__SLIDENUM__>` 置換 | 実行 | スキップ |
 | `<__TITLE__>` 置換 | 実行 | スキップ |
 | `{{v:VARIABLE}}` 置換 | 実行 | スキップ |
-| `#CHAPT#`/`#SECTION#`/`#STAY#` テキスト除去 | 実行 | スキップ |
+| `#CHAPT#`/`#SECTION#`/`#SUBSECTION#`/`#STAY#` テキスト除去 | 実行 | スキップ |
 | `#CSL#` テキスト除去（CSL マーカー消去処理） | 実行 | スキップ |
 | `#CSP#` テキスト除去（`deletecsp: false` 時） | 実行 | スキップ |
 | 章・節番号付きタイトル書き換え（chapt_section） | 実行 | **実行**（スキップしない） |
@@ -309,7 +336,7 @@ procedure:
 
 | 分類 | 対象 | 処理する場所 |
 | ---- | ---- | ------------ |
-| **一般マーカー** | `#CSL#` 以外のすべて（`#CSP#` / `#TEMP#` / `#MEMO#` / `#CHAPT#` / `#SECTION#` / `#STAY#` など） | 個別 pptx でも結合済み pptx でも処理してよい |
+| **一般マーカー** | `#CSL#` 以外のすべて（`#CSP#` / `#TEMP#` / `#MEMO#` / `#CHAPT#` / `#SECTION#` / `#SUBSECTION#` / `#STAY#` など） | 個別 pptx でも結合済み pptx でも処理してよい |
 | **CSL マーカー** | `#CSL#` のみ | **結合済み pptx に対して pptmerge の最後でのみ**処理する |
 
 CSL マーカーへの処理は 2 種類ある。
@@ -405,7 +432,7 @@ output:
   force: false                # --force 相当（全サブコマンド共通）
 ```
 
-`cropsrc` は辞書形式（単一ペア）またはリスト形式（複数ペア）のどちらでも指定できる。各エントリの `pptx` および `pdf` はいずれも必須。
+`cropsrc` は辞書形式（単一ペア）またはリスト形式（複数ペア）のどちらでも指定できる。各エントリの `pptx` は必須。`pdf` を省略（空欄）すると `output.outputdir/<pptx の stem>_slides.pdf` を自動で使う（`_slides` を付けるのは、`ppt_to_pdf` の成果物 PDF `<targetbasefilename>.pdf` と同名になって上書きされるのを避けるため。`ppt_to_pdf` は両者が同じパスになるレシピを開始前にエラーにする）。
 
 ### スライドノートのメタデータ形式
 
@@ -487,6 +514,7 @@ export-image: ../images/<__BASEFILENAME__>_slide<__SLIDENUM__>_step<__STEP__>.pn
 * pptx 1 つにつきスライドショーを 1 回起動する。実行中はスライドショーのウィンドウが画面に出る（前面である必要はない）。**最小化・画面ロック中は撮れない**
 * 非表示スライドもキャプチャできる
 * `--dry-run` では PowerPoint を起動しない（`all` / `last` は展開せずに表示）
+* キャプチャ時の `GetClickCount()` がスライドの `p:timing` から数えたクリック数と異なると警告する。pptmdexport の [`<!-- #steps -->` 展開](#ステップ画像の展開steps-セクション)は後者を使うため
 
 ### 入力
 
@@ -505,7 +533,6 @@ export-image: ../images/<__BASEFILENAME__>_slide<__SLIDENUM__>_step<__STEP__>.pn
 ### エラー条件
 
 * `input.cropsrc.pptx` が未定義
-* `input.cropsrc.pdf` が未定義
 * PPTX ファイルが存在しない
 * PDF ファイルが存在しない
 * PDF のページ数が対象スライド番号より少ない
@@ -593,7 +620,7 @@ pptmdexport:
 `latex_check` は、抽出した各 MD ブロックを次の 2 点について走査する。
 
 1. `{=FORMAT}`（`{=latex}` / `{=html}` 等、任意の raw attribute）
-2. **フェンスなしの LaTeX コマンド**（本文に直接書いた `\hspace*{4em}` / `{\bfseries …}` / `\vspace{5mm}` など）。pptmdexport は本文のバックスラッシュをエスケープするので、これらはどの出力形式でも効かず文字どおり表示される。コードブロック・インラインコード・fenced div / span の属性値（`{.widequote width="0.6\linewidth"}` 等。フィルタが読み替える）・Markdown のエスケープ（`\*` `\_` `\\`）は対象外
+2. **フェンスなしの LaTeX コマンド**（本文に直接書いた `\hspace*{4em}` / `{\bfseries …}` / `\vspace{5mm}` など）。pptmdexport は本文のバックスラッシュをエスケープするので、これらはどの出力形式でも効かず文字どおり表示される。コードブロック・インラインコード・fenced div / span の属性値（`{.widequote width="0.6\linewidth"}` 等。フィルタが読み替える）・Markdown のエスケープ（`\*` `\_` `\\`）・パス区切り（英数字や `_` `.` `:` `~` `-` の直後のバックスラッシュ。`PROJECT_ROOT\examples\pm1` / `C:\Users` / `..\images` 等）は対象外
 
 | モード | 動作 |
 |---|---|
@@ -647,6 +674,26 @@ export-note: ../extracted/overview_slide1_md.md
 | `<__BASEFILENAME__>` | PPTX ファイル名（拡張子なし） |
 | `<__SLIDENUM__>` | スライド番号（1 始まりの整数） |
 
+### 条件ブロック
+
+`MD_BLOCK` の本文（`export-note:` 行を含む全体）は、書き出し前に条件ブロック `{{#if:NAME}}` … `{{#else:NAME}}` … `{{#endif:NAME}}` を展開する。変数はレシピ `vars:`（`--var NAME=VALUE` で上書き可）。
+
+```
+===BLOCK===
+{{BLOCK:MD}}
+export-note: s1.md
+# 演習
+{{#if:EDITION=student}}
+解答は巻末にあります。
+{{#else:EDITION}}
+解答例: ……
+{{#endif:EDITION}}
+```
+
+- `export-note:` 行ごと囲むと、条件が偽のときそのブロックを書き出さない。
+- フェンスコード内のタグは解釈しない。文法エラーは pptx 名・スライド番号・行番号を出してそのブロックを失敗扱いにする。
+- 記法の詳細は [conditional_block_process.md](../conditional_block_process.md#32-条件ブロック)。
+
 ### 出力
 
 * `export-note:` で指定したパスに MD テキストをプレーンテキスト（UTF-8 / Unix 改行）として保存する
@@ -656,7 +703,7 @@ export-note: ../extracted/overview_slide1_md.md
 
 #### サンプルファイル（procedure 貼り付け用）
 
-`procedure` に貼り付けるためのサンプルを 1 つのファイル `output.insertsamplefilename`（省略時は `output.targetbasefilename` から `{base}_insertsample.yaml` を自動生成。`output.outputdir` 配下）に書き出す。各行頭は空白2個でインデント。エントリは入力レシピの `version` の procedure 記法で書く（version 2 は `- insertpptx: ...`、version 1 は `- operation: insertpptx`）。`--dry-run` 時は書き出さない。出力先が未設定（`targetbasefilename` も `insertsamplefilename` も無い）の場合は生成しない。
+`procedure` に貼り付けるためのサンプルを 1 つのファイル `output.insertsamplefilename`（省略時は `output.targetbasefilename` から `{base}_insertsample.yaml` を自動生成。`output.outputdir` 配下）に書き出す。各行頭は空白2個でインデント。エントリは入力レシピの `version` の procedure 記法で書く（version 2 以降は `- insertpptx: ...`、version 1 は `- operation: insertpptx`）。`--dry-run` 時は書き出さない。出力先が未設定（`targetbasefilename` も `insertsamplefilename` も無い）の場合は生成しない。
 
 ファイルは **3 ブロック**で構成する。各ブロック内は cropsrc の登場順 → スライド順に列挙する（cropsrc が複数あれば各ブロックで全 pptx をまたいで列挙）。
 
@@ -721,6 +768,7 @@ export-note: ../extracted/overview_slide1_md.md
 | ノート解析 | 置換済みノートテキストを NOTE_CONTENT_FORMAT として解析し、すべての `MD_BLOCK` を取得する |
 | タスク収集 | 各 `MD_BLOCK` の 1 行目が `export-note:` 形式で、かつ拡張子が `.md` のブロックをタスクとして収集する。1 行目が `export-note:` でない場合は警告を出してそのブロックをスキップする |
 | タスク一覧表示 | スライド番号・出力先・MD テキストの 1 行目の一覧を標準出力に表示する |
+| ステップ画像の展開 | `<!-- #steps -->` … `<!-- /steps -->` 内の `[all]` 等を、同じスライドの `export-image-step` で書き出されるステップ番号へ行ごと展開する（後述） |
 | ファイル書き出し | `MD_BLOCK` の 2 行目以降を MD テキストとして出力ファイルに書き込む（ノート専用参照マーカーは除去する。後述） |
 | `--dry-run` | ファイルへの書き込みを行わず実行内容のみ表示する |
 | `--json` | 処理結果（タスク一覧・書き出し結果）を JSON 形式で標準出力へ出力する |
@@ -732,6 +780,53 @@ export-note: ../extracted/overview_slide1_md.md
 - マーカーだけの行は行ごと削除する。行内に他の内容があればマーカー部分のみ除去する。
 - 定義マーカー `{{#id:...}}` や `{{nolabel}}`、参照 `{{num:...}}` / `{{label:...}}` / `{{title:...}}` / `{{rawtitle:...}}` は MD 側で idcollect / render が使うため除去しない。
 - これにより参照マーカーを `export-note:` 直後など MD ブロック内に記述してもエクスポート MD に残らない。pptmerge idresolve は結合済み pptx のノート原文を参照するため、番号付け・タイトル置換は正しく機能する（[pptmerge の idresolve モードの動作詳細](#idresolve-モードの動作詳細)参照）。
+
+#### ステップ画像の展開（`#steps` セクション）
+
+`export-image-step` で書き出したステップ画像を MD から並べるとき、ステップ数を手で合わせなくてよいように、`<!-- #steps -->` と `<!-- /steps -->`（どちらも単独行）で囲んだ範囲の画像パスに `[all]` を書くと、実際のステップ数に応じて**その行を複製**して展開する。
+
+```text
+===BLOCK===
+{{BLOCK:IMAGE}}
+
+export-image-mode: slide_with_rectpct
+export-image-target: exportrange
+export-image-step: all
+export-image: ../images/steps-slide<__SLIDENUM__>_step<__STEP__>.png
+===BLOCK===
+{{BLOCK:MD:LONG}}
+
+export-note: ../mds/<__BASEFILENAME__>_slide<__SLIDENUM__>_md.md
+<!-- #steps -->
+![](../images/steps-slide<__SLIDENUM__>_step[all].png){ width=80% }
+<!-- /steps -->
+```
+
+クリックが 3 回のスライドなら、エクスポート MD では次のようになる（マーカー行は残す）。
+
+```text
+<!-- #steps -->
+![](../images/steps-slide2_step0.png){ width=80% }
+![](../images/steps-slide2_step1.png){ width=80% }
+![](../images/steps-slide2_step2.png){ width=80% }
+![](../images/steps-slide2_step3.png){ width=80% }
+<!-- /steps -->
+```
+
+- **どの IMAGE ブロックか**は画像パスで決まる。`[…]` を `<__STEP__>` に戻したパスが、同じスライドの `export-image-step` 付き IMAGE ブロックの `export-image:` と一致するものを使う（`<__SLIDENUM__>` 等は両方とも置換済みで比べる）。出力パスはブロックごとに異なるので、複数のステップ画像ブロックがあっても区別できる。パス全体が一致しなければファイル名部分の一致で探す（同名が複数あれば展開しない）
+- **ステップ番号**はその IMAGE ブロックの `export-image-step` から決める。`all` / `last` のクリック数はスライドの `p:timing`（メインシーケンスの `clickEffect` 数）をオフラインで数える（PowerPoint 不要）。数値指定でもクリック数を超える番号は pptimgexport が書き出さないので展開しない
+- `[…]` に書ける値
+
+  | 値 | 展開されるステップ |
+  | -- | ------------------ |
+  | `[all]` | IMAGE ブロックが書き出す全ステップ |
+  | `[last]` | そのうち最後のステップ |
+  | `[1-3]` / `[0, 2]` | 指定した番号のうち書き出されるもの（書き出されない番号は警告して除く） |
+
+- 行全体を複製するので `{ width=80% }` やキャプションは各行に残る。行内の `<__STEP__>`（例: `![ステップ<__STEP__>](…)`）もステップ番号に置き換える
+- 対象は画像・リンクの行き先 `](…)` の中の `[…]` だけ。alt テキストや `#steps` の外は変更しない。コードブロック内のマーカーは無視する
+- 警告して行をそのまま残す: 対応する IMAGE ブロックが無い・曖昧、1 行に展開指定が複数。`<!-- #steps -->` が閉じられていない場合はそのセクションを展開しない
+- pptimgexport はキャプチャ時の `GetClickCount()` が `p:timing` のクリック数と異なると警告する（展開結果と書き出した画像がずれるため）
 
 ---
 
@@ -789,6 +884,7 @@ export-image: sample.png
 
 ===BLOCK===
 {{BLOCK:YAML}}
+export-note: sample.yaml
 id: sample
 title: "サンプル図: 原因・結果・対策"
 image: sample.png
@@ -824,8 +920,8 @@ samples:
 
 | キー | 説明 |
 |---|---|
-| `id` | 図版 ID（必須）。`export-note` 未指定時は出力ファイル名 `{id}.yaml` の基になる |
-| `export-note` | 出力ファイル名（省略時は `{id}.yaml`）。**出力 YAML には残らない** |
+| `id` | 図版 ID（推奨。未指定は警告のみで処理を続ける）。出力ファイル名には使わない |
+| `export-note` | 出力ファイル名（**必須**。未指定はエラー）。**出力 YAML には残らない** |
 | `baseframe` | 座標の基準となるシェイプ名。**出力 YAML には残らない**。slot / region に `auto` があるとき必須（予約値 `slide` と省略時の推論は後述） |
 | `image` | 図版の PNG。省略時は `baseframe` を切り出す IMAGE ブロックの `export-image` から補完される |
 | `type` | 定義の種類。`module` を書くと **`slots` が任意**になる（`regions` だけの部品定義用）。値は解釈せずそのまま出力へ通す |
@@ -852,6 +948,26 @@ slot / region に `auto`（キーの省略を含む）があるとき、座標�
 
 1 スライドに複数の `YAML_BLOCK` を記述した場合はすべて処理される。空の `YAML_BLOCK` はプレースホルダとみなし黙ってスキップする。
 
+### ノート YAML での条件ブロック
+
+`YAML_BLOCK` の本文は、YAML として解析する**前に**行単位で条件ブロック（`{{#if:NAME}}` … `{{#endif:NAME}}`）を展開する。変数はレシピ `vars:`（`--var` で上書き可）。
+
+```
+===BLOCK===
+{{BLOCK:YAML}}
+export-note: sample.yaml
+id: sample
+{{#if:DRAFT}}
+title: "（ドラフト）サンプル図"
+{{#else:DRAFT}}
+title: "サンプル図"
+{{#endif:DRAFT}}
+```
+
+- 展開後が空になったブロックは空の `YAML_BLOCK` と同じく黙ってスキップする。
+- `_include` で取り込むファイルの中身は対象外（ノート本文のみ）。
+- 記法の詳細は [conditional_block_process.md](../conditional_block_process.md#32-条件ブロック)。
+
 ### ノート YAML での `_include`
 
 `YAML_BLOCK` の本文は、**レシピ YAML とまったく同じ規則**で読み込む。`_include` / `_constants` / `__CONSTANT__` がそのまま使える（規則は [md_merge_spec 5.1](../md_merge_spec.md#51-レシピ-yaml-の-_include)）。
@@ -860,6 +976,7 @@ slot / region に `auto`（キーの省略を含む）があるとき、座標�
 ===BLOCK===
 {{BLOCK:YAML}}
 _include: figdefs/common_head.yaml
+export-note: sample.yaml
 id: sample
 title: "サンプル図"
 baseframe: exportrange
@@ -973,7 +1090,7 @@ regions:
 
 ### 出力
 
-`export-note`（省略時 `{id}.yaml`）が絶対パスならそのまま、相対パスなら**元 PPTX と同じディレクトリ**を基準に解決する（`pptmdexport` / `pptimgexport` と同じ）。
+`export-note`（必須）が絶対パスならそのまま、相対パスなら**元 PPTX と同じディレクトリ**を基準に解決する（`pptmdexport` / `pptimgexport` と同じ）。
 
 出力 YAML は入力のキー順を保ち、`export-note` と `baseframe`（ノート側の指示専用キー）を取り除いたもの。シーケンスは親キーの下に 2 スペース字下げして出力する。
 
@@ -983,7 +1100,8 @@ regions:
 |---|---|
 | YAML として解析できない / トップレベルがマッピングでない | エラー |
 | `_include` の取り込み先ファイルが見つからない / 循環参照 | エラー（スライド番号を添えて報告） |
-| `id` が未指定 | エラー |
+| `export-note` が未指定 | エラー |
+| トップレベルの `id` が未指定 | 警告（処理は続ける） |
 | `baseframe` のシェイプが見つからない | エラー |
 | slot / region に `auto`（または省略された）座標があるが `baseframe` 未指定 | エラー |
 | slot / region と同名のシェイプが見つからない（`auto` または座標キー省略のとき） | エラー |
@@ -1056,12 +1174,11 @@ input:
 #       pdf: slides/deck2.pdf
 ```
 
-`cropsrc` は辞書形式（単一ペア）またはリスト形式（複数ペア）のどちらでも指定できる。各エントリの `pptx` および `pdf` はいずれも必須。パスは `workdir`（省略時は YAML と同じディレクトリ）を基準に解決する。PowerPoint アプリケーションは全エントリを通じて 1 回だけ起動する。
+`cropsrc` は辞書形式（単一ペア）またはリスト形式（複数ペア）のどちらでも指定できる。各エントリの `pptx` は必須。`pdf` を省略（空欄）すると `output.outputdir/<pptx の stem>_slides.pdf` を自動で使う（`_slides` を付けるのは、`ppt_to_pdf` の成果物 PDF `<targetbasefilename>.pdf` と同名になって上書きされるのを避けるため。`ppt_to_pdf` は両者が同じパスになるレシピを開始前にエラーにする）。パスは `workdir`（省略時は YAML と同じディレクトリ）を基準に解決する。PowerPoint アプリケーションは全エントリを通じて 1 回だけ起動する。
 
 ### エラー条件
 
 * `input.cropsrc.pptx` が未定義
-* `input.cropsrc.pdf` が未定義
 * PPTX ファイルが存在しない
 * win32com（pywin32）がインポートできない（Windows 以外または未インストール）
 

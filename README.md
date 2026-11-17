@@ -9,7 +9,7 @@
 PPT \& MD merger は、「pptxファイルを文書部品として扱い、多様な形式の文書を生成できるジェネレーター」 です。　（ツールそのものは Python スクリプトであり、Windows + PowerPoint 環境で動作します）
 
 
-![](examples/overview/build/figures/ppt_md_merger_overview_slide1_fig_35.png)
+![](examples/overview/build/figures/ppt_md_merger_overview_slide1_fig.png)
 
 
 何はともあれ使ってみたい、という場合は　[5) Requirements \& Quick Start](#5-requirements--quick-start) をご覧ください。システム要件、インストール方法、Quick Start ガイド、11種類のサンプルデータの案内があります。
@@ -33,7 +33,7 @@ PPT \& MD merger は、「pptxファイルを文書部品として扱い、多�
 その種のテキストを作る時によくある悩みとはなんでしょう？
 
 
-![](examples/overview/build/figures/ppt_md_merger_overview_slide2_fig_35.png)
+![](examples/overview/build/figures/ppt_md_merger_overview_slide2_fig.png)
 
 
 たとえば、文書のバリエーションが増えすぎて収集がつかなくなる。　章・節番号をつけるのが面倒くさい。　講師用と受講者用の2種類を作らなきゃいけないのが面倒くさい！
@@ -42,7 +42,6 @@ PPT \& MD merger は、「pptxファイルを文書部品として扱い、多�
 
 そのために、「pptxファイルを文書部品として扱い、必要に応じて結合する」 というコンセプトを採用したものです。まずはその背景から詳しくお話ししましょう。
 
-<!-- source: defaults/common_assets/tex_newpage.md -->
 
 
 
@@ -58,14 +57,13 @@ PowerPoint で研修用のテキストを作るときは、こんな悩みがよ
 「ちょっと修正」 の中にはそのまま永続的に使うものもあれば、そのときだけの臨時の修正もあり、それを区別しておかないと **「あれ？　以前、ここのところ直したはずだったんだけど・・・」**　という問題が起きてしまいます。
 
 
-![](examples/overview/build/figures/ppt_md_merger_overview_slide3_fig_35.png)
+![](examples/overview/build/figures/ppt_md_merger_overview_slide3_fig.png)
 
 
 結局、コピーが増殖すると、どれをマスター原本にしたら良いのか分かりません。
 
 さらに、企業研修は同じ講座を定期的に行うことが多いので、「Ａ、Ｂ、Ｃ社向け」 をそれぞれメンテナンスしなければいけないのですが、すべてコピーですから、同じ修正をすべてに行う必要があり、とても面倒です。
 
-<!-- source: defaults/common_assets/tex_newpage.md -->
 
 
 
@@ -77,12 +75,11 @@ PowerPoint で研修用のテキストを作るときは、こんな悩みがよ
 また別な悩みもあります。研修用テキストはページ数が多いので章・節番号をつけたくなるのですが、PowerPointにはWordのような自動付番機能がないので、手作業でやらなければなりません。
 
 
-![](examples/overview/build/figures/ppt_md_merger_overview_slide4_fig_35.png)
+![](examples/overview/build/figures/ppt_md_merger_overview_slide4_fig.png)
 
 
 プレゼン用の資料なら20ページ程度で済むことが多いですが、研修テキストでは100ページを超えることもよくあります。ページの追加/削除があるたびに手動で付番しなおすのは大変な手間がかかります。
 
-<!-- source: defaults/common_assets/tex_2line.md -->
 
 
 
@@ -99,7 +96,7 @@ PowerPoint で研修用のテキストを作るときは、こんな悩みがよ
 の2つです。なんとかこれを解決できないか？　と考えて、
 
 
-![](examples/overview/build/figures/ppt_md_merger_overview_slide5_fig_35.png)
+![](examples/overview/build/figures/ppt_md_merger_overview_slide5_fig.png)
 
 
 PowerPoint 部品マージツール、 PPT \& MD merger を作りました！
@@ -117,7 +114,7 @@ PowerPoint 部品マージツール、 PPT \& MD merger を作りました！
 大きなPowerPointファイルも実際は小さな部品の集合体です。
 
 
-![](examples/overview/build/figures/ppt_md_merger_overview_slide6_fig_35.png)
+![](examples/overview/build/figures/ppt_md_merger_overview_slide6_fig.png)
 
 
 たとえばＡ社向け、Ｂ、Ｃ社向けと3種類の .pptx があるとして、その中には３社共通の部品もあれば２社共通の部品、各社専用の部品もあります。その組合せが各社違うということです。
@@ -131,12 +128,11 @@ PowerPoint 部品マージツール、 PPT \& MD merger を作りました！
 pptx部品単位でマスターを管理し、更新は必ずマスターに対して行うようにします。そうすれば 「○○社向け構成」 が何百種類あってもマージするだけで完成版ができるので、自動的に各社向け完成版に反映可能です。
 
 
-![](examples/overview/build/figures/ppt_md_merger_overview_slide7_fig_35.png)
+![](examples/overview/build/figures/ppt_md_merger_overview_slide7_fig.png)
 
 
 したがって、原則としてマージ後は編集しません。（その場限りで捨てるような語句軽微な修正はしてもかまいませんが）
 
-<!-- source: defaults/common_assets/tex_2line.md -->
 
 
 
@@ -148,12 +144,11 @@ pptx部品単位でマスターを管理し、更新は必ずマスターに対�
 自動マージするときに章/節番号の付与もできます。
 
 
-![](examples/overview/build/figures/ppt_md_merger_overview_slide8_fig_35.png)
+![](examples/overview/build/figures/ppt_md_merger_overview_slide8_fig.png)
 
 
 部品側には番号を付与せず、マージ時に付番するので各社向けの構成の違いにも対応できます。
 
-<!-- source: defaults/common_assets/tex_2line.md -->
 
 
 
@@ -165,12 +160,11 @@ pptx部品単位でマスターを管理し、更新は必ずマスターに対�
 さらに変数置換機能をつけました。 pptx部品上で特殊な書式で変数を書いておくと、その内容をマージ仕様書の設定にしたがって書き換えられます。
 
 
-![](examples/overview/build/figures/ppt_md_merger_overview_slide9_fig_35.png)
+![](examples/overview/build/figures/ppt_md_merger_overview_slide9_fig.png)
 
 
 仕向先別のバリエーションをこの方法でも吸収することができます。
 
-<!-- source: defaults/common_assets/tex_newpage.md -->
 
 
 
@@ -186,12 +180,11 @@ pptx部品単位でマスターを管理し、更新は必ずマスターに対�
 そこで、このシェイプ／スライド自動削除機能です。配付資料には載せたくないシェイプ／スライドに特殊マーカーを記入しておくと、オプションひとつでそれを削除したバージョン、残ったバージョンを自動生成可能です。
 
 
-![](examples/overview/build/figures/ppt_md_merger_overview_slide10_fig_35.png)
+![](examples/overview/build/figures/ppt_md_merger_overview_slide10_fig.png)
 
 
 マスターは1つだけで、生成物が変わるだけですから、コピー増殖問題は起きません。
 
-<!-- source: defaults/common_assets/tex_newpage.md -->
 
 
 
@@ -207,7 +200,7 @@ pptx部品単位でマスターを管理し、更新は必ずマスターに対�
 ところが・・・そう、残ってしまうことがあるんですね。
 
 
-![](examples/overview/build/figures/ppt_md_merger_overview_slide11_fig_35.png)
+![](examples/overview/build/figures/ppt_md_merger_overview_slide11_fig.png)
 
 
 そこで、この一時メモ用シェイプの自動削除機能です。これを使えば必ず削除されるので安心です。
@@ -224,7 +217,7 @@ pptx部品単位でマスターを管理し、更新は必ずマスターに対�
 現時点で詳しい（図版つき）機能解説を用意しているのはPPTX生成の範囲のみで、他形式分については準備中です。ただし、他形式生成も図版つき解説がないだけで、機能としては動いているので、詳細スペック文書やサンプルを読んでいただけば、使い方は察しがつくかもしれません。（かもしれません・・・・・保証はしない(^_^;)　まあ、おいおい書きますよ）
 
 
-![](examples/overview/build/figures/ppt_md_merger_overview_slide12_fig_35.png)
+![](examples/overview/build/figures/ppt_md_merger_overview_slide12_fig.png)
 
 
 以下、PPTX生成機能の詳細解説、および他形式生成機能も含む詳細スペック文書へのリンク一覧です。　しかし、「詳細を読むよりまず試しに使ってみたい」　という場合はこの後の Quick Start をご覧ください。
@@ -265,7 +258,6 @@ Test環境
   - PowerPoint for Microsoft 365
 ```
 
-<!-- source: defaults/common_assets/tex_newpage.md -->
 
 
 
@@ -308,7 +300,6 @@ python -m venv .venv
 pip install -e .
 ```
 
-<!-- source: defaults/common_assets/tex_newpage.md -->
 
 
 
@@ -367,7 +358,6 @@ options
 merged.pptx
 ```
 
-<!-- source: defaults/common_assets/tex_newpage.md -->
 
 
 
@@ -382,7 +372,7 @@ merged.pptx
 
 サンプルフォルダ：　pm1_simple_ppt_merge
 
-[![サンプル：単純マージ](examples/overview/build/figures/simple_ppt_merge_guide_keyvisual_35.png)](examples/pm1_simple_ppt_merge/README.md)
+[![サンプル：単純マージ](examples/overview/build/figures/simple_ppt_merge_guide_keyvisual.png)](examples/pm1_simple_ppt_merge/README.md)
 
 
 ### 簡易ナンバリング
@@ -391,7 +381,7 @@ merged.pptx
 
 サンプルフォルダ：　pm2_simple_numbering
 
-[![サンプル：簡易ナンバリング](examples/overview/build/figures/simple_numbering_guide_keyvisual_35.png)](examples/pm2_simple_numbering/README.md)
+[![サンプル：簡易ナンバリング](examples/overview/build/figures/simple_numbering_guide_keyvisual.png)](examples/pm2_simple_numbering/README.md)
 
 
 
@@ -401,7 +391,7 @@ merged.pptx
 
 サンプルフォルダ：　pm3_chapter_marker_numbering
 
-[![サンプル：chapter_marker によるナンバリング](examples/overview/build/figures/chapter_marker_numbering_guide_keyvisual_35.png)](examples/pm3_chapter_marker_numbering/README.md)
+[![サンプル：chapter_marker によるナンバリング](examples/overview/build/figures/chapter_marker_numbering_guide_keyvisual.png)](examples/pm3_chapter_marker_numbering/README.md)
 
 
 
@@ -411,7 +401,7 @@ merged.pptx
 
 サンプルフォルダ：　pm_variable_replacement
 
-[![サンプル：スライド中の変数置換](examples/overview/build/figures/variable_replacement_guide_keyvisual_35.png)](examples/pm4_variable_replacement/README.md)
+[![サンプル：スライド中の変数置換](examples/overview/build/figures/variable_replacement_guide_keyvisual.png)](examples/pm4_variable_replacement/README.md)
 
 
 
@@ -421,7 +411,7 @@ merged.pptx
 
 サンプルフォルダ：　pm5_chapter_cover_insertion
 
-[![サンプル：Chapter Cover 挿入運用](examples/overview/build/figures/chapter_cover_insertion_guide_keyvisual_35.png)](examples/pm5_chapter_cover_insertion/README.md)
+[![サンプル：Chapter Cover 挿入運用](examples/overview/build/figures/chapter_cover_insertion_guide_keyvisual.png)](examples/pm5_chapter_cover_insertion/README.md)
 
 
 
@@ -431,7 +421,7 @@ pptxファイルを結合する際、コンテンツとは別にスタイル情�
 
 サンプルフォルダ：　pm6_stylebase
 
-[![サンプル：stylebaseを別に指定する機能](examples/overview/build/figures/stylebase_guide_keyvisual_35.png)](examples/pm6_stylebase/README.md)
+[![サンプル：stylebaseを別に指定する機能](examples/overview/build/figures/stylebase_guide_keyvisual.png)](examples/pm6_stylebase/README.md)
 
 
 
@@ -441,7 +431,7 @@ pptxファイルを結合する際、コンテンツとは別にスタイル情�
 
 サンプルフォルダ：　pm7_splitted_insertion
 
-[![サンプル：ファイルの分割挿入機能](examples/overview/build/figures/splitted_insertion_guide_keyvisual_35.png)](examples/pm7_splitted_insertion/README.md)
+[![サンプル：ファイルの分割挿入機能](examples/overview/build/figures/splitted_insertion_guide_keyvisual.png)](examples/pm7_splitted_insertion/README.md)
 
 
 
@@ -451,7 +441,7 @@ pptxファイルを結合する際、コンテンツとは別にスタイル情�
 
 サンプルフォルダ：　pm8_delete_csp
 
-[![サンプル：指定したシェイプを消去](examples/overview/build/figures/delete_csp_guide_keyvisual_35.png)](examples/pm8_delete_csp/README.md)
+[![サンプル：指定したシェイプを消去](examples/overview/build/figures/delete_csp_guide_keyvisual.png)](examples/pm8_delete_csp/README.md)
 
 
 
@@ -461,7 +451,7 @@ pptxファイルを結合する際、コンテンツとは別にスタイル情�
 
 サンプルフォルダ：　pm9_delete_csl
 
-[![サンプル：指定したスライドを削除](examples/overview/build/figures/delete_csl_guide_keyvisual_35.png)](examples/pm9_delete_csl/README.md)
+[![サンプル：指定したスライドを削除](examples/overview/build/figures/delete_csl_guide_keyvisual.png)](examples/pm9_delete_csl/README.md)
 
 
 
@@ -471,7 +461,7 @@ pptxファイルを結合する際、コンテンツとは別にスタイル情�
 
 サンプルフォルダ：　pm10_memo_temp
 
-[![サンプル：作業用のメモを書く](examples/overview/build/figures/memo_temp_guide_keyvisual_35.png)](examples/pm10_memo_temp/README.md)
+[![サンプル：作業用のメモを書く](examples/overview/build/figures/memo_temp_guide_keyvisual.png)](examples/pm10_memo_temp/README.md)
 
 
 
@@ -481,4 +471,4 @@ pptxファイルを結合する際、コンテンツとは別にスタイル情�
 
 サンプルフォルダ：　pm11_title_filename
 
-[![サンプル：特殊定数を置換する](examples/overview/build/figures/title_filename_guide_keyvisual_35.png)](examples/pm11_title_filename/README.md)
+[![サンプル：特殊定数を置換する](examples/overview/build/figures/title_filename_guide_keyvisual.png)](examples/pm11_title_filename/README.md)

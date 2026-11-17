@@ -31,3 +31,40 @@ def resolve_cropsrc_path(val: str, yaml_path: Path, workdir: Path | None) -> Pat
     base = resolve_base(yaml_path, workdir)
     p = Path(val)
     return p if p.is_absolute() else (base / p).resolve()
+
+
+# 自動生成するスライド PDF のファイル名サフィックス。
+# 以前は ``<pptx_stem>.pdf`` だったが、pptx の stem と ``output.targetbasefilename`` が
+# 同じ（よくある命名）だと ppt_to_pdf の最終成果物 PDF と同じパスになり、
+# pandoc の出力がスライド PDF を上書きしてしまう。次回実行時、pptpdfexport は
+# 「PDF の方が新しい」と判断してスキップし、pptimgexport が成果物 PDF（ページ数が
+# スライド数と無関係）から切り出そうとして失敗していた。
+AUTO_PDF_SUFFIX = "_slides"
+
+
+def auto_cropsrc_pdf_path(pptx_val: str, output_section: dict, yaml_path: Path, workdir: Path | None) -> Path:
+    """`input.cropsrc[].pdf` 省略時の PDF パス: ``output.outputdir/<pptx_stem>_slides.pdf``。"""
+    base = resolve_base(yaml_path, workdir)
+    outdir_val = (output_section or {}).get("outputdir")
+    if outdir_val:
+        p = Path(str(outdir_val))
+        out_dir = p if p.is_absolute() else (base / p).resolve()
+    else:
+        out_dir = base
+    return out_dir / (Path(str(pptx_val)).stem + AUTO_PDF_SUFFIX + ".pdf")
+
+
+def cropsrc_pdf_paths(recipe: dict, yaml_path: Path, workdir: Path | None) -> list[Path]:
+    """全 cropsrc エントリのスライド PDF パス（明示指定 or 自動生成）を解決して返す。"""
+    output_section = recipe.get("output") or {}
+    paths: list[Path] = []
+    for entry in cropsrc_entries(recipe):
+        if not isinstance(entry, dict):
+            continue
+        pptx_val = entry.get("pptx")
+        pdf_val = entry.get("pdf")
+        if pdf_val:
+            paths.append(resolve_cropsrc_path(str(pdf_val), yaml_path, workdir))
+        elif pptx_val:
+            paths.append(auto_cropsrc_pdf_path(str(pptx_val), output_section, yaml_path, workdir))
+    return paths

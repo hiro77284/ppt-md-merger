@@ -5,7 +5,6 @@
 | 書き方 | 意味 |
 |---|---|
 | ```` ```{=typst} ```` … ```` ``` ```` | Typst のときだけ出力する生ブロック |
-| ```` ```{=latex} ```` … ```` ``` ```` | LaTeX のときだけ出力する生ブロック |
 | ```` ```{=html} ```` … ```` ``` ```` | HTML のときだけ出力する生ブロック |
 | `` `…`{=typst} `` | 行内の生コード（Typst） |
 
@@ -45,7 +44,7 @@
 
 ## 出力形式が合わない生コード
 
-Typst エンジンで PDF にするとき、LaTeX の生ブロックは破棄されます。
+PDF（Typst）に出すとき、LaTeX の生ブロック（LaTeX エンジンは撤去済み）は破棄されます。
 
 **書き方**
 
@@ -53,7 +52,7 @@ Typst エンジンで PDF にするとき、LaTeX の生ブロックは破棄さ
 この下に LaTeX の生ブロックがあります。
 
 ```{=latex}
-\begin{center}LaTeX エンジンのときだけ表示される\end{center}
+\begin{center}LaTeX のときだけ表示される（今はどの出力にも出ない）\end{center}
 ```
 
 この上の LaTeX の生ブロックは、Typst では何も出力しません。
@@ -64,11 +63,11 @@ Typst エンジンで PDF にするとき、LaTeX の生ブロックは破棄さ
 この下に LaTeX の生ブロックがあります。
 
 ```{=latex}
-\begin{center}LaTeX エンジンのときだけ表示される\end{center}
+\begin{center}LaTeX のときだけ表示される（今はどの出力にも出ない）\end{center}
 ```
 
 この上の LaTeX の生ブロックは、Typst では何も出力しません。
 
 ::: {.warning}
-このように、LaTeX エンジン時代の原稿に残っている生 LaTeX は Typst では黙って消えます。`pptmdexport` の `latex_check`（既定 `warn`）で生コードの混入を検出できるので、見つかったものはセマンティック記法に書き換えてください（例：`\begin{center}` → `::: {.center}`、`\newpage` → `{{pagebreak}}`、`\par\vspace{1\baselineskip}` → `{{vspace:1}}`、`\hfill` → `[…]{.rightlabel}`）。
+このように、LaTeX 時代の原稿に残っている生 LaTeX は Typst では黙って消えます。`pptmdexport` の `latex_check`（既定 `warn`）で生コードの混入を検出できるので、見つかったものはセマンティック記法に書き換えてください（例：`\begin{center}` → `::: {.center}`、`\newpage` → `{{pagebreak}}`、`\par\vspace{1\baselineskip}` → `{{vspace:1}}`、`\hfill` → `[…]{.rightlabel}`）。
 :::

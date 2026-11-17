@@ -1,4 +1,4 @@
-# 出力変換仕様（pandoc / puremd / condblockprocess / transfer）
+# 出力変換仕様（pandoc / puremd / 表紙 / transfer）
 
 > [仕様書トップ](../md_merge_spec.md) — 共通オプション・入力/出力指定・ログ・JSON・dry-run の各仕様はトップを参照。
 
@@ -8,7 +8,7 @@
 
 ### 概要
 
-`render` で生成したレンダー済み MD を pandoc に渡し、PDF・LaTeX 等を生成する。pandoc の設定はレシピ YAML の `pandoc` セクションと文書プロジェクト内の defaults ファイルで管理する。
+`render` で生成したレンダー済み MD を pandoc に渡し、PDF（typst）・HTML・reveal.js を生成する。pandoc の設定はレシピ YAML の `pandoc` セクションと文書プロジェクト内の defaults ファイルで管理する。LaTeX（lualatex）の経路は 2026-11-15 に撤去した（[design_typst_migration.md](../design_typst_migration.md) Phase 7）。
 
 ### 使用例
 
@@ -22,85 +22,84 @@ pptmdmerge pandoc recipe.yaml
 | ---------- | ---- | ---- |
 | `--workdir` / `-w` DIR | input / output の相対パスをこのディレクトリ基準で解釈する | 任意 |
 | `--force` | 既存の出力ファイルを上書きする | 任意 |
-| `--tex` | LaTeX 出力モード。`output.texfilename` を使い `-t latex` で pandoc を起動する | 任意 |
 | `--html` | HTML 出力モード。`output.htmlfilename` を使い `-t html` で pandoc を起動する | 任意 |
 | `--reveal` | reveal.js 出力モード。`output.revealfilename` を使い `-t revealjs` で pandoc を起動する | 任意 |
-| `--engine latex\|typst` | PDF の組版エンジン。レシピの `pandoc.engine` より優先（既定 `typst`。`latex` は廃止予定で、指定すると警告する）。PDF 出力のときだけ効き、`--tex` / `--html` / `--reveal` では無視する（後述「Typst エンジン」） | 任意 |
 
 ### 出力ファイルとフォーマットの決定
 
-| オプション | 出力ファイルキー | pandoc `-t` | defaults キー | template / include-in-header / resource-path |
-| ---------- | --------------- | ----------- | ------------- | -------------------------------------------- |
-| なし（engine: typst。既定） | `output.pdffilename`（同じ名前の `.typ` も残す） | `typst`（固定。.typ を書き出し `typst compile`） | `pandoc.typstdefaults`（省略時は同梱 `typst_semantic_engine.yaml`） | template / include-in-header は使用しない（typstdefaults 側に書く）。resource-path は使用する |
-| なし（engine: latex。廃止予定） | `output.pdffilename` | `pdf`（`pandoc.format` で上書き可） | `pandoc.defaults` | 使用する |
-| `--tex`    | `output.texfilename` | `latex`（固定） | `pandoc.defaults` | 使用する |
-| `--html`   | `output.htmlfilename` | `html`（固定） | `pandoc.htmldefaults` | 使用しない |
-| `--reveal` | `output.revealfilename` | `revealjs`（固定） | `pandoc.revealdefaults` | 使用しない |
+| オプション | 出力ファイルキー | pandoc `-t` | defaults キー | 表紙 |
+| ---------- | --------------- | ----------- | ------------- | ---- |
+| なし（PDF） | `output.pdffilename`（同じ名前の `.typ` も残す） | `typst`（.typ を書き出し `typst compile`） | `pandoc.defaults`（version 3 以前は `typstdefaults`。省略時は同梱 `report_base_defaults.yaml`） | `pandoc.cover-md`（version 3 以前は `typst-cover-md`） |
+| `--html`   | `output.htmlfilename` | `html`（固定） | `pandoc.htmldefaults` | `pandoc.htmlcover` |
+| `--reveal` | `output.revealfilename` | `revealjs`（固定） | `pandoc.revealdefaults` | `pandoc.htmlcover` |
 
-### レシピ YAML スキーマ
+pandoc のキーはレシピの `version` で読み方が変わる。version 4 は PDF 用のキーを接頭辞なし、HTML 用を `html` 付きにそろえた（`docs/md_merge_spec.md` の 5.3）。
+
+| 用途 | version 4 | version 3 以前 |
+| ---- | --------- | -------------- |
+| PDF の表紙 | `cover-md` | `typst-cover-md` |
+| PDF の pandoc defaults | `defaults` | `typstdefaults` |
+| HTML / reveal の表紙 | `htmlcover` | `htmlcover`（と `cover-md` の HTML 変換） |
+| LaTeX 専用だったキー（`template` / `include-in-header` / `include-before-body` / `conditional-process-input` / `conditional-process-output` / `format` / `engine`） | エラー | 警告して使わない（`engine` に typst 以外を書くとエラー） |
+
+version 3 以前の `cover-md` / `defaults` は LaTeX 用の意味なので PDF では読まない。version 4 への書き換えは `tools/convert_recipe_v4.py` でできる。
+
+### レシピ YAML スキーマ（version 4）
 
 ```yaml
 output:
   renderedfilename: rendered.md   # 入力（render の出力）
   pdffilename: doc.pdf            # PDF 出力ファイル名（オプションなし時）
-  texfilename: doc.tex            # LaTeX 出力ファイル名（--tex 指定時）
   htmlfilename: doc.html          # HTML 出力ファイル名（--html 指定時）
   revealfilename: doc_reveal.html # reveal.js 出力ファイル名（--reveal 指定時）
   outputdir: out                  # 上記ファイルの基準ディレクトリ
 
 pandoc:
-  defaults: pandoc/defaults.yaml        # pandoc defaults ファイルへのパス（省略可。--html 時は無視）
+  defaults: pandoc/defaults.yaml        # PDF 用 pandoc defaults（省略時は同梱 report_base_defaults.yaml。リスト可）
+  cover-md: cover_standard.md           # PDF の表紙 Markdown（省略時は表紙なし）
   htmldefaults: pandoc/html_defaults.yaml    # --html 時に使用する defaults ファイル（省略可）
-  htmlcover: standard_cover.html        # --html 用 HTML 表紙テンプレ（省略可）。{{v:COVER_*}} を vars で置換し本文前に挿入。省略時は表紙なし
+  htmlcover: standard_cover.html        # --html / --reveal 用 HTML 表紙テンプレ（省略可）。{{v:COVER_*}} を vars で置換し本文前に挿入
   revealdefaults: pandoc/reveal_defaults.yaml  # --reveal 時に使用する defaults ファイル（省略可）
-  format: pdf                           # 出力フォーマット（--tex 未指定時のみ有効。省略時は pdf）
   filters:                              # Lua filter リスト（省略可）
-    - cross_ref.lua                     # ビルトイン filter（pptmdmerge 同梱）
+    - center.lua                        # ビルトイン filter（pptmdmerge 同梱）
     - pandoc/my_filter.lua              # カスタム filter（yaml 基準の相対パス）
-  metadata-file: pandoc/metadata.yaml   # --metadata-file に渡すパス（省略可）
-  template: pandoc/template.tex         # --template に渡すパス（省略可。data-dir 基準で解決）
-  include-in-header: pandoc/header.tex  # --include-in-header に渡すパス（省略可。data-dir 基準で解決）
-  #   ↑ 単一パスまたはリストで複数指定可。リストは記載順に複数の --include-in-header として渡され、
-  #     プリアンブルへ順に連結される。例:
-  #   include-in-header:
-  #     - pandoc/header.tex
-  #     - semantic_macros.tex
-  include-before-body: pandoc/before.tex  # --include-before-body に渡すパス（省略可。リスト可）
   syntax-highlighting: tango          # --syntax-highlighting に渡すスタイル名またはテーマファイルパス（省略可）
   data-dir: pandoc/                   # --data-dir に渡すパス（省略可）
-  resource-path: figures/             # 画像等のリソース検索パス（省略可。リスト・;区切り可）
+  resource-path: figures/             # 画像等のリソース検索パス（PDF。省略可。リスト・;区切り可）
+  typst-root: ..                      # typst compile の --root（省略可）
 ```
+
+PDF の pandoc テンプレートや、プリアンブルに読み込む `.typ`（`include-in-header`）は defaults ファイルの `template:` / `include-in-header:` に書く（レシピの `pandoc.template` / `pandoc.include-in-header` は LaTeX 用だったので廃止した）。
 
 ### パスの解決基準
 
 | キー | 解決基準 |
 | ---- | -------- |
-| `defaults` / `htmldefaults` / `revealdefaults` | `data-dir` → workdir の順にフォールバック |
-| `template` / `include-in-header` | `data-dir` → workdir → **パッケージ同梱 `src/md_merge/templates/`（basename）** の順にフォールバック |
-| `conditional-process-input` / `htmlcover` | `data-dir` → workdir → **パッケージ同梱 `src/md_merge/templates/`（basename）** の順にフォールバック（`template`/`include-in-header` と同じ `resolve_from_datadir` を共有）。`htmlcover` は `--html` 時のみ使用し、`{{v:COVER_*}}` を `vars` で置換した `cover-processed.html` を生成して `include-before-body` に前置する |
-| `metadata-file` / `include-before-body` / `filters` | workdir（省略時は YAML の親ディレクトリ） |
+| `defaults` / `htmldefaults` / `revealdefaults` | `data-dir` → workdir → **パッケージ同梱 `src/md_merge/templates/`（basename）** の順にフォールバック |
+| `cover-md` | レシピ dir → workdir → 同梱 templates（basename）。旧名 `cover_standard_typst.md` はエラー（どの version でも。`cover_standard.md` を案内する） |
+| `htmlcover` | `data-dir` → workdir → 同梱 templates（basename）。`{{v:COVER_*}}` を `vars` で置換した `cover-processed.html` を生成して本文前に挿入する |
+| `filters`（version 3 以前は `metadata-file` も） | workdir（省略時は YAML の親ディレクトリ） |
 | `resource-path` | レシピ YAML のあるディレクトリ（workdir の影響を受けない） |
 | `data-dir` 自体 | workdir 基準で解決後、`..`・`.` を除去した正規パスで pandoc に渡す |
 
-`data-dir` を指定すると、テンプレート・defaults 等の検索が `data-dir` 内から先に行われる。相対パスで指定したファイルが `data-dir` に存在しない場合は workdir にフォールバックする。
+`data-dir` を指定すると、defaults 等の検索が `data-dir` 内から先に行われる。相対パスで指定したファイルが `data-dir` に存在しない場合は workdir にフォールバックする。
 
 #### defaults の多層指定（リスト）
 
 `defaults` / `htmldefaults` / `revealdefaults` は **単一ファイルまたはファイルのリスト**を指定できる。リスト指定時は各ファイルを記載順に `-d` として pandoc へ渡し、pandoc が後勝ちでマージする（スカラー・マップは後のファイルが優先、`filters` 等のリストは後のファイルが置換）。
 
-用途は「変わらない共有基盤」と「文書ごとに変わる部分」の分離。`filters` / `include-in-header` / `pdf-engine` / `toc` 等の基本挙動を共有ベースに集約し、`variables`（documentclass・フォント・geometry 等）・`metadata`・`resource-path` を文書ごとの上書きファイルに切り出せる。これにより defaults の重複・ドリフト（共有部分の変更が一部の文書に反映されない等）を防げる。
+用途は「変わらない共有基盤」と「文書ごとに変わる部分」の分離。`filters` / `include-in-header` / `toc` 等の基本挙動を共有ベースに集約し、`toc-depth`・`metadata` などを文書ごとの上書きファイルに切り出せる。
 
 ```yaml
 pandoc:
-  data-dir: .
   defaults:
-    - report_semantic_engine.yaml   # 共有: filters / include-in-header / 基本挙動
-    - this_document.yaml            # 文書ごと: variables / metadata / resource-path
+    - report_base_defaults.yaml    # 同梱: filters / テンプレート / include-in-header / 目次
+    - this_document.yaml            # 文書ごと: toc-depth など
 ```
 
-各ファイルの解決基準・basename フォールバックはリストの各要素にも同様に適用される。単一文字列指定は従来どおり（後方互換）。
+`defaults` を書くと同梱の `report_base_defaults.yaml` は使われない（置き換わる）ので、同梱を土台に一部だけ変えるときは上のように先頭に書く。各ファイルの解決基準・basename フォールバックはリストの各要素にも同様に適用される。
 
-`template` / `include-in-header` は、`data-dir`・workdir のいずれにも無ければ **パッケージ同梱の `src/md_merge/templates/` に basename でフォールバック**する（`report_header.tex` / `semantic_macros.tex` / `standard_cover.tex` 等の正本 header・template・cover・マクロ）。したがって bare 名で書けば場所非依存に同梱の正本へ解決され、コピーや絶対パスは不要。**文書シリーズごとにテンプレートを差し替えたい場合は、同名ファイルを `data-dir` または workdir 側に置けばそちらが優先される**（同梱正本を上書きする cascade）。
+同梱の土台は 2026-11-16 に `typst_semantic_engine.yaml` から `report_base_defaults.yaml` に改名した。旧名は受け付けない（どの version のレシピでも、`pandoc.defaults`／`typstdefaults` に旧名があると `pandoc`・`validate` がエラーにして新しい名前を案内する）。version 3 以前のレシピは `tools/convert_recipe_v4.py` が version 4 への変換と一緒に書き換える。
 
 ### Lua filter の解決順
 
@@ -117,32 +116,49 @@ pandoc:
 
 #### pandoc defaults ファイル内の `filters` / `include-in-header` / `template` も同様に解決する
 
-pandoc 自身は defaults ファイル内のこれらをパッケージ同梱ディレクトリにフォールバックできない（`filters` はスラッシュ付き＝CWD 相対・bare 名は `data-dir/filters/` のみ、`include-in-header`/`template` の bare 名も同梱を探さない）。そのため `pandoc` サブコマンドは **defaults ファイルの `filters` / `include-in-header` / `template` も上表の順序で解決**し、名前を解決済み絶対パスに置換した一時 defaults ファイルを生成して pandoc に渡す（実行後に削除）。
+pandoc 自身は defaults ファイル内のこれらをパッケージ同梱ディレクトリにフォールバックできない（`filters` はスラッシュ付き＝CWD 相対・bare 名は `data-dir/filters/` のみ、`include-in-header`/`template` の bare 名も同梱を探さない）。そのため `pandoc` サブコマンドは **defaults ファイルの `filters` / `include-in-header` / `template` も上表の順序で解決**し（`include-in-header` / `template` は `data-dir` → workdir → 同梱 templates）、名前を解決済み絶対パスに置換した一時 defaults ファイルを生成して pandoc に渡す（実行後に削除）。
 
-これにより defaults ファイルにも **bare 名（例 `center.lua` / `semantic_macros.tex`）で同梱の filter・header・template を書ける**（＝パッケージ同梱の版に自動解決。絶対パスやコピー不要で場所非依存）。解決できないエントリ（`pandoc-crossref` 等の外部フィルタ、実在しないパス）と並び順はそのまま保持される。
+これにより defaults ファイルにも **bare 名（例 `center.lua` / `semantic_macros.typ`）で同梱の filter・header・template を書ける**。**文書シリーズごとにテンプレートを差し替えたい場合は、同名ファイルを `data-dir` または workdir 側に置けばそちらが優先される**（同梱正本を上書きする cascade）。解決できないエントリ（外部フィルタ、実在しないパス）と並び順はそのまま保持される。
 
 ### pandoc の呼び出し形式
 
+PDF は後述「PDF（Typst）」の 2 段構成。HTML / reveal.js は次の形で呼ぶ。
+
 ```
-pandoc <rendered.md> -o <pdffilename|texfilename> -t <pdf|tex>
-      [-d <defaults>] [-L <filter>...>]
-      [--metadata-file <path>] [--template <path>] [--include-in-header <path>]
+pandoc <rendered.md> -o <htmlfilename|revealfilename> -t <html|revealjs>
+      [-d <htmldefaults|revealdefaults>...] [-L <filter>...]
       [--syntax-highlighting=<style>]
-      [--include-before-body <path>...]
+      [--include-before-body <htmlcover を置換した cover-processed.html>]
 ```
 
-`--html` / `--reveal` モード時は `--template`・`--include-in-header`・`--include-before-body` を省略する。
+#### YAML frontmatter の除去
 
-### Typst エンジン（`engine: typst`）
+render 済み MD に YAML frontmatter（`---` … `---`。`transfer` / `notecomexport` 用の `title` / `hero` 等）があれば、pandoc に渡す前に取り除く（PDF / `--html` / `--reveal` すべて）。merge 後の MD では frontmatter の直前に `<!-- source: -->` や `<!-- md_merge_rawtitle: -->` が来るため pandoc がメタデータとして読まず本文に出してしまい、2 ファイル目以降の frontmatter は文書の途中に来るためである。
 
-PDF の既定の組版エンジン（2026-10-23 から。移行の経緯は [design_typst_migration.md](../design_typst_migration.md)）。lualatex で出したいときは、レシピの `pandoc.engine: latex` か CLI の `--engine latex` を指定する（廃止予定で、指定すると警告する。出力名は Typst 版と同じ `output.pdffilename` なので上書きする）。`ppt_to_pdf` / `crop_to_pdf` も `--engine` を受け付け、pandoc 段に渡す。
+* 対象は「文書の先頭」と「`<!-- source: ... -->` 行の直後」の `---` … `---` ブロック。開始 `---` の前の空行・1 行の HTML コメントは許容する
+* 中身が YAML のマッピングとして読めるものだけを frontmatter とみなす（本文の水平線 `---` は消さない）
+* ブロックは空行 1 行に置き換え、コメント行はそのまま残す
+* 取り除いたときは info ログに件数を出し、本文は標準入力で pandoc に渡す（`pandoc -o ...` の形になる）。render 済み MD ファイル自体は書き換えない
+* frontmatter の `title` 等は pandoc のメタデータにも入らない。PDF の文書タイトル等はレシピ `vars` の `COVER_*` か defaults の `metadata:` で与える（後述「PDF の文書プロパティ」）
+
+#### 画像参照と属性の間の空白詰め
+
+pandoc は画像の属性を `![](a.png){width=80%}` のように画像の直後（空白なし）にしか認めず、`![](a.png) {width=80%}` と空白があると `{width=80%}` が本文の文字列として出力される。このため pandoc に渡す前に、画像参照（`![alt](ref)`）と直後の `{...}` の間の空白・タブを取り除く（PDF / `--html` / `--reveal` すべて）。
+
+* 改行を挟むものは結合しない
+* コードフェンス（```` ``` ```` / `~~~`）内とインラインコード内は変えない
+* 詰めたときは info ログに件数を出し、本文は標準入力で pandoc に渡す。render 済み MD ファイル自体は書き換えない
+
+### PDF（Typst）
+
+PDF は Typst で組む（2026-10-23 に既定にし、2026-11-15 に lualatex を撤去した。経緯は [design_typst_migration.md](../design_typst_migration.md)）。
 
 **2 段構成:** pandoc で `.typ` を書き出し、続けて `typst compile` で PDF にする。`.typ` は消さずに残すので、typst のエラーはこのファイルの行番号で確認できる。
 
 ```
 pandoc <rendered.md> -o <pdfstem>.typ -t typst
-      [-d <typstdefaults>...] [-L <filter>...] -L typst-images.lua
-      [--metadata-file <path>] [--syntax-highlighting=<style>]
+      [-d <defaults>...] [-L <filter>...] -L typst-images.lua
+      [--syntax-highlighting=<style>]
       [--include-before-body <cover-md の .typ 断片>]
       --resource-path <.;resource-path...>
 typst compile --root <root> <pdfstem>.typ <pdfstem>.pdf
@@ -150,23 +166,26 @@ typst compile --root <root> <pdfstem>.typ <pdfstem>.pdf
 
 | 項目 | 内容 |
 | ---- | ---- |
-| 出力 | `output.pdffilename` と、同じ名前の `.typ`（2026-10-22 の併存期間中は `<stem>_typst.pdf` だった） |
-| defaults | `pandoc.typstdefaults`（単一またはリスト、後勝ち）。省略時は同梱の `typst_semantic_engine.yaml`（セマンティックフィルタ一式・テンプレート `report_template.typst`・`semantic_macros.typ`／`report_style.typ`・目次・`lang: ja`） |
-| ページ設計 | 同梱の `report_style.typ`（LaTeX 版 `report_header.tex` の Typst 版）: A4（LaTeX 版の既定 US Letter とは異なる）・余白 20mm/15mm、和文 BIZ UDGothic 10.5pt／欧文 Times New Roman・Arial、章は改ページして中央 28pt＋下線、節 14pt、項 12pt、右柱に節タイトル（章の開始ページ・目次 1 ページ目は柱なし）、中央下にノンブル（表紙の次から 1）、目次は「目次」20pt＋線。差し替えるときは typstdefaults で `include-in-header` を自分のファイルにする |
-| 表紙 | `pandoc.typst-cover-md` を typst 断片（`<stem>_cover.typ`）に変換し、柱・ノンブルなしの 1 ページ目にする。省略時、`cover-md` か `conditional-process-input`（LaTeX 用の表紙）があれば同梱の `cover_standard_typst.md`（`COVER_IMAGE` / `COVER_TITLE` / `COVER_SUBTITLE` / `COVER_DATE` / `COVER_AUTHOR` / `COVER_AFFILIATION` / `COVER_CONTACT` / `COVER_NOTE` / `COVER_FOOTERIMAGE`、空の項目は省く）を使う。`typst-cover-md` はレシピ dir → workdir → 同梱 templates（basename）の順に探すので、LaTeX 用の表紙設定を消して `typst-cover-md: cover_standard_typst.md` と書けば同じ標準表紙を明示的に使える。表紙 Markdown では `{{#if:NAME}}` … `{{#endif:NAME}}` が使える。`include-before-body` / `conditional-process-output`（LaTeX 断片）は使わない（指定されていれば INFO を出す。`conditional-process-input` だけでも出力名が自動生成されるので対象になる） |
+| 出力 | `output.pdffilename` と、同じ名前の `.typ` |
+| defaults | `pandoc.defaults`（version 3 以前は `typstdefaults`。単一またはリスト、後勝ち）。省略時は同梱の `report_base_defaults.yaml`（セマンティックフィルタ一式・テンプレート `report_template.typst`・`semantic_macros.typ`／`report_style.typ`・目次・`lang: ja`）。version 3 以前で `typstdefaults` が無く LaTeX 用の `defaults` だけあると、読まないことを警告する |
+| ページ設計 | 同梱の `report_style.typ`: A4・余白 20mm/15mm、和文 BIZ UDGothic 10.5pt／欧文 Times New Roman・Arial、章は改ページして中央 28pt＋下線、節 14pt、項 12pt、右柱に節タイトル（章の開始ページ・目次 1 ページ目は柱なし）、中央下にノンブル（表紙の次から 1）、目次は「目次」20pt＋線。差し替えるときは defaults で `include-in-header` を自分のファイルにする |
+| 表 | 同梱の `report_template.typst`: 罫線 0.5pt、セルは左揃え（表そのものは中央に配置）、見出し行（1 行目）は太字＋薄い灰色の背景。Markdown で列揃えを書いた列（`:---:` 中央 / `---:` 右）はその指定に従う。変えるときは `include-in-header` の自分のファイルで `#set table(stroke: ..., fill: ...)` / `#show table.cell: set align(...)` / `#show table.cell.where(y: 0): set text(...)` を上書きする |
+| 表紙 | `pandoc.cover-md`（version 3 は `typst-cover-md`）を typst 断片（`<stem>_cover.typ`）に変換し、柱・ノンブルなしの 1 ページ目にする。**省略時は表紙なし**。同梱の標準表紙は `cover-md: cover_standard.md` と明示する（`COVER_IMAGE` / `COVER_TITLE` / `COVER_SUBTITLE` / `COVER_DATE` / `COVER_AUTHOR` / `COVER_AFFILIATION` / `COVER_CONTACT` / `COVER_NOTE` / `COVER_FOOTERIMAGE` を使い、空の項目は省く）。詳しくは後述「表紙（`cover-md` / `htmlcover`）」。version 2 以前のレシピでは、`typst-cover-md` が無く LaTeX 用の表紙（`cover-md` / `conditional-process-input`）だけあると同梱の標準表紙を暗黙に使い、明示するよう警告する（`docs/md_merge_spec.md` 5.3） |
+| 文書プロパティ | PDF のタイトル・作成者・サブジェクトはレシピ `vars` の `COVER_TITLE` / `COVER_AUTHOR` / `COVER_SUBTITLE` を流用し、defaults の `metadata:` の `title` / `author` / `subject` で上書きできる。キーワード（`keywords`）と言語（`lang`）は `metadata:` だけ。作成日はビルドした日時。詳しくは後述「PDF の文書プロパティ」 |
 | 画像 | 同梱フィルタ `typst-images.lua` が、画像を `resource-path` から探して `.typ` からの相対パスに書き換える（Typst には `\graphicspath` のような複数ディレクトリ探索がないため） |
 | `--root` | `pandoc.typst-root`。省略時は `.typ` の場所・render 済み MD の場所・`resource-path` をすべて含む共通の上位ディレクトリ。ドライブが異なると決められないので、その場合は明示する |
 | 必要なもの | `typst` が PATH 上にあること（0.15.1 で確認） |
 
-セマンティック記法の Typst への変換は `semantics.yaml` の `typst:` 列で定義し、見た目は `semantic_macros.typ` の関数が決める。ブロックの属性は LaTeX 版と同じ名前を受け付け、Typst の値に読み替える（`width="0.6\linewidth"` → 60%、`colback=blue!8` → 青 8%＋白、`fontsize="\large"` → 1.2em など）。読み替えられない値は警告して無視する。`typst:` が無いクラスは中身だけが残る。
+セマンティック記法の Typst への変換は `semantics.yaml` の `typst:` 列で定義し、見た目は `semantic_macros.typ` の関数が決める。ブロックの属性は旧 LaTeX（tcolorbox）版と同じ名前・書き方を受け付け、Typst の値に読み替える（`width="0.6\linewidth"` → 60%、`colback=blue!8` → 青 8%＋白、`fontsize="\large"` → 1.2em など）。読み替えられない値は警告して無視する。`typst:` が無いクラスは中身だけが残る。
 
 ### 完了メッセージ
 
-単体実行（`ppt_to_pdf` 経由ではない）で成功すると、標準出力に完了ブロックを出力する。`--json` / `--dry-run` 時は出力しない。
+単体実行（`ppt_to_pdf` 経由ではない）で成功すると、標準出力に完了ブロックを出力する。完了行の直後にコマンド開始からの所要時間を表示する（60 秒未満は `12.3秒`、1 時間未満は `2分05.4秒`、それ以上は `1時間02分03秒`）。`--json` / `--dry-run` 時は出力しない。
 
 ```
 ========================================
   pandoc 完了
+  所要時間: 12.3秒
 ========================================
 ```
 
@@ -174,7 +193,10 @@ typst compile --root <root> <pdfstem>.typ <pdfstem>.pdf
 
 * 入力 YAML に `output.renderedfilename` / `output.pdffilename`（または対応する出力キー）も `output.targetbasefilename` も未定義
 * レンダー済み MD が存在しない
-* `pandoc.defaults` / `pandoc.metadata-file` / `pandoc.template` / `pandoc.include-in-header` / `pandoc.include-before-body` に指定したファイルが存在しない
+* version 4 のレシピに廃止したキー（`typst-cover-md` / `typstdefaults` / `engine` / `template` / `include-in-header` / `include-before-body` / `conditional-process-*` / `format` / `metadata-file`）がある（終了コード 2）
+* version 3 以前のレシピの `pandoc.engine` に typst 以外が書いてある（終了コード 2）
+* defaults・表紙に指定したファイルが存在しない
+* PDF 出力で `typst` が PATH 上に見つからない
 * `pandoc` が PATH 上に見つからない
 * pandoc が非ゼロ終了コードで終了した
 * 出力先に既存ファイルがあり、`--force` 未指定
@@ -197,9 +219,9 @@ my_document/
 ├── recipe.yaml
 ├── md/
 ├── pandoc/
-│   ├── defaults.yaml     # --pdf-engine, --toc, --metadata-file 等
-│   ├── metadata.yaml     # タイトル・著者・日付
-│   └── template.tex      # 文書専用テンプレート（任意）
+│   ├── defaults.yaml     # toc-depth 等の上書き（report_base_defaults.yaml の後に重ねる）
+│   ├── metadata.yaml     # メタデータ
+│   └── cover.md          # 文書専用の表紙 Markdown（任意）
 └── out/
 ```
 
@@ -358,7 +380,7 @@ pandoc の fenced div（`::: {.class ...}` … `:::`、または bare 形式 `::
 > 大きい文字ブロック。
 ```
 
-> 各 fenced div クラスを処理するビルトイン Lua filter（LaTeX 出力時）については [pandoc_filters.md](../pandoc_filters.md) を参照。`puremd` はこれらの fenced div を pandoc を通さずに素の Markdown へ変換する別系統の処理である。
+> 各 fenced div クラスを処理するビルトイン Lua filter（Typst / HTML 出力時）については [pandoc_filters.md](../pandoc_filters.md) を参照。`puremd` はこれらの fenced div を pandoc を通さずに素の Markdown へ変換する別系統の処理である。
 
 ### 処理手順
 
@@ -384,77 +406,74 @@ pandoc の fenced div（`::: {.class ...}` … `:::`、または bare 形式 `::
 
 ---
 
-## condblockprocess
+## 表紙（`cover-md` / `htmlcover`）
 
-### 概要
+> `condblockprocess` サブコマンド（条件ブロック付き `.tex` 表紙を展開して `include-before-body` に渡す）は LaTeX と一緒に撤去した（2026-11-15）。条件ブロックの記法そのもの（`{{#if:VAR}}` … `{{#endif:VAR}}`）は表紙 Markdown・ノート・insertmd などで引き続き使える（[conditional_block_process.md](../conditional_block_process.md)）。
 
-テンプレートファイル（LaTeX・テキスト等）内に記述された条件ブロック（`{{#if:VAR}}`〜`{{#endif:VAR}}`）と変数参照（`{{v:VAR}}`）を、レシピ YAML の `vars:` セクションに定義された値に基づいて展開し、出力ファイルを生成する。
+### PDF の表紙（`pandoc.cover-md`）
 
-詳細仕様: [conditional_block_process.md](../conditional_block_process.md)
-
-### 使用例
-
-```bash
-pptmdmerge condblockprocess recipe.yaml
-pptmdmerge condblockprocess recipe.yaml --force
-pptmdmerge condblockprocess recipe.yaml --dry-run
-```
-
-### 固有オプション
-
-| オプション | 説明 | 必須 |
-| ---------- | ---- | ---- |
-| `--workdir` / `-w` DIR | input / output の相対パスをこのディレクトリ基準で解釈する | 任意 |
-| `--force` | 既存の出力ファイルを上書きする | 任意 |
-
-### レシピ YAML キー
-
-```yaml
-vars:
-  TITLE: サンプル文書
-  AUTHOR: 山田太郎
-  COVERIMAGE: figures/cover.png   # 未定義または空文字で条件ブロックが削除される
-
-pandoc:
-  conditional-process-input: templates/cover.tex       # テンプレートファイル（必須。data-dir 基準で解決）
-  conditional-process-output: out/cover_generated.tex  # 出力ファイル（省略時は output.outputdir に自動生成）
-```
-
-`conditional-process-input` は `pandoc.data-dir` → workdir の順に解決する。`conditional-process-output` を省略すると `output.outputdir / work_<input_basename>` を自動生成し、pandoc の `include-before-body` 先頭にも自動追加する。
-
-### Markdown 表紙（`pandoc.cover-md`）
-
-手書き tex 表紙（`conditional-process-input`）の Markdown 版。`pandoc` サブコマンドが表紙 Markdown を tex/html 断片へ変換し、本文前（目次より前）に前置する。**タイトルの下を Markdown で自由に書ける**のが利点（段落・箇条書き・引用など）。tex 表紙は `include-before-body` で生 LaTeX を注入するため本文を Markdown で書けないのに対し、`cover-md` は表紙そのものを Markdown として組める。
+表紙を Markdown で書き、`pandoc` サブコマンドが typst 断片に変換して本文前（目次より前）に置く。version 3 以前のレシピでは同じものを `typst-cover-md` に書く。
 
 ```yaml
 pandoc:
-  cover-md: cover.md   # 表紙 Markdown（レシピ dir 基準 → workdir → 同梱 templates の basename フォールバック）
+  cover-md: cover_standard.md   # 表紙 Markdown（レシピ dir 基準 → workdir → 同梱 templates の basename フォールバック）
 ```
 
 **処理**
-1. `cover-md` を読み、`{{v:NAME}}` をレシピ `vars` で置換する（未定義変数は空文字＝寛容）。
-2. 置換後の中間 MD（`<stem>_cover_processed.md`）を `output.outputdir` に書き出す。
-3. セマンティック lua フィルタ付きで pandoc により断片へ変換する。PDF/LaTeX モードは `latex`（`<stem>_cover.tex`）、`--html`/`--reveal` は該当形式（`.html`）。断片は standalone ではないので、内部で参照する画像やマクロは本体 pandoc 実行時の `resource-path` / プリアンブルで解決される。
-4. 生成断片を `include-before-body` の先頭に前置する（`conditional-process-output` があればその前）。
+1. `cover-md` を読み、`{{#if:NAME}}` … `{{#endif:NAME}}` を展開し（値が空のブロックを省く）、`{{v:NAME}}` をレシピ `vars` で置換する（未定義変数は空文字＝寛容）。
+2. 表紙の画像参照（`![](...)`。`COVER_IMAGE` など変数で入れたものを含む）を、insertvar と同じくレシピのディレクトリ基準で解決する（レシピ dir → workdir → 表紙 MD のディレクトリの順に探す）。見つかり、`merge.copy-images` が有効（既定 true）なら `merge.image-dir` にコピーして参照を書き換える（下記「表紙の画像」）。
+3. 置換後の中間 MD（`<stem>_cover_processed.md`）を PDF と同じ場所に書き出す。
+4. セマンティック lua フィルタと `typst-images.lua` 付きで pandoc により typst 断片（`<stem>_cover.typ`）へ変換する。
+5. 生成断片を `--include-before-body` で本文前に入れる。テンプレートが `#sem-cover[...]` で包み、柱・ノンブルなしの 1 ページ目にする。
 
 **留意点**
-- 表紙のページ体裁（`\begin{titlepage}` / `\thispagestyle{empty}` / 背景・余白）は表紙 Markdown 内に raw LaTeX ブロック（```` ```{=latex} ````）で書く。その内側に置いた Markdown が pandoc で変換され本文になる。
-- 変換で `\tightlist` / `\pandocbounded` 等の pandoc マクロが本体テンプレート側に無い場合は、表紙 Markdown 冒頭の raw ブロックで `\providecommand` して補える。
-- v1 は `{{v:}}` 置換のみ対応（`{{#if:}}` 条件ブロックは未対応）。変換失敗時は pandoc ステップを失敗（終了コード 1）にする。
+- 表紙のページ体裁（文字の大きさ・空き）は表紙 Markdown 内に raw typst ブロック（```` ```{=typst} ````）で書く。同梱の `cover_standard.md` が書き方の例になる。
+- 変換失敗時は pandoc ステップを失敗（終了コード 1）にする。
 
-### 変数値のエスケープ処理
+**表紙の画像**
 
-`{{v:VAR}}` を置換する直前に、変数の値に対して `escape_backslash_smart` 処理を適用してから埋め込む。`vars` 辞書の値自体は変更しない。
+表紙 MD は merge を通らないので、本文の画像のようには merge が `image-dir` に集めない。そこで pandoc ステップが表紙の画像も同じ場所に集める。
 
-`escape_backslash_smart` はコードブロック（` ``` ` で囲まれた範囲）とインラインコード（`` ` `` で囲まれた範囲）の外側にある `\` を `\\` に、`&` を `\&` にエスケープする。
+```yaml
+vars:
+  COVER_IMAGE: ../images/cover_image.png   # レシピ（src/recipe.yaml）からの相対
+merge:
+  image-dir: ../build/images               # 表紙の画像もここにコピーされる
+```
 
-### エラー条件
+- コピー先は `merge.image-dir`（結合済み MD の場所基準、既定 `images`）の直下（`flatten-images` に関係なくフラット）。命名は `merge.image-naming`、同名衝突は `merge.image-collision` に従う。衝突とみなすのは本文（render 済み MD）が参照する image-dir 内の別内容のファイルと同名になるときだけで、前回実行で置いた同名ファイルは上書きする。既に image-dir 内にある画像はコピーせずその場で参照する。
+- レシピ基準で見つからない参照は書き換えない。従来どおり `pandoc.resource-path` から探す（同梱の `ppt_md_merger.png` を名前だけで書く例など、既存のレシピはそのまま動く）。
+- `merge.copy-images: false`（`no-copy-images: true`）のときはコピーせず、従来どおり resource-path から探す。
+- URL・絶対パス・data URI は対象外。
 
-* `pandoc.conditional-process-input` が未定義
-* 入力ファイルが存在しない
-* 出力先に既存ファイルがあり `--force` 未指定
-* `{{v:VAR}}` の `VAR` が `vars:` に未定義
-* 条件ブロックの開始・終了タグ不一致、ネスト、変数名不正（詳細は [conditional_block_process.md](../conditional_block_process.md) 参照）
+### PDF の文書プロパティ
+
+PDF のプロパティ（タイトル・作成者など。PDF ビューアの「文書のプロパティ」に出るもの）は、表紙用のレシピ変数 `COVER_*` を流用して付ける。表紙に何を出すかは PDF を作る人が必ず決めるので、それを主な設定項目にする。表紙と違う値にしたいときは、PDF の defaults（`pandoc.defaults`。version 3 以前は `typstdefaults`）の `metadata:` に書くとそちらが優先する（version 3 以前のレシピの `pandoc.metadata-file` も読むが、defaults の `metadata:` に負ける）。表紙（`cover-md`）を付けないレシピでも、`COVER_*` を書けばプロパティは付く。
+
+| プロパティ | `vars` | `metadata:` のキー |
+|---|---|---|
+| タイトル | `COVER_TITLE` | `title` |
+| 作成者 | `COVER_AUTHOR` | `author`（リスト可） |
+| サブジェクト | `COVER_SUBTITLE` | `subject` |
+| キーワード | （なし） | `keywords`（リスト可） |
+| 言語 | （なし） | `lang`（同梱の defaults は `ja`。`en` / `en-US` など） |
+| 作成日 | （なし） | 常にビルドした日時（`COVER_DATE` は使わない） |
+
+```yaml
+# 上書き用の defaults（pandoc.defaults: [report_base_defaults.yaml, over.yaml] の over.yaml）
+metadata:
+  title: PDF のプロパティだけ別のタイトル
+  keywords: [pptmdmerge, typst]
+  lang: en
+```
+
+* 値は 1 行の文字列として使う（改行は空白に、Markdown の記法は解釈しない）。`metadata:` に空の値（`subject: ""`）を書くとそのプロパティは付けない
+* `lang` は本文の言語（行分割・ハイフネーション・引用符）にも効く。言語コードでない値は警告して使わない
+* 同梱テンプレート `report_template.typst` が `#set document(...)` / `#set text(lang: ...)` として出す（`src/md_merge/_pdf_metadata.py`）。自作のテンプレートでは変数 `sem-document` を出力すると同じ結果になる
+
+### HTML / reveal.js の表紙（`pandoc.htmlcover`）
+
+HTML の断片（例: 同梱の `standard_cover.html`）の `{{v:NAME}}` をレシピ `vars` で置換した `cover-processed.html` を本文前に入れる。version 4 の `cover-md` は PDF 専用で、HTML には変換しない（中身が typst の生コードなので HTML では崩れる）。version 3 以前のレシピでは、`cover-md`（LaTeX 用の Markdown 表紙）を書いてあると HTML 出力でもそれを変換して前置する。
 
 ---
 
@@ -638,16 +657,16 @@ note エディタはキーボード入力で本文を受け取るため、Markdo
 
 ### note.com への投入（tools/notecom_autopilot.py）
 
-生成した YAML は `tools/notecom_autopilot.py` が読む。Playwright で note.com の新規記事エディタを開き、カバー画像（1280×670 にリサイズ）・タイトル・本文ブロック・目次を順に入力したのち Inspector で一時停止する。再開すると「公開に進む」を押してハッシュタグ（`meta.hashtags`）を埋め、公開直前の画面で 60 秒待って終了する。**最終的な公開ボタンは押さない。**
+生成した YAML は `tools/notecom_autopilot.py` が読む。Playwright で note.com の新規記事エディタを開き、カバー画像（1280×670 にリサイズ）・タイトル・本文ブロック・目次を順に入力したのち Inspector で一時停止する。再開すると「公開に進む」を押してハッシュタグ（`meta.hashtags`）を埋め、公開直前の画面で `--close-wait` 秒（既定 60 秒）待って終了する。要素待ちのタイムアウトはスクリプト冒頭の `TIMEOUT_*` 定数にまとめてある。**最終的な公開ボタンは押さない。**
 
 ```bash
 pip install "pptmdmerge[notecom]"            # playwright, pyperclip
 python -m playwright install chromium
 python -m playwright codegen --save-storage=auth.json https://note.com/login   # 初回のみ。ログインして閉じる
-python tools/notecom_autopilot.py build/article_notecom.yaml --auth-state auth.json [--imagedir DIR] [--hashtags "#a,#b"] [--no-pause]
+python tools/notecom_autopilot.py build/article_notecom.yaml --auth-state auth.json [--imagedir DIR] [--hashtags "#a,#b"] [--no-pause] [--close-wait SEC] [--record-video DIR] [--viewport WxH]
 ```
 
-`--auth-state` 省略時は環境変数 `NOTE_AUTH_STATE` を使う。画像は `--imagedir` 配下を優先し、無ければ YAML のディレクトリ基準で解決する。既知の制約: リストは 1 階層のみ、表は等幅ブロック、インライン装飾は `inline: plain` で除去したものがそのまま表示される。
+`--auth-state` 省略時は環境変数 `NOTE_AUTH_STATE` を使う。`--record-video DIR` を付けると自動操作を録画し、`DIR/{YAML名}_{日時}.webm` に保存する。録画範囲はページの描画領域（ビューポート。既定 1280×1400、`--viewport 1024x768` のように変更可）のみで、アドレスバーやタブは含まない。Inspector での一時停止中や公開画面での待機中も録画は続く。途中でエラーになってもそこまでの録画は残る。録画には Playwright 同梱の ffmpeg が要る（`playwright install chromium` で入る。無いと言われたら `python -m playwright install ffmpeg`）。画像は `--imagedir` 配下を優先し、無ければ YAML のディレクトリ基準で解決する。既知の制約: リストは 1 階層のみ、表は等幅ブロック、インライン装飾は `inline: plain` で除去したものがそのまま表示される。
 
 リンク（`runs` の `url` 付き要素）は、リンクテキストを打った直後に Shift+← で選択し、バブルメニューが出るまで約 0.6 秒待ってから note の標準ショートカット Ctrl+K で URL 入力欄（`textarea` placeholder `https://`）を開き、URL を入れて「適用」→ Esc で確定し、End で行末に戻って続きを打つ。選択直後に Ctrl+K を押しても入力欄は開かないので待ちが必要。URL 入力欄が 3 秒以内に現れなければリンクを諦め、`（url）` をテキストとして補う（警告を表示）。
 

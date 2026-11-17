@@ -27,7 +27,6 @@ pptxをマージする際、ファイル全体ではなく一部を選択して�
 ![](build/figures/splitted_insertion_guide_slide2_fig.png)
 
 
-<!-- source: defaults/common_assets/tex_newpage.md -->
 
 
 

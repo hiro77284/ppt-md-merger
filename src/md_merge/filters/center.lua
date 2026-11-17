@@ -1,17 +1,13 @@
 -- center.lua
 -- Div .center を中央寄せブロックに lower する。
---   LaTeX: \begin{center} ... \end{center}（組込み環境。ヘッダ定義不要）
+--   Typst: #semcenter[...]
 --   HTML : <div class="center" style="text-align:center">（CSS 未読込でも効くよう inline style）
 --   その他の形式: 素通り
 function Div(el)
   if not el.classes:includes("center") then
     return nil
   end
-  if FORMAT:match("latex") then
-    table.insert(el.content, 1, pandoc.RawBlock("latex", "\\begin{center}"))
-    table.insert(el.content, pandoc.RawBlock("latex", "\\end{center}"))
-    return el
-  elseif FORMAT:match("html") then
+  if FORMAT:match("html") then
     el.attributes["style"] = "text-align:center"
     return el
   elseif FORMAT == "typst" then

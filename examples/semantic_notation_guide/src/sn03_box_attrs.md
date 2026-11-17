@@ -1,6 +1,6 @@
 # 囲みの属性
 
-note / warning / leadline / widequote の 4 つ（囲み系）は、`{ }` の中に `属性=値` を並べて見た目を調整できます。属性名は LaTeX（tcolorbox）版と同じで、Typst では同じ意味の値に読み替えます。
+note / warning / leadline / widequote の 4 つ（囲み系）は、`{ }` の中に `属性=値` を並べて見た目を調整できます。属性名と値の書き方は旧 LaTeX（tcolorbox）版と同じで、Typst では同じ意味の値に読み替えます。
 
 | 属性 | 意味 | 値の例 |
 |---|---|---|
@@ -188,7 +188,7 @@ small 指定の引用（0.9 倍）
 :::
 
 ::: {.note}
-Typst では `fontsize=14pt` のような長さも受け付けますが、LaTeX エンジンではこの書き方は使えません。LaTeX の絶対サイズ指定 `"\fontsize{14pt}{17pt}\selectfont"` は逆に Typst では読み替えられず、警告を出して無視されます。両方のエンジンで使う原稿では、サイズ命令（`"\large"` など）を使ってください。
+`fontsize=14pt` のような長さも受け付けます。LaTeX の絶対サイズ指定 `"\fontsize{14pt}{17pt}\selectfont"` は読み替えられず、警告を出して無視されます。
 :::
 
 ## stretch … 行送り

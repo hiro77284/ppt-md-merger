@@ -21,7 +21,6 @@ _WORK_FILE_KEYS = (
     "idresolvedfilename",
     "renderedfilename",
     "puremdfilename",
-    "resourcepathfilename",
 )
 
 _STEPS: list[tuple[str, object]] = [

@@ -30,6 +30,7 @@ entries:
 
     number: string           # optional if numbering disabled
     label: string            # optional if numbering disabled
+    nonum: boolean           # optional. true のとき number は空、label は title と同じ（カウンタを進めない）
 
     source:
       pptx: string
