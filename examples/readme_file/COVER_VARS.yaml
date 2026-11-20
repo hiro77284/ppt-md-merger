@@ -1,0 +1,13 @@
+# pandoc セッティングのサンプル
+
+  COVER_IMAGE: ppt_md_merger.png
+  COVER_TITLE: "PPT & MD merge ツール README 制作用ファイル"
+  COVER_SUBTITLE: "PPT & MD merge ツール README 制作用ファイル"
+  COVER_DATE: __DATE__
+  COVER_AUTHOR: "開米瑞浩"
+  COVER_AFFILIATION: "アイデアクラフト"
+  COVER_CONTACT: "https://ideacraft.jp"
+  COVER_COPYRIGHT: "© 2026 開米瑞浩"
+  COVER_NOTE: "PPT & MD merge ツール README 制作用ファイル"
+  COVER_QRCODE: 
+

@@ -12,7 +12,7 @@ input:
   dirs: 
     - .
     - extracted
-    - ../../defaults/common_assets
+    - ../../user_settings/common_assets
 
 procedure:
   - insertpptx: chapter_marker_numbering_guide.pptx

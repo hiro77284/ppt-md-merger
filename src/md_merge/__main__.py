@@ -16,6 +16,8 @@ from md_merge.pptmdexport import run as run_pptmdexport
 from md_merge.pptyamlexport import run as run_pptyamlexport
 from md_merge.ppt_to_pdf import run as run_ppt_to_pdf
 from md_merge.ppt_to_puremd import run as run_ppt_to_puremd
+from md_merge.ppt_to_githubmd import run as run_ppt_to_githubmd
+from md_merge.githubmd import run as run_githubmd
 from md_merge.merge import run as run_merge
 from md_merge.idcollect import run as run_idcollect
 from md_merge.idresolve import run as run_idresolve
@@ -52,7 +54,7 @@ def _make_common_parser() -> argparse.ArgumentParser:
     )
     p.add_argument(
         "--keep-work", action="store_true", dest="keep_work",
-        help="Retain work_ intermediate files after completion (only effective for ppt_to_pdf / ppt_to_transfer / ppt_to_puremd / ppt_to_notecom; ignored with a warning elsewhere)",
+        help="Retain work_ intermediate files after completion (only effective for ppt_to_pdf / ppt_to_transfer / ppt_to_puremd / ppt_to_githubmd / ppt_to_notecom; ignored with a warning elsewhere)",
     )
     return p
 
@@ -266,17 +268,27 @@ def _make_parser() -> argparse.ArgumentParser:
     pptyamlexport.add_argument("--force", action="store_true", help="Overwrite existing output files")
     pptyamlexport.add_argument("--closepptx", action="store_true", help="Close PPTX after processing")
 
-    # ── puremd (alias: githubmd) ─────────────────────────────────────────────────
+    # ── puremd ─────────────────────────────────────────────────────────────
     puremd = sub.add_parser(
         "puremd",
         parents=[common],
-        aliases=["githubmd"],
-        help="Generate GitHub-flavored Markdown: strip LaTeX raw blocks and lower "
-             "semantic constructs to GFM (alias: githubmd)",
+        help="Generate plain GFM (shared by transfer / notecomexport / GitHub): strip LaTeX raw "
+             "blocks and lower semantic constructs to GFM. Pandoc image attributes are kept",
     )
     puremd.add_argument("input", nargs="?", metavar="INPUT", help="Input YAML file")
     puremd.add_argument("--workdir", "-w", metavar="DIR", help="Base directory for relative paths")
     puremd.add_argument("--force", action="store_true", help="Overwrite existing output file")
+
+    # ── githubmd ───────────────────────────────────────────────────────────
+    githubmd = sub.add_parser(
+        "githubmd",
+        parents=[common],
+        help="Convert the puremd MD into GitHub-ready MD (output.githubmdfilename): images with "
+             "{ width=.. } become <img width=..>; attributes GitHub cannot express are dropped",
+    )
+    githubmd.add_argument("input", nargs="?", metavar="INPUT", help="Input YAML file")
+    githubmd.add_argument("--workdir", "-w", metavar="DIR", help="Base directory for relative paths")
+    githubmd.add_argument("--force", action="store_true", help="Overwrite existing output file")
 
     # ── ppt_to_pdf ─────────────────────────────────────────────────────────
     p2p = sub.add_parser(
@@ -326,6 +338,23 @@ def _make_parser() -> argparse.ArgumentParser:
     p2pm.add_argument("--deletecsl", nargs="?", const="on", choices=["on", "off"], default=None, dest="delete_csl", metavar="[on|off]", help="[非推奨/無視] パイプラインでは CSL 処理を行わないため効果がない。指定すると警告する")
     p2pm.add_argument("--deletecsp", nargs="?", const="on", choices=["on", "off"], default=None, dest="delete_csp", metavar="[on|off]", help="Preprocess: delete shapes containing #CSP#. Bare flag = on; 'off' forces off; omitted = recipe indexer.deletecsp. Effective only with --preprocess")
     p2pm.add_argument("--no-check", action="store_true", dest="no_check", help="Skip the pre-merge insertmd drift check (no confirmation prompt)")
+    p2pm.add_argument("--transfer", action="store_true", help="Run transfer as the last step: copy the puremd MD (output.puremdfilename) and its images to transfer.dataentry_input (needs the transfer: section)")
+
+    # ── ppt_to_githubmd ───────────────────────────────────────────────────
+    p2gh = sub.add_parser(
+        "ppt_to_githubmd",
+        parents=[common],
+        help="Run pptpdfexport → pptimgexport → pptmdexport → merge → idcollect → idresolve → render → puremd → githubmd in sequence (GitHub-ready MD is the deliverable)",
+    )
+    p2gh.add_argument("input", nargs="?", metavar="INPUT", help="Input YAML file")
+    p2gh.add_argument("--workdir", "-w", metavar="DIR", help="Base directory for relative paths")
+    p2gh.add_argument("--force", action="store_true", help="Overwrite existing output files")
+    p2gh.add_argument("--rebuild", action="store_true", help="Force the pptpdfexport step to rebuild PDFs even when newer than the source PPTX")
+    p2gh.add_argument("--preprocess", action="store_true", help="Preprocess each input.cropsrc.pptx (single-file pptmerge, slides:all) and use the preprocessed pptx for the pptx-consuming steps")
+    p2gh.add_argument("--deletecsl", nargs="?", const="on", choices=["on", "off"], default=None, dest="delete_csl", metavar="[on|off]", help="[非推奨/無視] パイプラインでは CSL 処理を行わないため効果がない。指定すると警告する")
+    p2gh.add_argument("--deletecsp", nargs="?", const="on", choices=["on", "off"], default=None, dest="delete_csp", metavar="[on|off]", help="Preprocess: delete shapes containing #CSP#. Bare flag = on; 'off' forces off; omitted = recipe indexer.deletecsp. Effective only with --preprocess")
+    p2gh.add_argument("--no-check", action="store_true", dest="no_check", help="Skip the pre-merge insertmd drift check (no confirmation prompt)")
+    p2gh.add_argument("--transfer", action="store_true", help="Run transfer as the last step: copy the GitHub MD (output.githubmdfilename) and its images to transfer.dataentry_input (needs the transfer: section)")
 
     # ── transfer ──────────────────────────────────────────────────────────
     transfer = sub.add_parser(
@@ -337,8 +366,8 @@ def _make_parser() -> argparse.ArgumentParser:
     transfer.add_argument("--workdir", "-w", metavar="DIR", help="Base directory for relative paths")
     transfer.add_argument("--force", action="store_true", help="Overwrite existing output files")
     transfer.add_argument(
-        "--source", choices=["puremd", "rendered", "merged"], dest="source",
-        help="Transfer source MD: puremd (puremdfilename) | rendered (renderedfilename) | merged (mdfilename). Overrides transfer.inputmd",
+        "--source", choices=["puremd", "githubmd", "rendered", "merged"], dest="source",
+        help="Transfer source MD: puremd (puremdfilename) | githubmd (githubmdfilename) | rendered (renderedfilename) | merged (mdfilename). Overrides transfer.inputmd",
     )
 
     # ── notecomexport ────────────────────────────────────────────────────────
@@ -435,7 +464,7 @@ def _make_parser() -> argparse.ArgumentParser:
 
 
 # Subcommands that actually honor --keep-work; others accept it but ignore with a warning.
-_KEEP_WORK_SUBCOMMANDS = {"ppt_to_pdf", "ppt_to_transfer", "ppt_to_puremd", "ppt_to_notecom"}
+_KEEP_WORK_SUBCOMMANDS = {"ppt_to_pdf", "ppt_to_transfer", "ppt_to_puremd", "ppt_to_githubmd", "ppt_to_notecom"}
 
 
 def main() -> None:
@@ -488,8 +517,10 @@ def main() -> None:
                     print_done("pandoc")
             case "render":
                 code = run_render(args)
-            case "puremd" | "githubmd":
+            case "puremd":
                 code = run_puremd(args)
+            case "githubmd":
+                code = run_githubmd(args)
             case "pptmerge":
                 code = run_pptmerge(args)
             case "crop":
@@ -512,6 +543,8 @@ def main() -> None:
                 code = run_ppt_to_transfer(args)
             case "ppt_to_puremd":
                 code = run_ppt_to_puremd(args)
+            case "ppt_to_githubmd":
+                code = run_ppt_to_githubmd(args)
             case "transfer":
                 code = run_transfer(args)
             case "notecomexport":

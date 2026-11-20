@@ -19,7 +19,8 @@
 | ir | `idresolve` |
 | rd | `render` |
 | pd | `pandoc` |
-| ur | `puremd`（別名 `githubmd`） |
+| ur | `puremd` |
+| gh | `githubmd`（表には列を設けず、備考に記載） |
 | pm | `pptmerge` |
 | ie | `pptimgexport` |
 | me | `pptmdexport` |
@@ -59,7 +60,8 @@
 | `output.pdffilename`          |     |     |     |     |  W  |     |     |     |     |     |     |     | `--html`/`--reveal` 未指定時。省略時は `targetbasefilename` から自動生成     |
 | `output.htmlfilename`         |     |     |     |     |  W  |     |     |     |     |     |     |     | `--html` 指定時。省略時は `targetbasefilename` から自動生成                         |
 | `output.revealfilename`       |     |     |     |     |  W  |     |     |     |     |     |     |     | `--reveal` 指定時。省略時は `targetbasefilename` から自動生成                       |
-| `output.puremdfilename`       |     |     |     |     |     |  W  |     |     |     |     |     |     | 省略時は `targetbasefilename` から自動生成。nc は既定の入力（`--source` / `notecomexport.inputmd` 未指定時） |
+| `output.puremdfilename`       |     |     |     |     |     |  W  |     |     |     |     |     |     | 省略時は `targetbasefilename` から自動生成。nc は既定の入力（`--source` / `notecomexport.inputmd` 未指定時）。gh の入力 |
+| `output.githubmdfilename`     |     |     |     |     |     |     |     |     |     |     |     |     | gh（`githubmd`）が書く GitHub 表示用 MD。省略時は `targetbasefilename` から `{base}_github.md` を自動生成 |
 | `output.notecomyamlfilename`     |     |     |     |     |     |     |     |     |     |     |     |     | nc が W。省略時は `targetbasefilename` から `<base>_notecom.yaml` を自動生成          |
 | `output.pptxfilename`         |     |     |     |     |     |     |  W  |     |     |     |     |     | `targetbasefilename` 未指定時は必須。省略時は `targetbasefilename` から自動生成         |
 
@@ -179,6 +181,7 @@
 | `params.*` | R | R | R | 切り替え（`when.var` / `{{#if}}`）に使う変数の宣言。`type`（`bool`/`string`）・`values`・`default`・`description`。`--var` で渡さなければ `default`。宣言があるレシピでは未宣言の名前・取りうる値でない値を読み込み時にエラーにする。`va --list-params` で一覧。詳細は `docs/spec/md_pipeline.md` |
 | `procedure` | R |  | R | `mg` は `insertmd`/`insertvar`/`chapter`/`section`/`subsection`/`insertvspace`/`insertpagebreak`/`insertvfill`、`pm` は `insertpptx`/`chapter`/`section`/`subsection`/`beginstay`/`endstay`。`pm` は MD 専用の操作（`insertmd`/`insertvar`/`insertvspace`/`insertpagebreak`/`insertvfill`）も**許可はするが無視**する（同一 procedure を mg と pm で共用できるようにするため） |
 | `procedure[].when` | R |  | R | 項目の条件付き適用。`command` / `not_command`（起動サブコマンド名）、`var`（`vars:` ＋ `--var` に対する条件式 `NAME` / `!NAME` / `NAME=VALUE` / `NAME!=VALUE`）。値は文字列またはリスト。`ck`/`cv`/`va` は条件を無視して全項目を対象にする。詳細は `docs/spec/md_pipeline.md` |
+| `procedure[].insertmdpages` | R |  | R | （version 2 以降）`insertmd` と同じファイル名（`[from-to]` レンジ可）を展開し、各 MD の間に `insertvfill` + `insertpagebreak` を挟んだ insertmd の並びにする略記。1 ファイルなら insertmd と同じ。読み込み時に展開される（`pm` では insertmd と同じく無視）。詳細は `docs/spec/md_pipeline.md` |
 | `procedure[].group` | R |  | R | （version 2 以降）項目のリストを束ねる。同じ要素の `when:` が配下の全項目に掛かる（項目自身の `when:` とは AND、入れ子可）。書けるキーは `group` / `when` / `description`。読み込み時に展開される。詳細は `docs/spec/md_pipeline.md` |
 | `separator.enabled` |  |  | R | `insertpptx` 間に空白スライドを挿入するか |
 | `log.filename` |  |  | R | 省略時は `<pptxfilename_stem>_merge.log` |

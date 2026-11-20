@@ -1,100 +1,210 @@
 #!/usr/bin/env bash
-set -e
+# =============================================================================
+# build_all_examples.sh
+#   examples/ 配下のレシピ yaml を pptmdmerge で一括ビルドする。
+#
+# 使い方 (examples ルートで実行):
+#   ./build_all_examples.sh -r [options] [PATTERN]   (実行)
+#   ./build_all_examples.sh -n [options] [PATTERN]   (dry-run)
+#
+#   -r / -n のどちらも指定しないときは、このヘルプを表示して何も実行しない。
+#
+#   PATTERN を指定すると、レシピ yaml のファイル名に PATTERN を含む
+#   (部分一致・大文字小文字区別) ものだけを実行する。省略時は全件。
+#   例: ./build_all_examples.sh -r _pdf_recipe   /   ./build_all_examples.sh -r -k stylebase
+#
+# オプション:
+#   -r, --run            ビルドを実行する
+#   -k, --keep-going     pptmdmerge がエラーになっても続行する
+#                        (既定: 最初のエラーで中断)
+#   -l, --log            実行ログを保存する (既定ファイル名:
+#                        build_all_examples_YYYYMMDD_HHMMSS.log, examples ルート)
+#       --log-file FILE  実行ログを FILE に保存する (-l を兼ねる)
+#   -n, --dry-run        実行するコマンドを表示するだけで実行しない
+#                        (-r と同時指定はエラー)
+#   -h, --help           このヘルプを表示する
+#
+# ログ保存時も標準出力に同じ内容を表示する (tee)。
+# 終了コード: 全件成功 0 / 失敗あり 1 / 引数・リスト不正 2
+# =============================================================================
 
-# このスクリプトは、すべてのexamplesをビルドするためのスクリプトです。
+# -----------------------------------------------------------------------------
+# ビルド対象リスト
+#   1 行 1 レシピ、"|" 区切りで 3 項目:
+#     <examples ルートからの相対パス> | <サブコマンド> | <パラメータ>
+#   - サブコマンドを空にすると DEFAULT_SUBCOMMAND (ppt_to_puremd) を使う
+#   - パラメータは空白区切りの文字列 (例: --force --deletecsp off)。既定は空
+#   - 空行と # で始まる行は無視する
+#   ※ 値に "|" は使えない。パラメータ内で空白を含む値の引用は非対応。
+# -----------------------------------------------------------------------------
+DEFAULT_SUBCOMMAND="ppt_to_puremd"
 
-# README.md の生成には textconv（別ツール）を使う。設定ファイルを環境変数
-# TEXTCONV_CONFIG で渡したときだけ実行し、未指定ならスキップする。
-TEXTCONV_CONFIG=${TEXTCONV_CONFIG:-}
-TEXTCONV_OVERWRITE=--overwrite
-
-run_textconv() {
-    if [[ -z "$TEXTCONV_CONFIG" ]]; then
-        echo "TEXTCONV_CONFIG が未指定のため README.md の生成をスキップします"
-        return 0
-    fi
-    textconv "$@" --config "$TEXTCONV_CONFIG" $TEXTCONV_OVERWRITE
-}
-PPTMERGE_FORCE=--force
-
-KEEP_WORK=--keep-work
-
-DO_OVERVIEW=true
-
-DEBUG=--debug
-
-# 概要説明書のビルド
-if [[ "$DO_OVERVIEW" == true ]]; then
-    echo "===========building overview example... ==========="
-    cd overview
-    pptmdmerge.exe ppt_to_pdf overview_recipe.yaml $KEEP_WORK
-    run_textconv build/overview_merged_rendered.md -o ../../README.md --from-base examples/overview/build/ --to-base .
-    pptmdmerge.exe pptmerge overview_recipe.yaml
-    cd ..
-fi
-
-
-
-
-targets=(
-    pm1
-    pm2
-    pm3
-    pm4
-    pm5
-    pm6
-    pm7
-    pm8
-    pm9
-    pm10
-    pm11
+RECIPES=$(cat <<'EOF'
+# path                                                                  | subcommand    | parameters
+pm1_simple_ppt_merge/simple_ppt_merge_recipe.yaml                       | pptmerge | --force
+pm1_simple_ppt_merge/simple_ppt_merge_pdf_recipe.yaml                   | ppt_to_githubmd | --transfer
+pm2_simple_numbering/simple_numbering_recipe.yaml                       | pptmerge |
+pm2_simple_numbering/simple_numbering_pdf_recipe.yaml                   | ppt_to_githubmd | --transfer
+pm3_chapter_marker_numbering/chapter_marker_numbering_recipe.yaml       | pptmerge |
+pm3_chapter_marker_numbering/chapter_marker_numbering_pdf_recipe.yaml   | ppt_to_githubmd | --transfer
+pm4_variable_replacement/variable_replacement_recipe.yaml               | pptmerge |
+pm4_variable_replacement/variable_replacement_pdf_recipe.yaml           | ppt_to_githubmd | --transfer
+pm5_chapter_cover_insertion/chapter_cover_insertion_recipe.yaml         | pptmerge |
+pm5_chapter_cover_insertion/chapter_cover_insertion_pdf_recipe.yaml     | ppt_to_githubmd | --transfer
+pm6_stylebase/stylebase_recipe.yaml                                     | pptmerge |
+pm6_stylebase/stylebase_pdf_recipe.yaml                                 | ppt_to_githubmd | --transfer
+pm7_splitted_insertion/splitted_insertion_recipe.yaml                   | pptmerge |
+pm7_splitted_insertion/splitted_insertion_pdf_recipe.yaml               | ppt_to_githubmd | --transfer
+pm8_delete_csp/delete_csp_recipe.yaml                                   | pptmerge |
+pm8_delete_csp/delete_csp_pdf_recipe.yaml                               | ppt_to_githubmd | --transfer
+pm9_delete_csl/delete_csl_recipe.yaml                                   | pptmerge |
+pm9_delete_csl/delete_csl_pdf_recipe.yaml                               | ppt_to_githubmd | --transfer
+pm10_memo_temp/memo_temp_recipe.yaml                                    | pptmerge |
+pm10_memo_temp/memo_temp_pdf_recipe.yaml                                | ppt_to_githubmd | --transfer
+pm11_title_filename/title_filename_recipe.yaml                          | pptmerge |
+pm11_title_filename/title_filename_pdf_recipe.yaml                      | ppt_to_githubmd | --transfer
+pdf1_minimum/src/pdf1_minimum_pdf_recipe.yaml                               | ppt_to_githubmd | --transfer --keep-work 
+#pdf2_minimum/src/pdf1_minimum_pdf_recipe.yaml                           | ppt_to_githubmd |  --transfer
+overview/overview_pdf_recipe.yaml                                           | ppt_to_githubmd | --transfer
+# semantic_notation_guide/semantic_notation_recipe.yaml                   | ppt_to_githubmd |  --transfer        # これは別種の方法でビルドするので除外
+readme_file/src/readme_file_pdf_recipe.yaml                                 | ppt_to_githubmd | --transfer --force
+EOF
 )
 
-declare -A samplenames
+# -----------------------------------------------------------------------------
+# 以下は実装部 (通常は編集不要)
+# -----------------------------------------------------------------------------
+EXAMPLES_ROOT=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)
 
-samplenames[pm1]="simple_ppt_merge"
-samplenames[pm2]="simple_numbering"
-samplenames[pm3]="chapter_marker_numbering"
-samplenames[pm4]="variable_replacement"
-samplenames[pm5]="chapter_cover_insertion"
-samplenames[pm6]="stylebase"
-samplenames[pm7]="splitted_insertion"
-samplenames[pm8]="delete_csp"
-samplenames[pm9]="delete_csl"
-samplenames[pm10]="memo_temp"
-samplenames[pm11]="title_filename"
+KEEP_GOING=0
+SAVE_LOG=0
+LOG_FILE=""
+DRY_RUN=0
+RUN=0
+PATTERN=""
 
+usage() {
+    sed -n '2,/^# =====/p' "${BASH_SOURCE[0]}" | sed '$d' | sed 's/^# \{0,1\}//'
+}
 
-for target in "${targets[@]}"
-do
-    echo "checking $target"
-    echo cd ${target}_${samplenames[$target]}
-    cd ${target}_${samplenames[$target]}
-    echo "===========building ${samplenames[$target]} PDF ==========="
-    echo pptmdmerge.exe ppt_to_pdf ${samplenames[$target]}_pdf_recipe.yaml $PPTMERGE_FORCE $KEEP_WORK
-    pptmdmerge.exe ppt_to_pdf ${samplenames[$target]}_pdf_recipe.yaml $PPTMERGE_FORCE
-    echo "===========building ${samplenames[$target]} README ==========="
-    run_textconv build/${samplenames[$target]}_rendered.md -o README.md --from-base build --to-base . $DEBUG
-    echo "===========building ${samplenames[$target]} PPTX ==========="
-    echo pptmdmerge.exe pptmerge ${samplenames[$target]}_recipe.yaml $PPTMERGE_FORCE
-    pptmdmerge.exe pptmerge ${samplenames[$target]}_recipe.yaml $PPTMERGE_FORCE
-    echo cd ..
-    cd ..
-    read -p "Enterキーを押すと続行します..." < /dev/tty
+while [ $# -gt 0 ]; do
+    case "$1" in
+        -k|--keep-going) KEEP_GOING=1 ;;
+        -l|--log)        SAVE_LOG=1 ;;
+        --log-file)
+            [ $# -ge 2 ] || { echo "error: --log-file には FILE が必要です" >&2; exit 2; }
+            SAVE_LOG=1; LOG_FILE="$2"; shift ;;
+        --log-file=*)    SAVE_LOG=1; LOG_FILE="${1#*=}" ;;
+        -r|--run)        RUN=1 ;;
+        -n|--dry-run)    DRY_RUN=1 ;;
+        -h|--help)       usage; exit 0 ;;
+        -*) echo "error: 不明なオプション: $1" >&2; usage >&2; exit 2 ;;
+        *)
+            [ -z "$PATTERN" ] || { echo "error: PATTERN は 1 つだけ指定できます" >&2; exit 2; }
+            PATTERN="$1" ;;
+    esac
+    shift
 done
 
+if [ $RUN -eq 1 ] && [ $DRY_RUN -eq 1 ]; then
+    echo "error: -r/--run と -n/--dry-run は同時に指定できません" >&2; exit 2
+fi
+if [ $RUN -eq 0 ] && [ $DRY_RUN -eq 0 ]; then
+    usage; exit 0
+fi
 
+trim() {
+    local s="$1"
+    s="${s#"${s%%[![:space:]]*}"}"
+    s="${s%"${s##*[![:space:]]}"}"
+    printf '%s' "$s"
+}
 
-# pm1 のビルド
-# if [[ "$DO_PM1" == true ]]; then
-#     echo "===========building pm1_simple_ppt_merge example... ==========="
-#     cd pm1_simple_ppt_merge
-#     echo "===========building pm1_simple_ppt PDF ==========="
-#     pptmdmerge.exe ppt_to_pdf simple_ppt_merge_pdf_recipe.yaml $PPTMERGE_FORCE
-#     echo "===========building pm1_simple_ppt README ==========="
-#     echo textconv build/simple_ppt_rendered.md -o README.md --config $TEXTCONV_CONFIG $TEXTCONV_OVERWRITE --from-base . --to-base .
-#     textconv build/simple_ppt_rendered.md -o README.md --config $TEXTCONV_CONFIG $TEXTCONV_OVERWRITE --from-base . --to-base . $DEBUG
-#     echo "===========building pm1_simple_ppt PPTX ==========="
-#     pptmdmerge.exe pptmerge simple_ppt_merge_recipe.yaml $PPTMERGE_FORCE
-#     cd ..
-# fi
+run_all() {
+    local total=0 ok=0 ng=0
+    local -a failed=()
+    local line path sub params dir file rc
+    local -a args
+
+    cd "$EXAMPLES_ROOT" || return 2
+    echo "=== build_all_examples.sh  $(date '+%Y-%m-%d %H:%M:%S') ==="
+    echo "examples root: $EXAMPLES_ROOT"
+    echo "on error: $([ $KEEP_GOING -eq 1 ] && echo continue || echo stop)"
+    [ $DRY_RUN -eq 1 ] && echo "dry-run: yes"
+    [ -n "$PATTERN" ] && echo "pattern: $PATTERN"
+    echo
+
+    # リストは fd 3 から読む (stdin は pptmdmerge の確認入力用に端末のまま残す)
+    while IFS= read -r -u 3 line || [ -n "$line" ]; do
+        line=$(trim "$line")
+        case "$line" in ''|'#'*) continue ;; esac
+
+        IFS='|' read -r path sub params <<<"$line"
+        path=$(trim "$path"); sub=$(trim "$sub"); params=$(trim "$params")
+        [ -n "$sub" ] || sub="$DEFAULT_SUBCOMMAND"
+        dir=$(dirname "$path"); file=$(basename "$path")
+        if [ -n "$PATTERN" ] && [[ "$file" != *"$PATTERN"* ]]; then
+            continue
+        fi
+
+        total=$((total + 1))
+        read -r -a args <<<"$params"
+
+        echo "----- [$total] $path"
+        if [ ! -f "$EXAMPLES_ROOT/$path" ]; then
+            echo "ERROR: レシピが見つかりません: $path"
+            rc=2
+        elif ! cd "$EXAMPLES_ROOT/$dir"; then
+            echo "ERROR: cd できません: $dir"
+            rc=2
+        else
+            echo "\$ (cd $dir) pptmdmerge $sub $file${params:+ $params}"
+            if [ $DRY_RUN -eq 1 ]; then
+                rc=0
+            else
+                pptmdmerge "$sub" "$file" "${args[@]}" 2>&1
+                rc=$?
+            fi
+            cd "$EXAMPLES_ROOT" || return 2
+        fi
+
+        if [ $rc -eq 0 ]; then
+            ok=$((ok + 1))
+            echo "OK"
+        else
+            ng=$((ng + 1))
+            failed+=("$path (exit $rc)")
+            echo "FAILED (exit $rc)"
+            if [ $KEEP_GOING -eq 0 ]; then
+                echo
+                echo "エラーのため中断しました (続行するには -k / --keep-going)"
+                break
+            fi
+        fi
+        echo
+    done 3<<<"$RECIPES"
+
+    cd "$EXAMPLES_ROOT" || return 2
+    if [ $total -eq 0 ]; then
+        echo "ERROR: 対象のレシピがありません${PATTERN:+ (pattern: $PATTERN)}"
+        return 2
+    fi
+    echo "=== summary: total(run)=$total ok=$ok failed=$ng ==="
+    local f
+    for f in "${failed[@]}"; do echo "  FAILED: $f"; done
+
+    [ $ng -eq 0 ]
+}
+
+if [ $SAVE_LOG -eq 1 ]; then
+    [ -n "$LOG_FILE" ] || LOG_FILE="$EXAMPLES_ROOT/build_all_examples_$(date '+%Y%m%d_%H%M%S').log"
+    echo "log file: $LOG_FILE"
+    run_all 2>&1 | tee "$LOG_FILE"
+    status=${PIPESTATUS[0]}
+else
+    run_all
+    status=$?
+fi
+
+cd "$EXAMPLES_ROOT"
+exit "$status"

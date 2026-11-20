@@ -1,4 +1,5 @@
 <!-- source: extracted/title_filename_guide_slide1_md.md -->
+<!-- md_merge_rawtitle: TITLE、FILENAME置換 -->
 <!-- #id:section:title_filename_guide:slide1 -->
 ## TITLE、FILENAME置換
 
@@ -10,7 +11,8 @@
 
 
 
-![](build/figures/title_filename_guide_slide1_fig.png)
 
-![](build/figures/title_filename_guide_keyvisual.png)
+<img src="readme-images/title-filename-guide-slide1-fig.png" alt="" width="95%">
+
+<img src="readme-images/title-filename-guide-keyvisual.png" alt="" width="95%">
 

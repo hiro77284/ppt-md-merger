@@ -1,4 +1,4 @@
-# パイプライン仕様（crop_to_pdf / ppt_to_pdf / ppt_to_transfer / ppt_to_puremd / ppt_to_notecom）
+# パイプライン仕様（crop_to_pdf / ppt_to_pdf / ppt_to_transfer / ppt_to_puremd / ppt_to_githubmd / ppt_to_notecom）
 
 > [仕様書トップ](../md_merge_spec.md) — 共通オプション・入力/出力指定・ログ・JSON・dry-run の各仕様はトップを参照。
 
@@ -195,7 +195,7 @@ pptmdmerge ppt_to_transfer recipe.yaml --dry-run
 | 8 | rawblock 除去 | `puremd` |
 | 9 | dataentry へ転送 | `transfer` |
 
-`puremd` ステップはレンダー済み MD（`output.renderedfilename`）から raw ブロック等を除去し `output.puremdfilename` を生成する（生 raw ブロックの除去は組み込み、追加パターンは `puremd.strip_config`。[puremd](output_formats.md#puremd別名-githubmd) を参照）。
+`puremd` ステップはレンダー済み MD（`output.renderedfilename`）から raw ブロック等を除去し `output.puremdfilename` を生成する（生 raw ブロックの除去は組み込み、追加パターンは `puremd.strip_config`。[puremd](output_formats.md#puremd) を参照）。
 
 最終段の `transfer` は `transfer.dataentry_input`・`transfer.slug` 等のレシピキーを必要とする（[transfer](output_formats.md#transfer) を参照）。転送対象 MD の優先順位は `--source` > `transfer.inputmd` > パイプライン既定（`output.puremdfilename`）。すなわち `--source` も `transfer.inputmd` も未指定の場合、このパイプラインでは `output.puremdfilename`（puremd 処理済み MD）を転送対象とする（単体 `transfer` の既定である `output.renderedfilename` とは異なる）。`--source` を指定すると `transfer.inputmd` を上書きして対象を選択できる。
 
@@ -244,13 +244,33 @@ WARNING: ...
 * **`transfer` ステップを実行しない。** したがって `transfer.dataentry_input` / `transfer.slug` 等の `transfer:` セクションや `--source` オプションは不要（持たない）。
 * **中間生成ファイルの削除対象から `output.puremdfilename` を除外する。** puremd 処理済み MD はこのパイプラインの成果物なので、`--keep-work` を付けなくても削除されない。それ以外（`mdfilename` / `idcollectfilename` / `idresolvedfilename` / `renderedfilename`、および `--preprocess` 生成物）は `ppt_to_transfer` と同様に完了後に削除する。
 
-固有オプションは `--workdir` / `--force` / `--rebuild` / `--preprocess` / `--deletecsl`（無視）/ `--deletecsp` / `--no-check` / `--keep-work`（`--source` を除き `ppt_to_transfer` と同じ）。
+固有オプションは `--workdir` / `--force` / `--rebuild` / `--preprocess` / `--deletecsl`（無視）/ `--deletecsp` / `--no-check` / `--keep-work` / `--transfer`（`--source` を除き `ppt_to_transfer` と同じ）。
+
+`--transfer` を付けると、最後に `transfer` ステップを実行し、puremd 処理済み MD とその画像を `transfer.dataentry_input` へ転送する（`ppt_to_transfer` と同じく `transfer:` セクションが必要）。転送対象 MD の優先順位は `transfer.inputmd` > `output.puremdfilename`。`ppt_to_transfer` と違い、puremd 処理済み MD は成果物として残す。
 
 ```bash
 pptmdmerge ppt_to_puremd recipe.yaml
 pptmdmerge ppt_to_puremd recipe.yaml --keep-work --workdir /path/to/workdir
+pptmdmerge ppt_to_puremd recipe.yaml --transfer   # = ppt_to_transfer（ただし puremd MD を残す）
 ```
 
+
+---
+
+## ppt_to_githubmd
+
+`ppt_to_githubmd` は `ppt_to_puremd` の末尾に `githubmd` を足した 9 ステップのパイプライン（`pptpdfexport` → `pptimgexport` → `pptmdexport` → `merge` → `idcollect` → `idresolve` → `render` → `puremd` → `githubmd`）。**GitHub 表示用 MD（`output.githubmdfilename`）を最終成果物として生成する**（[githubmd](output_formats.md#githubmd) を参照）。共通ランナーを他の `ppt_to_*` と共有し、進捗・警告まとめ・エラー処理の挙動は同一（プレフィックスは `[ppt_to_githubmd]`）。
+
+* **中間生成ファイルの削除対象から `output.puremdfilename` を除外する**（`ppt_to_notecom` と同じ）。同じ実行結果から `transfer --source puremd` や `notecomexport` を続けて実行できるようにするため。`output.githubmdfilename` も成果物なので削除しない。
+
+固有オプションは `ppt_to_puremd` と同じ（`--workdir` / `--force` / `--rebuild` / `--preprocess` / `--deletecsl`（無視）/ `--deletecsp` / `--no-check` / `--keep-work` / `--transfer`）。
+
+`--transfer` を付けると、最後に `transfer` ステップを実行し、GitHub 表示用 MD（`output.githubmdfilename`）とその画像を `transfer.dataentry_input` へ転送する（`transfer:` セクションが必要）。githubmd が出力した `<img src="...">` の画像も、`![](...)` と同じく `{slug}/` へコピーしてパスを書き換える。転送対象 MD の優先順位は `transfer.inputmd` > `output.githubmdfilename`。
+
+```bash
+pptmdmerge ppt_to_githubmd recipe.yaml
+pptmdmerge ppt_to_githubmd recipe.yaml --transfer
+```
 
 ---
 

@@ -177,7 +177,7 @@ MDファイル内のローカル画像参照を検出し、画像を出力ディ
 | パスにスペースを含む | `![alt](my image.png)` |
 | `<...>` 囲みのパス | `![alt](<my image.png>)` |
 | 参照リンク形式 | `![alt][ref]` ＋ `[ref]: a.png` |
-| HTML の `<img>` タグ | `<img src="a.png">` |
+| HTML の `<img>` タグ（transfer は githubmd の出力に限り `src` を対象にする） | `<img src="a.png">` |
 
 対応するのは `![alt](ref)` と、その直後に続く pandoc 属性（`{ width=100% }` 等）のみ。判断の経緯は [design_image_refs.md](../design_image_refs.md) の §6.5 を参照。
 
@@ -309,7 +309,7 @@ procedure:
 | `var` | 列挙した条件式のいずれかが真である。条件式は `{{#if:…}}` と同じ `NAME` / `!NAME` / `NAME=VALUE` / `NAME!=VALUE` |
 
 - 値は文字列 1 つ、または文字列のリスト。リスト内は OR、キー同士は AND。
-- **サブコマンドはトップレベルで起動したコマンド名で照合する。** パイプラインは各段に同じ引数を渡すため、`ppt_to_pdf` の中の merge 段では command は `ppt_to_pdf` になる。逆に `merge` を単独実行すると command は `merge` なので、`command: [ppt_to_puremd]` の項目は除外される。別名 `githubmd` は `puremd` として扱う。
+- **サブコマンドはトップレベルで起動したコマンド名で照合する。** パイプラインは各段に同じ引数を渡すため、`ppt_to_pdf` の中の merge 段では command は `ppt_to_pdf` になる。逆に `merge` を単独実行すると command は `merge` なので、`command: [ppt_to_puremd]` の項目は除外される。`githubmd` は puremd の別名ではなく独立したサブコマンドなので、`command: [puremd]` は `githubmd` 単独実行には一致しない。
 - `var` の変数はレシピの `vars:` に、全サブコマンド共通の `--var NAME=VALUE`（`--var NAME` だけなら true）を上書きしたもの。真偽判定は行単位の IF ブロックと同じ（偽 = 未定義 / null / 空文字 / false / 文字列 `false`・`0`・`no`・`off`・`none`・`null`）。
 - 旧 `tag` / `not_tag`（`--tag`）は廃止した。`when:` に書かれていると読み込み時・validate ともにエラーになる。`tag: X` は `var: X`、`not_tag: X` は `var: '!X'` に、`--tag X` は `--var X` に置き換える（`!` で始まる値は YAML のタグ記法と衝突するので引用符で囲む）。
 - 条件判定はレシピ読み込み直後に 1 回だけ行い、除外した項目は procedure から取り除いてから後段に渡す（除外した項目は info ログに `procedure[N] (...) をスキップ` と出る）。章・節を除外すると、以降の番号はそのぶん詰まる。
@@ -448,6 +448,34 @@ procedure:
 
 `insertvspace` の値が数値でも単位付き長さでもない・負値の場合は警告して `1` を使用する。各出力形式での挙動: PDF は `\par\vspace{N\baselineskip}`（単位付きは `\par\vspace{5mm}` のようにそのまま）/ `\newpage` / `\vspace*{\fill}`、HTML は対応する `<div class>`（vspace は `height`。数値=`em`、単位付き=その単位）、MD（puremd）は vspace/pagebreak/vfill をいずれも破棄する（v1.0.3 までは pagebreak を `---` に変換していた）。
 
+#### MD ごとに改ページして並べる（insertmdpages）
+
+`- insertmdpages: <ファイル名>` は、`insertmd` と同じファイル名（`[from-to]` レンジ可）を展開し、**各 MD の間に `insertvfill` と `insertpagebreak` を挟んだ** insertmd の並びの略記（version 2 以降）。MD ファイルごとに改ページしたいときに使う。
+
+```yaml
+procedure:
+  - insertmdpages: sourcemd[1-3].md
+```
+
+は次と同じ:
+
+```yaml
+procedure:
+  - insertmd: sourcemd1.md
+  - insertvfill
+  - insertpagebreak
+  - insertmd: sourcemd2.md
+  - insertvfill
+  - insertpagebreak
+  - insertmd: sourcemd3.md
+```
+
+- 区切りはファイルの**間**にだけ入る（先頭・末尾には入らない）。ファイルが 1 つ（レンジなし、または `[1-1]`）なら `insertmd` 1 つと同じ。
+- 読み込み時に展開されるので、`merge` 以降・`explain`・`validate` からは上の並びと区別できない（スキップ時の info ログや explain の番号は展開後の位置）。`pptmerge` では insertmd と同じく無視される。
+- `when:` は展開したすべての項目（区切りを含む）に掛かる。`group:` の中にも書ける。`description` などその他の兄弟キーは先頭の insertmd にだけ残る。
+- 値が文字列でない・値を省略した・`mdfilename` キーを併記した場合はエラー。レンジの書式が不正な場合は insertmd と同じ扱い（その値の insertmd 1 つとして merge が警告してスキップする）。
+- 追加的な変更なので、レシピの `version` は上げない。version 1 のレシピでは使えない（エラー）。
+
 #### 見出し内の強制改行（`{{br}}`）
 
 章・節タイトルの途中に `{{br}}` を書くと、その位置で**強制改行**する。長いタイトルが単語の途中で折り返して見栄えが悪くなるのを、著者が改行位置を指定して防ぐためのマーカー。タイトルのテキストにインラインで埋め込む（`chapter` 操作の見出し文字列や、pptx ノートの見出しに直接記述）。
@@ -552,6 +580,8 @@ pptmdmerge idcollect recipe.yaml
 ### 抽出ロジック
 
 結合済み MD を行スキャンし、`<!-- source: ... -->` コメントを追跡することで各エントリの `source.md`（検出元ソースファイル）を特定する。1行に複数のマーカーがある場合はすべて記録する。
+
+`<!-- source: ... -->` のパスはレシピ YAML のディレクトリからの相対パス（`/` 区切り）で、レシピの外のファイルは `../mds/a.md` のように `..` を使う。相対化できないとき（Windows でドライブが違う等）だけ絶対パスになる。
 
 | エントリフィールド | 内容 |
 | ------------------ | ---- |

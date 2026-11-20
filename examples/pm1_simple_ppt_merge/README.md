@@ -1,4 +1,5 @@
 <!-- source: extracted/simple_ppt_merge_guide_slide1_md.md -->
+<!-- md_merge_rawtitle: pptmerge 単純マージ -->
 <!-- #id:section:simple_ppt_merge_guide:slide1 -->
 ## pptmerge　単純マージ
 
@@ -8,18 +9,14 @@
 
 処理のイメージは下記の通りです。
 
+<img src="readme-images/simple-ppt-merge-guide-slide1-fig.png" alt="" width="95%">
 
-![](build/figures/simple_ppt_merge_guide_slide1_fig.png)
-
-![](build/figures/simple_ppt_merge_guide_keyvisual.png)
-
-
-
-
+<img src="readme-images/simple-ppt-merge-guide-keyvisual.png" alt="" width="60%">
 
 
 
 <!-- source: extracted/simple_ppt_merge_guide_slide2_md.md -->
+<!-- md_merge_rawtitle: pm1_simple_ppt_merge 概要 -->
 <!-- #id:section:simple_ppt_merge_guide:slide2 -->
 ## pm1_simple_ppt_merge 概要
 
@@ -52,9 +49,8 @@ pptmdmerge pptmerge PROJECT_ROOT\examples\pm1_simple_ppt_merge_recipe.yaml --for
 
 
 
-
-
 <!-- source: extracted/simple_ppt_merge_guide_slide3_md.md -->
+<!-- md_merge_rawtitle: マージ結果 -->
 <!-- #id:section:simple_ppt_merge_guide:slide3 -->
 ## マージ結果
 
@@ -62,23 +58,18 @@ pptmdmerge pptmerge PROJECT_ROOT\examples\pm1_simple_ppt_merge_recipe.yaml --for
 
 結合だけなので、章・節番号はつきません。
 
-
-![](build/figures/simple_ppt_merge_guide_slide3_fig.png)
-
-
-
+<img src="readme-images/simple-ppt-merge-guide-slide3-fig.png" alt="" width="95%">
 
 
 
 <!-- source: extracted/simple_ppt_merge_guide_slide4_md.md -->
+<!-- md_merge_rawtitle: 結合指示書サンプル -->
 <!-- #id:section:simple_ppt_merge_guide:slide4 -->
 ## 結合指示書サンプル
 
 結合指示書では、output.pptxfilename: に結合後のpptxファイル名を記載し、
 procedureセクションに　operation: insertpptx の配列で結合対象ファイルを記載します。
 
-
-![](build/figures/simple_ppt_merge_guide_slide4_fig.png)
-
+<img src="readme-images/simple-ppt-merge-guide-slide4-fig.png" alt="" width="95%">
 
 PowerPointのデザインスタイル等は最初のファイル first.pptx が基準になるので、残りのファイルのスタイルが違っているとレイアウト崩れ等が起きることがあるのでご注意ください。

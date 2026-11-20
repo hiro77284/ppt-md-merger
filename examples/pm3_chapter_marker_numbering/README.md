@@ -1,8 +1,9 @@
-<!-- md_merge } } -->
+<!-- md_merge {{chapter:+}} {{title:}} -->
 <!-- #id:chapter:AUTOCHAPTER:AUTOID_1 -->
-#
+# 
 
 <!-- source: extracted/chapter_marker_numbering_guide_slide1_md.md -->
+<!-- md_merge_rawtitle: chapter_marker によるナンバリング -->
 <!-- #id:section:chapter_marker_numbering_guide:slide1 -->
 ## 1.1) chapter_marker によるナンバリング
 
@@ -14,17 +15,14 @@ chapt_section ナンバリングにおいて、operation: chapter ではなく�
 
 処理のイメージは下記の通りです。
 
+<img src="readme-images/chapter-marker-numbering-guide-slide1-fig.png" alt="" width="95%">
 
-![](build/figures/chapter_marker_numbering_guide_slide1_fig.png)
-
-![](build/figures/chapter_marker_numbering_guide_keyvisual.png)
-
-
-
+<img src="readme-images/chapter-marker-numbering-guide-keyvisual.png" alt="" width="85%">
 
 
 
 <!-- source: extracted/chapter_marker_numbering_guide_slide2_md.md -->
+<!-- md_merge_rawtitle: #CHAPT# マーカーの埋め込み -->
 <!-- #id:section:chapter_marker_numbering_guide:slide2 -->
 ## 1.2) #CHAPT# マーカーの埋め込み
 
@@ -34,29 +32,23 @@ chapt_section ナンバリングにおいて、operation: chapter ではなく�
 
 処理のイメージは下記の通りです。
 
-
-![](build/figures/chapter_marker_numbering_guide_slide2_fig.png)
-
-
-
+<img src="readme-images/chapter-marker-numbering-guide-slide2-fig.png" alt="" width="95%">
 
 
 
 <!-- source: extracted/chapter_marker_numbering_guide_slide3_md.md -->
+<!-- md_merge_rawtitle: 1ファイル中の複数 #CHAPT# も可能 -->
 <!-- #id:section:chapter_marker_numbering_guide:slide3 -->
 ## 1.3) 1ファイル中の複数 #CHAPT# も可能
 
 ひとつのファイルの中に複数の #CHAPT# を入れてもかまいません。1ファイル中に複数の Chapter を含むような大きな文書部品もこの方法でナンバリングできます。
 
-
-![](build/figures/chapter_marker_numbering_guide_slide3_fig.png)
-
-
-
+<img src="readme-images/chapter-marker-numbering-guide-slide3-fig.png" alt="" width="95%">
 
 
 
 <!-- source: extracted/chapter_marker_numbering_guide_slide4_md.md -->
+<!-- md_merge_rawtitle: #SECTION# マーカーは節番号をリセット -->
 <!-- #id:section:chapter_marker_numbering_guide:slide4 -->
 ## 1.4) #SECTION# マーカーは節番号をリセット
 
@@ -65,15 +57,12 @@ chapt_section ナンバリングにおいて、operation: chapter ではなく�
 （ただしその場合は operation: chapter や section で章・節番号をセットするほうが扱いやすいと思いますが）
 
 
-
-![](build/figures/chapter_marker_numbering_guide_slide4_fig.png)
-
-
-
+<img src="readme-images/chapter-marker-numbering-guide-slide4-fig.png" alt="" width="95%">
 
 
 
 <!-- source: extracted/chapter_marker_numbering_guide_slide5_md.md -->
+<!-- md_merge_rawtitle: 結合指示書サンプル -->
 <!-- #id:section:chapter_marker_numbering_guide:slide5 -->
 ## 1.5) 結合指示書サンプル
 
@@ -86,6 +75,4 @@ pptxnumbering: chapt_section は変わりませんが、ナンバリングその
 #CHAPT#, #SECTION# マーカーによる制御の実サンプルは、２つめの結合ファイルである chapter_marker_numbering_sample.pptx に該当する部分が結合後pptxの中でどうなっているかをご覧ください。
 
 
-
-![](build/figures/chapter_marker_numbering_guide_slide5_fig.png)
-
+<img src="readme-images/chapter-marker-numbering-guide-slide5-fig.png" alt="" width="95%">

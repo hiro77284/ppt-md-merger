@@ -1,0 +1,39 @@
+# report_base_defaults.yaml
+# PDF（typst）の pandoc defaults の土台（パッケージ同梱）。レシピで pandoc.defaults を省略したときは
+# これだけを使う。
+#
+# pandoc.defaults を書くと、これは自動では付かない（書いたファイルだけを使う）。文書ごとに一部だけ
+# 変えるときは、これを先頭に書き、その後ろに差分の defaults を並べる（-d は後勝ちでマージ）:
+#
+#   pandoc:
+#     defaults:
+#       - report_base_defaults.yaml       # 同梱の土台
+#       - defaults/toc2level.yaml          # 差分（例: toc-depth: 2）
+#
+# pandoc-crossref は使わない（図・表の番号は使っていない。docs/design_typst_migration.md §2.3）。
+# ページ設計（フォント・余白・見出し・柱・目次・表紙）は report_style.typ、
+# セマンティック記法の見た目は semantic_macros.typ（この順で読む）。
+standalone: true
+template: report_template.typst
+toc: true
+toc-depth: 2
+number-sections: false
+# gfm_auto_identifiers: 見出し ID を GitHub と同じ規則で付ける（先頭の章番号「5) 」も ID に残る）。
+# ノートや README の [..](#5-requirements--quick-start) 形式のリンクがそのまま解決する。
+# pandoc 既定の規則だと番号が落ちて typst が「label does not exist」で止まる。
+from: markdown-implicit_figures+gfm_auto_identifiers
+filters:
+  - include-files-resource-path.lua
+  - blockindent.lua
+  - largefontblock.lua
+  - keep-together.lua
+  - divboxes.lua
+  - center.lua
+  - semantic-spans.lua
+  - semantic-leaf.lua
+  - semantic-break.lua
+include-in-header:
+  - semantic_macros.typ
+  - report_style.typ
+metadata:
+  lang: ja

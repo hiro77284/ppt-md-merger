@@ -1,4 +1,5 @@
 <!-- source: extracted/simple_numbering_guide_slide1_md.md -->
+<!-- md_merge_rawtitle: simple_numbering 簡易ナンバリング -->
 <!-- #id:section:simple_numbering_guide:slide1 -->
 ## simple_numbering　簡易ナンバリング
 
@@ -10,18 +11,14 @@ chapter とは日本語でいえば「章」のことで、 「1章2節」 の�
 
 処理のイメージは下記の通りです。
 
+<img src="readme-images/simple-numbering-guide-slide1-fig.png" alt="" width="95%">
 
-![](build/figures/simple_numbering_guide_slide1_fig.png)
-
-![](build/figures/simple_numbering_guide_keyvisual.png)
-
-
-
-
+<img src="readme-images/simple-numbering-guide-keyvisual.png" alt="" width="70%">
 
 
 
 <!-- source: extracted/simple_numbering_guide_slide2_md.md -->
+<!-- md_merge_rawtitle: simple_numbering サンプル実行例 -->
 <!-- #id:section:simple_numbering_guide:slide2 -->
 ## simple_numbering サンプル実行例
 
@@ -53,9 +50,8 @@ pptmdmerge pptmerge PROJECT_ROOT/examples/pm2_simple_numbering_recipe.yaml --for
 
 
 
-
-
 <!-- source: extracted/simple_numbering_guide_slide3_md.md -->
+<!-- md_merge_rawtitle: 簡易ナンバリング結果 -->
 <!-- #id:section:simple_numbering_guide:slide3 -->
 ## 簡易ナンバリング結果
 
@@ -63,15 +59,12 @@ pptmdmerge pptmerge PROJECT_ROOT/examples/pm2_simple_numbering_recipe.yaml --for
 
 簡易ナンバリングを指定したので章・節番号がついて、pptxファイルが変わると新しい chapter となっています。
 
-
-![](build/figures/simple_numbering_guide_slide3_fig.png)
-
-
-
+<img src="readme-images/simple-numbering-guide-slide3-fig.png" alt="" width="95%">
 
 
 
 <!-- source: extracted/simple_numbering_guide_slide4_md.md -->
+<!-- md_merge_rawtitle: 結合指示書サンプル -->
 <!-- #id:section:simple_numbering_guide:slide4 -->
 ## 結合指示書サンプル
 
@@ -81,19 +74,16 @@ procedure の operation: chapter という項目で章番号のカウントア�
 
 ```bash
  - operation: chapter                    # 章番号を付番する。
-    chapter: "+"
+    chapter: "+" 
 ```
 
 
-
-![](build/figures/simple_numbering_guide_slide4_fig.png)
-
-
-
+<img src="readme-images/simple-numbering-guide-slide4-fig.png" alt="" width="95%">
 
 
 
 <!-- source: extracted/simple_numbering_guide_slide5_md.md -->
+<!-- md_merge_rawtitle: chap_section方式のアルゴリズム -->
 <!-- #id:section:simple_numbering_guide:slide5 -->
 ## chap_section方式のアルゴリズム
 
@@ -110,6 +100,4 @@ section はスライドが進むことにより自動的にカウントアップ
 chapter 増やすにはここで説明した　operation: chapter の操作をするか、あるいは スライド上のマーカーによりカウントする方法もあります（別項目にて説明します）。
 
 
-
-![](build/figures/simple_numbering_guide_slide5_fig.png)
-
+<img src="readme-images/simple-numbering-guide-slide5-fig.png" alt="" width="95%">

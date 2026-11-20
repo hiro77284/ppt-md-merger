@@ -189,7 +189,7 @@ build/sample_doc.pdf          ← 完成した PDF（ppt_to_pdf）
 | 結合した pptx 自体も出力する | [spec/pptx.md](spec/pptx.md#pptmerge)、`examples/` の 11 サンプル |
 | 注意書きボックスや中央寄せを使う | `::: {.note}` などのセマンティック記法 → [notation_reference.md](notation_reference.md#3-セマンティック構造原稿-md) |
 | Web 記事として出す | `ppt_to_transfer` / `ppt_to_notecom` → [spec/pipelines.md](spec/pipelines.md) |
-| 体裁を本格的に整える | `defaults/pandoc/` 一式と `examples/standard_pandocsettings.yaml` を出発点にする（pandoc-crossref と BIZ UD フォントが前提） |
+| 体裁を本格的に整える | `user_settings/pandoc/` 一式と `examples/standard_pandocsettings.yaml` を出発点にする（pandoc-crossref と BIZ UD フォントが前提） |
 | 使える記法を一覧したい | [notation_reference.md](notation_reference.md) |
 | レシピのキーを調べたい | [recipe_key_reference.md](recipe_key_reference.md) |
 

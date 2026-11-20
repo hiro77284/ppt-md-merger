@@ -49,6 +49,7 @@
 
 ### 3.1 ブロック（fenced div）
 
+<<<<<<< Updated upstream
 | 記法 | 意味 | PDF（Typst） | HTML | GFM（puremd） |
 |---|---|---|---|---|
 | `::: {.note}` | 補足情報ボックス | `#sem-box("note")` | `<div class>`＋CSS | `> [!NOTE]` |
@@ -56,11 +57,50 @@
 | `::: {.leadline}` | 擬似見出し・リード行 | `#sem-box("leadline")` | 同上 | `> [!IMPORTANT]` |
 | `::: {.widequote}` | 幅広引用 | `#sem-box("widequote")` | 同上 | 素の blockquote |
 | `::: {.largefontblock}` | 大きい文字ブロック | `#semlargefontblock` | 同上 | ラベル付き blockquote |
-| `::: {.blockindent}` | 字下げブロック（`indent=3em`） | `#semblockindent` | 同上 | ラベル付き blockquote |
+| `::: {.blockindent}` | 字下げブロック（既定 2em、`indent=6em` 等で量を指定） | `#semblockindent` | `margin-left` | ラベル付き blockquote（`indent` は無視） |
 | `::: {.keep-together}` | 改ページ抑制 | `#semkeeptogether` | `break-inside:avoid` | unwrap |
 | `::: {.center}` | 中央寄せ | `#semcenter` | `text-align:center` | unwrap |
+=======
+| 記法                      | 意味                    | PDF（Typst）              | HTML                 | GFM（puremd）      |
+| ----------------------- | --------------------- | ----------------------- | -------------------- | ---------------- |
+| `::: {.note}`           | 補足情報ボックス              | `#sem-box("note")`      | `<div class>`＋CSS    | `> [!NOTE]`      |
+| `::: {.warning}`        | 注意喚起ボックス              | `#sem-box("warning")`   | 同上                   | `> [!WARNING]`   |
+| `::: {.leadline}`       | 擬似見出し・リード行            | `#sem-box("leadline")`  | 同上                   | `> [!IMPORTANT]` |
+| `::: {.widequote}`      | 幅広引用                  | `#sem-box("widequote")` | 同上                   | 素の blockquote    |
+| `::: {.largefontblock}` | 大きい文字ブロック             | `#semlargefontblock`    | 同上                   | ラベル付き blockquote |
+| `::: {.blockindent}`    | 字下げブロック（`indent=3em`） | `#semblockindent`       | 同上                   | ラベル付き blockquote |
+| `::: {.keep-together}`  | 改ページ抑制                | `#semkeeptogether`      | `break-inside:avoid` | unwrap           |
+| `::: {.center}`         | 中央寄せ                  | `#semcenter`            | `text-align:center`  | unwrap           |
+>>>>>>> Stashed changes
 
 属性（`frame` / `colback` / `fontsize` / `left` / `width` / `center` ほか）は box 系の PDF（Typst）でのみ有効（値の書き方は旧 LaTeX 版と同じ）。一覧は [pandoc_filters](pandoc_filters.md#divboxeslua-の属性)。
+
+#### 記入例: `blockindent`（字下げブロック）
+
+ブロック全体の左側を空ける。`indent` を省略すると 2em、書くとその量で字下げする。
+
+````markdown
+::: {.blockindent}
+既定の字下げ（2em）です。
+:::
+
+::: {.blockindent indent=6em}
+indent=6em で深く字下げしています。
+複数の段落・箇条書きもそのまま入れられます。
+:::
+````
+
+- `indent` の値は **数値＋単位** のみ（`3em` / `1.5em` / `10mm` / `2cm` / `12pt` など）。`.5em` のように整数部を省いてもよい。単位なし（`6`）や `%` 付き、空白入りなどは警告（`[blockindent] indent=… は数値＋単位…ではないので無視し、既定の 2em にします`）を出して無視され、既定の 2em になる。
+- 出力ごとの扱い:
+
+  | 出力 | `::: {.blockindent}` | `::: {.blockindent indent=6em}` |
+  |---|---|---|
+  | PDF（Typst） | `#semblockindent[…]`（`pad(left: 2em)`） | `#semblockindent(indent: 6em)[…]` |
+  | HTML | `<div class="blockindent">`（`semantic.css` の `margin-left: 2em`） | `<div class="blockindent" style="margin-left:6em">` |
+  | GFM（puremd） | `> **BLOCKINDENT**` ＋空行＋内容を引用 | 同左（`indent` は破棄。字下げ量は表現できない） |
+
+- `fontsize` などの box 系属性は効かない。文字を大きくしたいときは `largefontblock` を入れ子にする（外側のフェンスを `::::` と長くする）。
+- 実例は `examples/semantic_notation_guide/src/sn02_blocks.md` と `sandbox/semantics_sample`。
 
 ### 3.2 インライン（bracketed span）
 
@@ -175,7 +215,7 @@
 | `_include: path.yaml` | レシピ / ノート YAML ブロック | YAML を読み込み、そのマッピングに合成する（兄弟キー優先・リスト可）。旧書式 `!include` は非推奨 | [md_merge_spec](md_merge_spec.md#51-レシピ-yaml-の-_include) |
 | `_constants: path.toml` | 同上（トップレベル） | TOML の定数ファイルを読み込む（リスト可）。旧書式 `!constants` は非推奨 | [pptx](spec/pptx.md#ノート-yaml-での-_include) |
 | `__NAME__` | 同上 | 定数置換。組み込みは `__DATE__` / `__TIME__` / `__DATETIME__` | 同上 |
-| `name[1-7].md` | `procedure` の `insertmd` | レンジ展開（`name1.md` … `name7.md`） | [md_pipeline](spec/md_pipeline.md#insertmd-ファイル名のレンジ展開from-to) |
+| `name[1-7].md` | `procedure` の `insertmd` / `insertmdpages` | レンジ展開（`name1.md` … `name7.md`） | [md_pipeline](spec/md_pipeline.md#insertmd-ファイル名のレンジ展開from-to) |
 | `fig__10_20_90_80.png` | crop 対象の画像ファイル名 | 末尾の `__{L}_{T}_{R}_{B}`（各 0〜100）で切り出し範囲を指定 | [pipelines](spec/pipelines.md) |
 
 ---

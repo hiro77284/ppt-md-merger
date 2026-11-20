@@ -1,4 +1,4 @@
-# 出力変換仕様（pandoc / puremd / 表紙 / transfer）
+# 出力変換仕様（pandoc / puremd / githubmd / 表紙 / transfer）
 
 > [仕様書トップ](../md_merge_spec.md) — 共通オプション・入力/出力指定・ログ・JSON・dry-run の各仕様はトップを参照。
 
@@ -227,11 +227,13 @@ my_document/
 
 ---
 
-## puremd（別名 githubmd）
+## puremd
 
 ### 概要
 
-レンダー済み MD ファイル（`output.renderedfilename`）から LaTeX の raw ブロック等を削除し、さらに pandoc の fenced div（`::: {.note}` 等）・インライン span・リーフ記法を GitHub Flavored Markdown（GFM）へ降格して、純粋な MD ファイル（`output.puremdfilename`）を生成する。出力は GitHub 向け（`::: {.note}`→`> [!NOTE]` 等）で、`pptmdmerge githubmd` は本サブコマンドの別名。
+レンダー済み MD ファイル（`output.renderedfilename`）から LaTeX の raw ブロック等を削除し、さらに pandoc の fenced div（`::: {.note}` 等）・インライン span・リーフ記法を GitHub Flavored Markdown（GFM）へ降格して、純粋な MD ファイル（`output.puremdfilename`）を生成する。出力は GFM（`::: {.note}`→`> [!NOTE]` 等）だが、`transfer`（Astro 等）・`notecomexport`・他の Markdown ビューアと共有する中間形式なので、画像の pandoc 属性（`![](a.png){ width=40% }`）はそのまま残す（Astro 側は属性記法で幅を効かせる）。GitHub はこの属性を解釈しないため、GitHub 向けの仕上げは [githubmd](#githubmd) で行う。
+
+以前は `githubmd` が本サブコマンドの別名だったが、GitHub 専用の別サブコマンドになった（`when.command: [githubmd]` も puremd ではなく githubmd を指す）。
 
 処理は次の 2 段で行う。
 
@@ -406,6 +408,57 @@ pandoc の fenced div（`::: {.class ...}` … `:::`、または bare 形式 `::
 
 ---
 
+## githubmd
+
+### 概要
+
+puremd 処理済み MD（`output.puremdfilename`）を GitHub で表示するための MD（`output.githubmdfilename`）に変換する。puremd の出力は transfer / notecomexport と共有するため変えず、GitHub 専用の変換だけをこの段で行う。現在の変換は画像の属性のみ。
+
+| 入力 | 出力 |
+|---|---|
+| `![図](a.png){ width=40% }` | `<img src="a.png" alt="図" width="40%">` |
+| `![](a.png){width=300px height=200}` | `<img src="a.png" alt="" width="300" height="200">` |
+| `[![](a.png){ width=40% }](https://example.com)` | `[<img src="a.png" alt="" width="40%">](https://example.com)` |
+| `![](a.png){ width=8cm #fig:a .wide }` | `![](a.png)`（警告） |
+| `![](a.png)` | 変更しない |
+
+* HTML 属性に移すのは `width` / `height` のうち `%` か px（単位なしも px）の値だけ。
+* それ以外の属性（`cm` / `in` 等の単位、`#id`、`.class`、その他の `key=value`）は GitHub で表現できない（`style` 属性も GitHub が除去する）ため、警告して捨てる。移せる属性が 1 つも無ければ `![alt](src)` に戻す。
+* `alt` と `src` は HTML エスケープする。GitHub は画像のキャプションを表示しないので、キャプション文字列は `alt` になるだけで見た目は変わらない。
+* コードフェンス内・インラインコード内・YAML frontmatter 内は変換しない。画像と属性の間の空白・タブは許容する。
+* 画像のパスは書き換えず、画像のコピーもしない（puremd と同じ相対パスのまま）。`transfer --source githubmd`（または `ppt_to_githubmd --transfer`）で転送すると、`<img src>` の画像もコピーしてパスを書き換える。
+
+### 使用例
+
+```bash
+pptmdmerge githubmd recipe.yaml
+pptmdmerge githubmd recipe.yaml --force
+pptmdmerge ppt_to_githubmd recipe.yaml   # pptx から一気通貫（パイプライン仕様を参照）
+```
+
+### 固有オプション
+
+| オプション | 説明 |
+|---|---|
+| `--force` | 出力ファイルが既存でも上書きする |
+
+### レシピ YAML キー
+
+| キー | 型 | 説明 |
+|---|---|---|
+| `output.puremdfilename` | string | 入力となる puremd 処理済み MD のファイル名（必須。`targetbasefilename` から自動生成可） |
+| `output.githubmdfilename` | string | 出力 MD のファイル名（必須。省略時は `targetbasefilename` から `{base}_github.md`） |
+
+### エラー処理
+
+| 条件 | 終了コード |
+|---|---|
+| `output.puremdfilename` / `output.githubmdfilename` が解決できない | 2 |
+| puremd 処理済み MD が存在しない | 3 |
+| 出力が既存で `--force` なし・書き込み失敗 | 1 |
+
+---
+
 ## 表紙（`cover-md` / `htmlcover`）
 
 > `condblockprocess` サブコマンド（条件ブロック付き `.tex` 表紙を展開して `include-before-body` に渡す）は LaTeX と一緒に撤去した（2026-11-15）。条件ブロックの記法そのもの（`{{#if:VAR}}` … `{{#endif:VAR}}`）は表紙 Markdown・ノート・insertmd などで引き続き使える（[conditional_block_process.md](../conditional_block_process.md)）。
@@ -481,7 +534,7 @@ HTML の断片（例: 同梱の `standard_cover.html`）の `{{v:NAME}}` をレ�
 
 ### 概要
 
-render 済み MD を静的サイト生成システム（Astro 等）の DB 投入用ディレクトリに転送する。画像参照の扱いを段ごとに比較した棚卸しは [design_image_refs.md](../design_image_refs.md) を参照。MD 内のローカル画像参照（本文の `![alt](ref)` と frontmatter の `hero:`）を書き換えて画像を所定のディレクトリへフラットコピーし、出力 MD のファイル名を `{slug}.md`（または `transfer.outputmd` 指定時はその名前）に変換する。
+render 済み MD を静的サイト生成システム（Astro 等）の DB 投入用ディレクトリに転送する。画像参照の扱いを段ごとに比較した棚卸しは [design_image_refs.md](../design_image_refs.md) を参照。MD 内のローカル画像参照（本文の `![alt](ref)`、[githubmd](#githubmd) が出力する `<img src="...">`、frontmatter の `hero:`）を書き換えて画像を所定のディレクトリへフラットコピーし、出力 MD のファイル名を `{slug}.md`（または `transfer.outputmd` 指定時はその名前）に変換する。
 
 ### 使用例
 
@@ -497,7 +550,7 @@ pptmdmerge transfer recipe.yaml --dry-run
 | ---------- | ---- | ---- |
 | `--workdir` / `-w` DIR | input / output の相対パスをこのディレクトリ基準で解釈する | 任意 |
 | `--force` | 既存の出力ファイルを上書きする | 任意 |
-| `--source` `{puremd\|rendered\|merged}` | 転送対象の MD を選択する。`puremd`→`output.puremdfilename`、`rendered`→`output.renderedfilename`、`merged`→`output.mdfilename`。指定時は `transfer.inputmd` より優先される | 任意 |
+| `--source` `{puremd\|githubmd\|rendered\|merged}` | 転送対象の MD を選択する。`puremd`→`output.puremdfilename`、`githubmd`→`output.githubmdfilename`、`rendered`→`output.renderedfilename`、`merged`→`output.mdfilename`。指定時は `transfer.inputmd` より優先される | 任意 |
 
 ### レシピ YAML キー
 

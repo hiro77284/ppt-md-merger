@@ -1,4 +1,5 @@
 <!-- source: extracted/splitted_insertion_guide_slide1_md.md -->
+<!-- md_merge_rawtitle: ファイルを分割して挿入する -->
 <!-- #id:section:splitted_insertion_guide:slide1 -->
 ## ファイルを分割して挿入する
 
@@ -6,13 +7,15 @@ pptxをマージする際、ファイル全体ではなく一部を選択して�
 
 
 
-![](build/figures/splitted_insertion_guide_slide1_fig.png)
 
-![](build/figures/splitted_insertion_guide_keyvisual.png)
+<img src="readme-images/splitted-insertion-guide-slide1-fig.png" alt="" width="95%">
+
+<img src="readme-images/splitted-insertion-guide-keyvisual.png" alt="" width="60%">
 
 
 
 <!-- source: extracted/splitted_insertion_guide_slide2_md.md -->
+<!-- md_merge_rawtitle: 分割挿入を使いたいのはどんなとき？ -->
 <!-- #id:section:splitted_insertion_guide:slide2 -->
 ## 分割挿入を使いたいのはどんなとき？
 
@@ -24,19 +27,21 @@ pptxをマージする際、ファイル全体ではなく一部を選択して�
 といった事情があるときは分割挿入機能を使いましょう。
 
 
-![](build/figures/splitted_insertion_guide_slide2_fig.png)
 
+<img src="readme-images/splitted-insertion-guide-slide2-fig.png" alt="" width="95%">
 
 
 
 
 
 <!-- source: extracted/splitted_insertion_guide_slide3_md.md -->
+<!-- md_merge_rawtitle: 結合指示書サンプル -->
 <!-- #id:section:splitted_insertion_guide:slide3 -->
 ## 結合指示書サンプル
 
 分割挿入をするには、operation: insertpptx に slides: パラメータを追加します。 slides を省略すると all 扱いになります。スライド番号は1オリジンです。
 
 
-![](build/figures/splitted_insertion_guide_slide3_fig.png)
+
+<img src="readme-images/splitted-insertion-guide-slide3-fig.png" alt="" width="95%">
 

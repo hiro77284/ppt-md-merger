@@ -1,4 +1,5 @@
 <!-- source: extracted/delete_csp_guide_slide1_md.md -->
+<!-- md_merge_rawtitle: 指定したシェイプを消去する -->
 <!-- #id:section:delete_csp_guide:slide1 -->
 ## 指定したシェイプを消去する
 
@@ -9,17 +10,17 @@
 結合指示書による on/off が可能で、起動時オプションでも設定できるので、講師用/受講者用の2種類を簡単に生成しわけられます。
 
 
-![](build/figures/delete_csp_guide_slide1_fig.png)
 
-![](build/figures/delete_csp_guide_keyvisual.png)
+<img src="readme-images/delete-csp-guide-slide1-fig.png" alt="" width="95%">
 
-
+<img src="readme-images/delete-csp-guide-keyvisual.png" alt="" width="80%">
 
 
 
 
 
 <!-- source: extracted/delete_csp_guide_slide2_md.md -->
+<!-- md_merge_rawtitle: 消去したいシェイプにCSPマーカーを入れておく -->
 <!-- #id:section:delete_csp_guide:slide2 -->
 ## 消去したいシェイプにCSPマーカーを入れておく
 
@@ -28,14 +29,15 @@
 deletecsp がfalseまたは未指定の場合は、#CSP#マーカーだけが消去されます。
 
 
-![](build/figures/delete_csp_guide_slide2_fig.png)
 
+<img src="readme-images/delete-csp-guide-slide2-fig.png" alt="" width="95%">
 
 
 
 
 
 <!-- source: extracted/delete_csp_guide_slide4_md.md -->
+<!-- md_merge_rawtitle: CSPマーカー利用例 -->
 <!-- #id:section:delete_csp_guide:slide4 -->
 ## CSPマーカー利用例
 
@@ -44,33 +46,36 @@ CSPマーカーの基本的な利用イメージです。左側が原本ファ�
 グループ化したシェイプをまるごと削除するには 「グループ名」 にCSPマーカーを設定する必要があることに注意してください。
 
 
-![](build/figures/delete_csp_guide_slide4_fig.png)
 
+<img src="readme-images/delete-csp-guide-slide4-fig.png" alt="" width="95%">
 
 
 
 
 
 <!-- source: extracted/delete_csp_guide_slide6_md.md -->
+<!-- md_merge_rawtitle: テーブルシェイプはテーブルごと消去 -->
 <!-- #id:section:delete_csp_guide:slide6 -->
 ## テーブルシェイプはテーブルごと消去
 
 テーブルセルに CSPマーカーがある場合は、テーブルごと消去されます。
 
 
-![](build/figures/delete_csp_guide_slide6_fig.png)
 
+<img src="readme-images/delete-csp-guide-slide6-fig.png" alt="" width="95%">
 
 
 
 
 
 <!-- source: extracted/delete_csp_guide_slide7_md.md -->
+<!-- md_merge_rawtitle: シェイプを残して文字列だけ消去するには？ -->
 <!-- #id:section:delete_csp_guide:slide7 -->
 ## シェイプを残して文字列だけ消去するには？
 
 手書き記入用の穴埋め欄を作る場合など、　「シェイプは残して、文字列だけ消去したい」 場合は 「文字列」 を別シェイプで作って重ねてください。
 
 
-![](build/figures/delete_csp_guide_slide7_fig.png)
+
+<img src="readme-images/delete-csp-guide-slide7-fig.png" alt="" width="95%">
 

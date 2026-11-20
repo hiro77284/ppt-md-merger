@@ -1,6 +1,7 @@
 import argparse
 import datetime
 import logging
+import os
 import re
 import tomllib
 from dataclasses import dataclass
@@ -12,10 +13,10 @@ from md_merge._condblock import process_conditionals
 from md_merge._params import apply_params
 from md_merge._conditions import filter_procedure
 from md_merge._imagerefs import FrontmatterTracker
+from md_merge._mdrange import expand_mdfilename as _expand_mdfilename
 from md_merge._procedure import normalize_recipe
 
 _INCLUDE_RE = re.compile(r'^!include\s+(.+?)\s*$')
-_RANGE_RE = re.compile(r'\[([^\]]*)\]')
 
 _AUTO_FILENAMES: dict[str, str] = {
     "mdfilename":           "work_{base}_merged.md",
@@ -26,6 +27,7 @@ _AUTO_FILENAMES: dict[str, str] = {
     "htmlfilename":         "{base}.html",
     "revealfilename":       "{base}_reveal.html",
     "puremdfilename":       "{base}_puremd.md",
+    "githubmdfilename":     "{base}_github.md",
     "notecomyamlfilename":  "{base}_notecom.yaml",
     "pptxfilename":         "{base}.pptx",
     "checkfilename":        "{base}_check.yaml",
@@ -47,52 +49,6 @@ class IncludeNotFoundError(Exception):
     def __init__(self, path: Path) -> None:
         self.path = path
         super().__init__(f"Include target not found: {path}")
-
-
-# ── range expansion ────────────────────────────────────────────────────────
-
-
-def _expand_mdfilename(val: str) -> list[str]:
-    """Expand a single ``[from-to]`` range in *val* and return the filename list.
-
-    Raises ValueError for invalid range specifications.
-    """
-    m = _RANGE_RE.search(val)
-    if m is None:
-        return [val]
-
-    spec = m.group(1)
-    prefix = val[: m.start()]
-    suffix = val[m.end() :]
-
-    if not spec.isascii():
-        raise ValueError(f"全角文字は使用できません: [{spec}]")
-
-    parts = spec.split("-")
-    if len(parts) != 2 or not parts[0] or not parts[1]:
-        raise ValueError(f"[from-to] 形式で指定してください: [{spec}]")
-
-    frm, to = parts
-
-    if frm.isdigit() and to.isdigit():
-        frm_i, to_i = int(frm), int(to)
-        if frm.startswith("0") or to.startswith("0"):
-            width = max(len(frm), len(to))
-            fmt = lambda n: str(n).zfill(width)  # noqa: E731
-        else:
-            fmt = str
-        step = 1 if frm_i <= to_i else -1
-        return [prefix + fmt(n) + suffix for n in range(frm_i, to_i + step, step)]
-
-    if len(frm) == 1 and len(to) == 1 and frm.isalpha() and to.isalpha():
-        if frm.isupper() != to.isupper():
-            raise ValueError(f"from と to の大文字小文字が一致しません: [{spec}]")
-        step = 1 if frm <= to else -1
-        return [prefix + chr(c) + suffix for c in range(ord(frm), ord(to) + step, step)]
-
-    raise ValueError(
-        f"from/to は数値または単一アルファベット文字で指定してください: [{spec}]"
-    )
 
 
 # ── public API ─────────────────────────────────────────────────────────────
@@ -775,6 +731,22 @@ def collect_procedure_items(
     return items
 
 
+def _source_display(path: Path, yaml_dir: Path | None) -> str:
+    """``<!-- source: -->`` に書く表示用パス。
+
+    *yaml_dir* からの相対パス（``../mds/a.md`` のように ``..`` も使う）を
+    POSIX 区切りで返す。*yaml_dir* が無い、または相対化できない
+    （Windows でドライブが違う等）ときだけ絶対パスを返す。
+    """
+    if yaml_dir is None:
+        return path.as_posix()
+    try:
+        rel = os.path.relpath(path, Path(yaml_dir).resolve())
+    except ValueError:
+        return path.as_posix()
+    return Path(rel).as_posix()
+
+
 def expand_md(
     path: Path,
     chain: frozenset[Path] = frozenset(),
@@ -796,7 +768,8 @@ def expand_md(
     but appearing in *chain* means a circular dependency.
 
     Each expanded file is preceded by an HTML comment recording its path
-    relative to *yaml_dir* (falls back to absolute when outside *yaml_dir*).
+    relative to *yaml_dir* (``../`` allowed; absolute only when no relative
+    path exists, e.g. a different drive on Windows).
 
     If *image_copier* is provided, local image references on each line are
     copied to the output directory and their paths rewritten.
@@ -811,10 +784,7 @@ def expand_md(
     if file_log is not None:
         file_log.append(path)
 
-    try:
-        display = path.relative_to(yaml_dir).as_posix() if yaml_dir else path.as_posix()
-    except ValueError:
-        display = path.as_posix()
+    display = _source_display(path, yaml_dir)
 
     lines = path.read_text(encoding="utf-8-sig").splitlines(keepends=True)
     if cond_vars is not None:

@@ -186,6 +186,10 @@ procedure:
       type: string
       description: 挿入する MD。input.dirs からの相対ファイル名、または絶対パス。[from-to] のレンジを 1 つ書ける
 
+    insertmdpages:
+      type: string
+      description: insertmd と同じファイル名（[from-to] レンジ可）。各 MD の間に insertvfill と insertpagebreak を挟んだ insertmd の並びに読み込み時に展開する。1 ファイルなら insertmd と同じ。version 2 以降
+
     insertvar:
       type: string
       description: 値を挿入する変数名（vars: / params: / --var）。値（文字列）をそのまま MD として挿入する。frontmatter の挿入などに使う。merge 専用（pptmerge は無視）

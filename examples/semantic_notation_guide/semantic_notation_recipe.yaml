@@ -22,13 +22,13 @@ pandoc:
   cover-md: cover_standard.md  # 同梱の標準表紙（COVER_* を使う）
   resource-path:
     - build
-    - ../../defaults/common_assets
+    - ../../user_settings/common_assets
 
 input:
   dirs:
     - .
     - src
-    - ../../defaults/common_assets
+    - ../../user_settings/common_assets
 
 # 結合手順。章の区切りは章見出し（#）が自動で改ページするので、
 # ここでは insertpagebreak 等の procedure 操作そのものの用例を兼ねて使う。

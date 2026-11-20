@@ -22,6 +22,7 @@ _SLUG_RE = re.compile(r'^[a-z0-9][a-z0-9-]*[a-z0-9]$')
 # --source choices -> output.<key> mapping.
 _SOURCE_KEYS = {
     "puremd":   "puremdfilename",
+    "githubmd": "githubmdfilename",
     "rendered": "renderedfilename",
     "merged":   "mdfilename",
 }
@@ -62,7 +63,8 @@ def _rewrite_and_collect(
             )
         return f"{slug}/{registry[img_src].name}"
 
-    return rewrite(content, lambda r: register(r.ref)), registry
+    # <img src> is what githubmd emits; harmless for other inputs (they have none).
+    return rewrite(content, lambda r: register(r.ref), html_img=True), registry
 
 
 def run(args: argparse.Namespace) -> int:

@@ -10,6 +10,7 @@
 
 from __future__ import annotations
 
+import html
 import logging
 import re
 import unicodedata
@@ -25,6 +26,11 @@ FRONTMATTER_IMAGE_KEYS: tuple[str, ...] = ("hero", "notecom_cover")
 # 書き換え時はそのまま再出力する。title 付き・スペース入りパス・`<...>` 囲み・
 # 参照リンク形式・`<img>` タグは非対応（docs/spec/md_pipeline.md の「非対応の記法」）。
 BODY_IMAGE_RE = re.compile(r'(!\[[^\]]*\]\()([^)\s]+)(\))(\s*\{[^}]*\})?')
+
+# githubmd が出力する HTML の ``<img src="...">``。transfer だけが ``html_img=True`` で
+# 対象にする（merge 等の入力原稿に現れる ``<img>`` は従来どおり非対応のまま）。src 値は
+# HTML エスケープされているので、解決前に戻し、書き換え後に再びエスケープする。
+HTML_IMG_SRC_RE = re.compile(r'(<img\b[^>]*?\ssrc=")([^"]+)(")', re.IGNORECASE)
 
 # frontmatter の画像キー行。group 2 = 引用符付きパス / group 3 = 引用符なしパス。
 # 引用符の有無と行末の空白は書き換え後も保持する。
@@ -89,14 +95,18 @@ class FrontmatterTracker:
         return self._inside
 
 
-def rewrite_line(line: str, *, in_frontmatter: bool, resolve: Resolver) -> str:
+def rewrite_line(line: str, *, in_frontmatter: bool, resolve: Resolver, html_img: bool = False) -> str:
     """1 行分の画像参照を *resolve* の戻り値で置き換える。
 
     frontmatter 内では画像キー行のみ、本文では ``![alt](ref)`` のみを対象とする。
+    ``html_img=True`` のときは本文の ``<img src="...">`` も対象にする（githubmd の出力用）。
     """
     if in_frontmatter:
         return FRONTMATTER_IMAGE_RE.sub(lambda m: _sub_frontmatter(m, resolve), line)
-    return BODY_IMAGE_RE.sub(lambda m: _sub_body(m, resolve), line)
+    line = BODY_IMAGE_RE.sub(lambda m: _sub_body(m, resolve), line)
+    if html_img:
+        line = HTML_IMG_SRC_RE.sub(lambda m: _sub_html_img(m, resolve), line)
+    return line
 
 
 def rewrite_yaml_links(line: str, *, in_frontmatter: bool, resolve: Resolver) -> str:
@@ -114,13 +124,13 @@ def rewrite_yaml_links(line: str, *, in_frontmatter: bool, resolve: Resolver) ->
     return BODY_YAML_LINK_RE.sub(sub, line)
 
 
-def rewrite(content: str, resolve: Resolver) -> str:
+def rewrite(content: str, resolve: Resolver, *, html_img: bool = False) -> str:
     """MD 全体（frontmatter ＋ 本文）の画像参照を *resolve* の戻り値で置き換える。"""
     tracker = FrontmatterTracker()
     parts: list[str] = []
     for line in content.splitlines(keepends=True):
         in_fm = tracker.feed(line)
-        parts.append(rewrite_line(line, in_frontmatter=in_fm, resolve=resolve))
+        parts.append(rewrite_line(line, in_frontmatter=in_fm, resolve=resolve, html_img=html_img))
     return "".join(parts)
 
 
@@ -179,6 +189,14 @@ def _sub_body(m: "re.Match[str]", resolve: Resolver) -> str:
     attr = m.group(4) or ""
     new_ref = resolve(Ref(ref=ref, kind="body", key=None))
     return f"{prefix}{new_ref or ref}{close}{attr}"
+
+
+def _sub_html_img(m: "re.Match[str]", resolve: Resolver) -> str:
+    ref = html.unescape(m.group(2))
+    new_ref = resolve(Ref(ref=ref, kind="body", key=None))
+    if new_ref is None:
+        return m.group(0)
+    return f"{m.group(1)}{html.escape(new_ref, quote=True)}{m.group(3)}"
 
 
 def _sub_frontmatter(m: "re.Match[str]", resolve: Resolver) -> str:

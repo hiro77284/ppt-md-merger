@@ -25,7 +25,7 @@ pandoc:
 | `warning` | `divboxes.lua` | `#sem-box("warning")[…]` でラップ（注意喚起、強い囲み） |
 | `widequote` | `divboxes.lua` | `#sem-box("widequote")[…]` でラップ |
 | `largefontblock` | `largefontblock.lua` | `#semlargefontblock[…]` でラップ |
-| `blockindent` | `blockindent.lua` | `#semblockindent(indent: …)[…]` でラップ（HTML は margin-left） |
+| `blockindent` | `blockindent.lua` | `#semblockindent(indent: …)[…]` でラップ（既定 2em。HTML は margin-left）。[使用例](#blockindent-の使用例) |
 | `keep-together` | `keep-together.lua` | `#semkeeptogether[…]`（分割しない block）でラップ。HTML は `break-inside: avoid` |
 | `center` | `center.lua` | `#semcenter[…]` でラップ。HTML は `text-align: center` |
 
@@ -108,6 +108,28 @@ fontsize 属性で指定します（値は旧 LaTeX 版と同じフォントサ�
 :::
 
 ```
+
+
+### blockindent の使用例
+
+```markdown
+::: {.blockindent}
+既定の字下げ（2em）
+:::
+
+::: {.blockindent indent=6em}
+6em 字下げ
+:::
+```
+
+`blockindent.lua` は `indent` 属性を取り出して検査し（`^%d*%.?%d+%a+$` = 数値＋単位）、合わない値は標準エラーに `[blockindent] indent=… は数値＋単位（例 3em / 10mm）ではないので無視し、既定の 2em にします` と警告して捨て、既定に戻す。変換結果:
+
+```text
+PDF（Typst）: #semblockindent[ … ]              / #semblockindent(indent: 6em)[ … ]
+HTML        : <div class="blockindent"> … </div> / <div class="blockindent" style="margin-left:6em"> … </div>
+```
+
+既定の 2em は Typst 側が `templates/semantic_macros.typ` の `semblockindent(indent: 2em, …)`、HTML 側が `user_settings/pandoc/semantic.css` の `div.blockindent { margin-left: 2em; }` で決まる（両方を変えないと PDF と HTML で既定がずれる）。puremd（GFM）はこのフィルタを通らず、`> **BLOCKINDENT**` のラベル付き引用になり `indent` は破棄される（[spec/output_formats.md](spec/output_formats.md#fenced-div-の変換)）。
 
 ---
 

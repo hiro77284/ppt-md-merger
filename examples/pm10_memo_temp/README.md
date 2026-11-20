@@ -1,4 +1,5 @@
 <!-- source: extracted/memo_temp_guide_slide1_md.md -->
+<!-- md_merge_rawtitle: 作業用のメモを書く -->
 <!-- #id:section:memo_temp_guide:slide1 -->
 ## 作業用のメモを書く
 
@@ -14,17 +15,17 @@ MEMO、TEMP の動作は同じです。
 
 
 
-![](build/figures/memo_temp_guide_slide1_fig.png)
 
-![](build/figures/memo_temp_guide_keyvisual.png)
+<img src="readme-images/memo-temp-guide-slide1-fig.png" alt="" width="95%">
 
-
+<img src="readme-images/memo-temp-guide-keyvisual.png" alt="" width="90%">
 
 
 
 
 
 <!-- source: extracted/memo_temp_guide_slide2_md.md -->
+<!-- md_merge_rawtitle: MEMO, TEMP サンプル -->
 <!-- #id:section:memo_temp_guide:slide2 -->
 ## MEMO, TEMP サンプル
 
@@ -32,14 +33,15 @@ MEMO、TEMP の動作は同じです。
 （PDFファイル中では両方とも残って見えますが、マージされた .pptx からは削除されます）
 
 
-![](build/figures/memo_temp_guide_slide2_fig.png)
 
+<img src="readme-images/memo-temp-guide-slide2-fig.png" alt="" width="95%">
 
 
 
 
 
 <!-- source: extracted/memo_temp_guide_slide3_md.md -->
+<!-- md_merge_rawtitle: テーブルシェイプはテーブルごと消去 -->
 <!-- #id:section:memo_temp_guide:slide3 -->
 ## テーブルシェイプはテーブルごと消去
 
@@ -47,5 +49,6 @@ MEMO、TEMP の動作は同じです。
 （PDFファイル中では両方とも残って見えますが、マージされた .pptx からは削除されます）
 
 
-![](build/figures/memo_temp_guide_slide3_fig.png)
+
+<img src="readme-images/memo-temp-guide-slide3-fig.png" alt="" width="95%">
 

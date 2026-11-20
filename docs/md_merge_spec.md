@@ -271,6 +271,7 @@ procedure:
 | ---- | ------------ | -------------------- |
 | `insertpptx` | 入力 pptx ファイル名 | `pptxfilename` |
 | `insertmd` | 入力 MD ファイル名（`[from-to]` レンジ可） | `mdfilename` |
+| `insertmdpages` | 入力 MD ファイル名（`[from-to]` レンジ可）。各 MD の間に `insertvfill` と `insertpagebreak` を挟んだ insertmd の並びに展開する（[md_pipeline.md](spec/md_pipeline.md)「MD ごとに改ページして並べる」） | （なし。version 2 以降のみ） |
 | `insertvar` | 変数名（値の文字列をそのまま MD として挿入） | `varname` |
 | `chapter` / `section` / `subsection` | カウンタ値（`"+"` / `n` / `+n` / `-n`）。省略可 | 同名キー |
 | `insertvspace` | 行数または単位付き長さ | `lines` |
@@ -283,7 +284,7 @@ version 2 以降では次をエラーにする（読み込んだ時点で全サ�
 * 1 要素に操作キーが 2 つ以上ある要素。version 1 で chapter 操作に書けた `section` キー（およびその逆）は書けない
 * 主引数キーの併記（例: `- insertpptx: a.pptx` と `pptxfilename: b.pptx`）
 * 引数のない操作に値を書いた要素（例: `- beginstay: true`）
-* `insertpptx` / `insertmd` / `insertvar` の値が文字列でない要素（YAML の `no` → `false` など。引用符で囲む）
+* `insertpptx` / `insertmd` / `insertvar` / `insertmdpages` の値が文字列でない要素（YAML の `no` → `false` など。引用符で囲む）
 * `group` 要素の誤り（値が項目のリストでない・空、操作キーや `group` / `when` / `description` 以外のキーとの併記）
 
 複数の項目を `- group:` で束ね、`when:` をまとめて付けられる（version 2 以降。読み込み時に展開される）。詳細は [md_pipeline.md](spec/md_pipeline.md) の「複数項目にまとめて掛ける（`group:`）」。
@@ -336,6 +337,7 @@ output:
 | `output.htmlfilename` | `<base>.html` | `target.html` |
 | `output.revealfilename` | `<base>_reveal.html` | `target_reveal.html` |
 | `output.puremdfilename` | `<base>_puremd.md` | `target_puremd.md` |
+| `output.githubmdfilename` | `<base>_github.md` | `target_github.md` |
 | `output.notecomyamlfilename` | `<base>_notecom.yaml` | `target_notecom.yaml` |
 | `output.pptxfilename` | `<base>.pptx` | `target.pptx` |
 
@@ -364,7 +366,7 @@ sample.yaml → sample_merge.md
 | 分冊 | 収録サブコマンド |
 |---|---|
 | [spec/md_pipeline.md](spec/md_pipeline.md) | [merge](spec/md_pipeline.md#merge) / [idcollect](spec/md_pipeline.md#idcollect) / [idresolve](spec/md_pipeline.md#idresolve) / [render](spec/md_pipeline.md#render) |
-| [spec/output_formats.md](spec/output_formats.md) | [pandoc](spec/output_formats.md#pandoc) / [puremd](spec/output_formats.md#puremd別名-githubmd) / [表紙](spec/output_formats.md#表紙cover-md--htmlcover) / [transfer](spec/output_formats.md#transfer) / [notecomexport](spec/output_formats.md#notecomexport) |
+| [spec/output_formats.md](spec/output_formats.md) | [pandoc](spec/output_formats.md#pandoc) / [puremd](spec/output_formats.md#puremd) / [githubmd](spec/output_formats.md#githubmd) / [表紙](spec/output_formats.md#表紙cover-md--htmlcover) / [transfer](spec/output_formats.md#transfer) / [notecomexport](spec/output_formats.md#notecomexport) |
 | [spec/pptx.md](spec/pptx.md) | [pptmerge](spec/pptx.md#pptmerge) / [pptimgexport](spec/pptx.md#pptimgexport) / [pptmdexport](spec/pptx.md#pptmdexport) / [pptyamlexport](spec/pptx.md#pptyamlexport) / [pptpdfexport](spec/pptx.md#pptpdfexport) / [pptdeletecsl](spec/pptx.md#pptdeletecsl) |
 | [spec/pipelines.md](spec/pipelines.md) | [crop_to_pdf](spec/pipelines.md#crop_to_pdf) / [ppt_to_pdf](spec/pipelines.md#ppt_to_pdf) / [ppt_to_transfer](spec/pipelines.md#ppt_to_transfer) / [ppt_to_puremd](spec/pipelines.md#ppt_to_puremd) / [ppt_to_notecom](spec/pipelines.md#ppt_to_notecom) |
 | [spec/validation.md](spec/validation.md) | [checkgen](spec/validation.md#checkgen) / [checkverify](spec/validation.md#checkverify) / [validate](spec/validation.md#validate) / [explain](spec/validation.md#explain) |

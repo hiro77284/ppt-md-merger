@@ -10,6 +10,8 @@
   （PDF の表紙 ``cover-md``・defaults ``defaults``。_pandoc_keys.py）。
 
 v2 以降では ``- group: [...]`` で複数の項目を束ね、``when:`` をまとめて付けられる。
+また ``- insertmdpages: a[1-3].md`` は、レンジ展開した各 MD の間に insertvfill と
+insertpagebreak を挟んだ insertmd の並びの略記（正規化時に展開する。内部表現には残らない）。
 グループは正規化時に平らに展開し、グループの ``when:`` は子の内部キー
 ``_group_when`` に (位置, when) の組として引き継ぐ（判定は _conditions.py）。
 
@@ -21,6 +23,8 @@ from __future__ import annotations
 
 import logging
 from pathlib import Path
+
+from md_merge._mdrange import expand_mdfilename
 
 LATEST_VERSION = 4
 SUPPORTED_VERSIONS = frozenset({1, 2, 3, 4})
@@ -53,6 +57,13 @@ GROUP_ITEM_KEYS = frozenset({GROUP_KEY, "when", "description"})
 # グループから引き継いだ when: の一覧（[(位置ラベル, when), ...]、外側が先）
 INHERITED_WHEN_KEY = "_group_when"
 
+# v2 の略記操作（内部表現には残らない）。値は insertmd と同じファイル名（[from-to] レンジ可）で、
+# 正規化時に insertmd / insertvfill / insertpagebreak の並びへ展開する。
+MDPAGES_OP = "insertmdpages"
+MDPAGES_SEPARATOR = ("insertvfill", "insertpagebreak")
+# v2 の要素に書ける操作キー（内部の操作 + 略記）
+V2_OPS = PROCEDURE_OPS | {MDPAGES_OP}
+
 # v1 で operation キーがない場合の既定値 (pptmerge レシピの慣習)
 DEFAULT_OP_V1 = "insertpptx"
 
@@ -69,6 +80,7 @@ PRIMARY_ARG: dict[str, str | None] = {
     "endstay": None,
     "insertpagebreak": None,
     "insertvfill": None,
+    MDPAGES_OP: "mdfilename",
 }
 
 
@@ -91,17 +103,19 @@ def recipe_version(recipe: dict) -> int:
 
 def _check_v1_item(i: int, item: object) -> list[str]:
     if not isinstance(item, dict):
-        if isinstance(item, str) and item in PROCEDURE_OPS:
+        if isinstance(item, str) and item in V2_OPS:
             return [f"procedure[{i}]: {item!r} は version 2 以降の記法です（version 1 では operation: {item} と書きます）"]
         return []  # 非辞書の一般エラーは validate / 各サブコマンドに任せる
     if GROUP_KEY in item:
         return [f"procedure[{i}]: group は version 2 以降でのみ使えます（version: {LATEST_VERSION} にしてください）"]
     op = item.get("operation")
+    if op == MDPAGES_OP or (op is None and MDPAGES_OP in item):
+        return [f"procedure[{i}]: {MDPAGES_OP} は version 2 以降でのみ使えます（version: {LATEST_VERSION} にしてください）"]
     if op is None:
         allowed: frozenset = frozenset()
     else:
         allowed = PROCEDURE_ITEM_KEYS.get(op, frozenset())
-    stray = sorted(k for k in item if k in PROCEDURE_OPS and k not in allowed)
+    stray = sorted(k for k in item if k in V2_OPS and k not in allowed)
     if stray:
         return [
             f"procedure[{i}]: 操作キー {', '.join(repr(k) for k in stray)} は version 2 以降の記法です"
@@ -116,8 +130,8 @@ def _normalize_v2_item(label: str, item: object) -> tuple[dict | None, list[str]
     *label* はエラー表示用の位置（例: ``procedure[3]`` / ``procedure[3].group[0]``）。
     """
     if isinstance(item, str):
-        if item not in PROCEDURE_OPS:
-            return None, [f"{label}: 未知の操作です: {item!r} (有効値: {', '.join(sorted(PROCEDURE_OPS))})"]
+        if item not in V2_OPS:
+            return None, [f"{label}: 未知の操作です: {item!r} (有効値: {', '.join(sorted(V2_OPS))})"]
         if PRIMARY_ARG[item] is not None:
             return None, [f"{label}: {item} には値が必要です（例: - {item}: ...）"]
         return {"operation": item}, []
@@ -128,10 +142,10 @@ def _normalize_v2_item(label: str, item: object) -> tuple[dict | None, list[str]
             f"{label}: operation 記法は version 2 以降では使えません"
             f"（例: - {item.get('operation') or 'insertpptx'}: ...）"
         ]
-    ops = [k for k in item if k in PROCEDURE_OPS]
+    ops = [k for k in item if k in V2_OPS]
     if not ops:
         return None, [
-            f"{label}: 操作キーがありません（有効な操作: {', '.join(sorted(PROCEDURE_OPS))}）"
+            f"{label}: 操作キーがありません（有効な操作: {', '.join(sorted(V2_OPS))}）"
         ]
     if len(ops) > 1:
         return None, [
@@ -148,7 +162,7 @@ def _normalize_v2_item(label: str, item: object) -> tuple[dict | None, list[str]
         return None, [
             f"{label}: version 2 以降では {primary} キーは使えません（- {op}: <値> に書きます）"
         ]
-    if op in ("insertpptx", "insertmd", "insertvar") and value is not None and not isinstance(value, str):
+    if op in ("insertpptx", "insertmd", "insertvar", MDPAGES_OP) and value is not None and not isinstance(value, str):
         return None, [f"{label}: {op} の値が文字列ではありません（引用符で囲んでください）: {value!r}"]
     result: dict = {"operation": op}
     for k, v in item.items():
@@ -164,13 +178,13 @@ def _normalize_v2_item(label: str, item: object) -> tuple[dict | None, list[str]
 def _check_group(label: str, item: dict) -> list[str]:
     """group 要素そのもの（子は除く）の書式エラーを列挙する。"""
     errors: list[str] = []
-    ops = [k for k in item if k in PROCEDURE_OPS]
+    ops = [k for k in item if k in V2_OPS]
     if ops:
         errors.append(
             f"{label}: group と操作キー {', '.join(repr(k) for k in ops)} は同じ要素に書けません"
             "（操作は group: の下のリストに書きます）"
         )
-    stray = sorted(str(k) for k in item if k not in GROUP_ITEM_KEYS and k not in PROCEDURE_OPS)
+    stray = sorted(str(k) for k in item if k not in GROUP_ITEM_KEYS and k not in V2_OPS)
     if stray:
         errors.append(
             f"{label}: group に書けないキー: {', '.join(repr(k) for k in stray)}"
@@ -207,9 +221,40 @@ def _flatten_v2_list(items: list, prefix: str, inherited: tuple) -> list:
             result.extend(_flatten_v2_list(item[GROUP_KEY], f"{label}.{GROUP_KEY}", inner))
             continue
         normalized = _normalize_v2_item(label, item)[0] if isinstance(item, (dict, str)) else item
-        if inherited and isinstance(normalized, dict):
-            normalized[INHERITED_WHEN_KEY] = list(inherited)
-        result.append(normalized)
+        expanded = _expand_mdpages(normalized) if isinstance(normalized, dict) else [normalized]
+        for one in expanded:
+            if inherited and isinstance(one, dict):
+                one[INHERITED_WHEN_KEY] = list(inherited)
+            result.append(one)
+    return result
+
+
+def _expand_mdpages(item: dict) -> list[dict]:
+    """insertmdpages を insertmd / insertvfill / insertpagebreak の並びへ展開する。
+
+    ファイルが 1 つ（レンジなし）なら insertmd 1 つと同じ。``when:`` は展開した全項目に
+    付ける（区切りだけが残らないように）。その他の兄弟キー（``description`` 等）は
+    先頭の insertmd にだけ残す。レンジが不正なら値をそのまま insertmd 1 つにして、
+    insertmd と同じ警告・validate エラーに任せる。
+    """
+    if item.get("operation") != MDPAGES_OP:
+        return [item]
+    extras = {k: v for k, v in item.items() if k not in ("operation", "mdfilename")}
+    shared = {k: v for k, v in extras.items() if k == "when"}
+    val = item.get("mdfilename")
+    try:
+        names = expand_mdfilename(val) if isinstance(val, str) else [val]
+    except ValueError:
+        names = [val]
+    result: list[dict] = []
+    for n, name in enumerate(names):
+        if n:
+            result.extend({"operation": op, **shared} for op in MDPAGES_SEPARATOR)
+        md: dict = {"operation": "insertmd"}
+        if name is not None:
+            md["mdfilename"] = name
+        md.update(extras if n == 0 else shared)
+        result.append(md)
     return result
 
 

@@ -77,7 +77,7 @@ MD:     この **メモリリーク** を `config.yaml` で確認し <kbd>Ctrl+C
 ```
 
 - **LaTeX 側は「マクロ定義＋Lua フィルタ」の両方が必要。** pandoc の LaTeX writer は `[x]{.term}` の span クラスを既定で捨てるため、(a) `\newcommand{\term}…` を `src/md_merge/templates/semantic_macros.tex` に定義し `include-in-header` で取り込み、(b) `[x]{.term}` → `\term{x}` に変換する Lua フィルタ（`semantic-spans.lua`、divboxes.lua のインライン版）で呼び出す。マクロ定義だけでは効かない。
-- **HTML 側は CSS のみで完結。** pandoc が `[x]{.term}` を `<span class="term">` としてネイティブ出力するので、`defaults/pandoc/semantic.css` を `css:` リストに足すだけ。`.kbd` は `<kbd>` 化、`.path` は `<code>` 化したい場合のみ軽い Lua フィルタを足す。
+- **HTML 側は CSS のみで完結。** pandoc が `[x]{.term}` を `<span class="term">` としてネイティブ出力するので、`user_settings/pandoc/semantic.css` を `css:` リストに足すだけ。`.kbd` は `<kbd>` 化、`.path` は `<code>` 化したい場合のみ軽い Lua フィルタを足す。
 - `.term` と `.keyword` は GFM ではどちらも**単なる太字**となり意味の区別が失われる（lossy・許容）。
 - ⚠️ **新規工数:** `puremd` は現在ブロック fenced div しか変換しない。**インライン span の lowering を puremd に新規追加**する必要がある（カテゴリBの最大の実装項目）。
 
@@ -155,7 +155,7 @@ src/md_merge/semantics.yaml        ← クラス × 形式の lowering 規則の
 1. **検出で可視化（実装済み）** — `pptmdexport latex_check: warn`。
 2. **lowering 被覆を完成** — 新ブロック（center/vspace/pagebreak/vfill）＋インライン span を **3 形式すべて**に実装。
    - **MD（puremd）: 完了・検証済み**。`_semantics` レジストリに配線（`_DEFAULT_*` を撤去）、インライン span（`[x]{.term}`→`**`/`*`/`` ` ``/`<kbd>`）とリーフ記法（`{{vspace:N}}`/`{{pagebreak}}`→`---`/`{{vfill}}`）を実装。既存クラス（note/warning/leadline/widequote/largefontblock/blockindent）は挙動不変。`center`/`keep-together` は設計どおり unwrap に変更。
-   - **LaTeX / HTML: 資産作成・検証済み**。`src/md_merge/filters/center.lua`（`.center`→`\begin{center}`／HTML は inline `text-align:center`）、`semantic-spans.lua`（span→マクロ／HTML は kbd・path 要素化）、`semantic-leaf.lua`（リーフ→`FORMAT` 別 RawBlock）、`src/md_merge/templates/semantic_macros.tex`（マクロ）、`defaults/pandoc/semantic.css`（CSS）を作成。**実 pandoc で LaTeX/HTML 出力を検証、pdflatex でマクロのコンパイルも確認済み**（CSS の見た目のみ未検証）。`.center` はフィルタが必要（`\begin{center}` 環境で包む。pandoc は `.center` div を自動では中央寄せしない）。
+   - **LaTeX / HTML: 資産作成・検証済み**。`src/md_merge/filters/center.lua`（`.center`→`\begin{center}`／HTML は inline `text-align:center`）、`semantic-spans.lua`（span→マクロ／HTML は kbd・path 要素化）、`semantic-leaf.lua`（リーフ→`FORMAT` 別 RawBlock）、`src/md_merge/templates/semantic_macros.tex`（マクロ）、`user_settings/pandoc/semantic.css`（CSS）を作成。**実 pandoc で LaTeX/HTML 出力を検証、pdflatex でマクロのコンパイルも確認済み**（CSS の見た目のみ未検証）。`.center` はフィルタが必要（`\begin{center}` 環境で包む。pandoc は `.center` div を自動では中央寄せしない）。
    - **残り: pandoc defaults へのフィルタ／include-in-header／css の配線**（ユーザーの defaults YAML は環境依存・絶対パスのため自動編集せず、追加スニペットを提示）。LaTeX defaults: `filters:` に semantic-spans.lua / semantic-leaf.lua、`include-in-header:` に semantic_macros.tex。HTML defaults: `filters:` に両 lua、`css:` に semantic.css。
    - **解消済み**: `semantic-spans.lua`（インライン）/ `semantic-leaf.lua`（リーフ）/ `divboxes.lua`（box 系 block の class→env）のルックアップ表は `tools/gen_lua_semantics.py` が `semantics.yaml` からコード生成（`-- >>> GENERATED` 区画、`--check` でドリフト検知）。手動同期は不要。divboxes は `latex.box: true` の 4 クラス（note/warning/leadline/widequote）のみ生成対象で、属性→tcolorbox オプション変換（build_options 等）は手維持。largefontblock/blockindent/center 等の env は各専用フィルタで手維持。詳細は docs §10.2。
 3. **`tex_*.md` 資産の差し替え**＋HTML 用 CSS/テンプレート整備。
@@ -176,7 +176,7 @@ src/md_merge/semantics.yaml        ← クラス × 形式の lowering 規則の
 - **`.vspace`/`.pagebreak`/`.vfill`**: 1 行リーフ記法（`{{vspace:N}}` / `{{pagebreak}}` / `{{vfill}}`、§3.A）。
 - **レジストリ形式**: 宣言的 YAML（`src/md_merge/semantics.yaml`、パッケージ同梱）。ローダーは `_semantics.py`。
 - **インライン span 略記**: 当面不要（標準の `[x]{.class}` を使う）。
-- **HTML CSS の取り込み**: 単独 CSS ファイルを pandoc defaults の `css:` リストで取り込む（既存 `html_pandoc_defaults.yaml` と同方式）。`standalone: true` で `<link>` 生成。1 ファイル完結が要るなら `embed-resources: true` でインライン化。新規 `defaults/pandoc/semantic.css` を**リポジトリ相対**で追加（既存の絶対パスは 2026-10-25 に `${.}` 相対へ修正済み）。
+- **HTML CSS の取り込み**: 単独 CSS ファイルを pandoc defaults の `css:` リストで取り込む（既存 `html_pandoc_defaults.yaml` と同方式）。`standalone: true` で `<link>` 生成。1 ファイル完結が要るなら `embed-resources: true` でインライン化。新規 `user_settings/pandoc/semantic.css` を**リポジトリ相対**で追加（既存の絶対パスは 2026-10-25 に `${.}` 相対へ修正済み）。
 - **LaTeX マクロの取り込み**: 単独 `src/md_merge/templates/semantic_macros.tex` に `\newcommand` を定義し、LaTeX/PDF defaults の `include-in-header:` リストで取り込む（PDF/LaTeX モード専用）。span→マクロ変換の Lua フィルタ（`semantic-spans.lua`）と**セット**で機能する。
 
 - **リーフ記法の綴り**: `{{vspace:N}}` / `{{pagebreak}}` / `{{vfill}}` で確定。既存マーカー族（`{{#id:}}` / `{{v:}}` / `{{num|title|label|rawtitle:}}` / `{{nolabel}}` / `{{noref}}` / `{{enclosenum|titlelabel:}}`）の正規表現はいずれも特定キーワード＋直後コロンを要求するため**衝突しない**（`{{v:` は `v` の直後にコロンが必要で `vspace` は非該当）。render / idcollect / pptmdexport を素通りすることを確認済み。

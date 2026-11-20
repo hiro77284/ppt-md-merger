@@ -47,7 +47,7 @@ REMOVED_WHEN_KEYS: dict[str, str] = {
 KNOWN_COMMANDS: frozenset[str] = frozenset({
     "merge", "idcollect", "checkgen", "checkverify", "idresolve", "pandoc", "render",
     "pptmerge", "crop", "crop_to_pdf", "pptimgexport", "pptmdexport", "pptyamlexport",
-    "puremd", "ppt_to_pdf", "ppt_to_transfer", "ppt_to_puremd",
+    "puremd", "githubmd", "ppt_to_pdf", "ppt_to_transfer", "ppt_to_puremd", "ppt_to_githubmd",
     "transfer", "notecomexport", "ppt_to_notecom", "validate", "pptpdfexport", "pptdeletecsl",
 })
 
@@ -57,7 +57,7 @@ REMOVED_COMMANDS: dict[str, str] = {
 }
 
 # サブコマンドの別名 → 正式名（照合は正式名で行う）
-_COMMAND_ALIASES: dict[str, str] = {"githubmd": "puremd"}
+_COMMAND_ALIASES: dict[str, str] = {}
 
 
 @dataclass(frozen=True)
@@ -162,8 +162,9 @@ def check_when_errors(recipe: dict) -> list[str]:
         # group の条件は展開後の各項目が同じものを持つので、位置ごとに 1 回だけ検査する
         if label in seen or not isinstance(when, dict):
             continue
+        seen.add(label)
         for key in sorted(set(when) - WHEN_KEYS - set(REMOVED_WHEN_KEYS), key=str):
-            errors.append(f"procedure[{i}]: {_unknown_key_message(key)}")
+            errors.append(f"{label}: {_unknown_key_message(key)}")
         for key, msg in REMOVED_WHEN_KEYS.items():
             if key in when:
                 errors.append(f"{label}: {msg}")

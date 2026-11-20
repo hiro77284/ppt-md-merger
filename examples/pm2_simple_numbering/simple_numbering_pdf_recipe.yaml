@@ -15,7 +15,7 @@ log:
 
 # puremd サブコマンドのオプション。削除対象とするパターンを指定するyamlファイルのパス
 puremd:
-  strip_config: ../../defaults/common_assets/puremd_strip.yaml
+  strip_config: ../../user_settings/common_assets/puremd_strip.yaml
 
 # pptmergeコマンドの設定
 pptmerge:
@@ -48,6 +48,15 @@ merge:
   flatten-images: false # trueならすべての画像を<outputdir>/<image-dir>/ にフラット集約する。同名ファイルは _1, _2 … のサフィックスを付けて上書きを回避する（既定: false）
   strict: false         # 警告をエラーとして扱う（既定: false）
 
+transfer:
+  dataentry_input: .  # 出力先（必須）
+  slug: readme-images          # 必須。画像を置くサブフォルダ名と出力 MD 名になる（英小文字・数字・-）
+  inputmd: simple_numbering_merged_github.md         # 省略すると output.renderedfilename を使う
+  outputmd: README.md     # 省略すると {slug}.md
+  image_naming: sanitize  # 既定は preserve（元のファイル名のまま）
+  image_collision: overwrite  # 既定は rename（_1, _2 の連番）
+
+
 pandoc:
   _include: ../standard_pandocsettings.yaml
 
@@ -56,11 +65,11 @@ input:
   dirs: 
     - .
     - extracted
-    - ../../defaults/common_assets
+    - ../../user_settings/common_assets
 
   imagesdir: 
     - extracted/figures
-    - ../../defaults/common_assets
+    - ../../user_settings/common_assets
 
   # pptxから画像を取得してくるための設定
   cropsrc:

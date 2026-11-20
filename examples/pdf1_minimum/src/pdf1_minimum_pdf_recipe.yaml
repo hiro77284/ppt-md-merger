@@ -1,0 +1,150 @@
+version: 4
+
+# PowerPoint → Markdown → PDF 生成指示サンプル
+# 概要：1つのPPTXをまるごとPDF化する最もシンプルな例
+# 　MD原稿は各スライドのnoteに書く。
+# 　画像切り出しは slide, named_shape, slide_with_rectpct の各例を使用。
+
+# 「同梱の」という表記は、「ppt-md-merger 同梱の」を意味し、 
+# ppt-md-merger の src/md_merge/templates/ または defaults/ ディレクトリ以下のファイルを意味します。
+
+vars:
+  COVER_IMAGE: ../images/cover_image.png
+  COVER_TITLE: "単純なPDFを生成するサンプル"
+  COVER_SUBTITLE: "PPTX->MD->PDF生成の最小事例"
+  COVER_DATE: __DATETIME__
+  COVER_AUTHOR: "開米瑞浩"
+  COVER_AFFILIATION: "アイデアクラフト"
+  COVER_CONTACT: "https://ideacraft"
+  COVER_COPYRIGHT: "© 2026 M. Kaimai"
+  COVER_NOTE: "本書は、 PowerPointファイルを「流用できる文書部品」として統合するツール PPT & MD merger の、 マージ→PDF生成機能の最小サンプルです。"
+  COVER_QRCODE: 
+
+log:
+  level: debug
+  filename: log.txt
+  duplicate: stdout  # ログファイルと同じ内容を標準出力または標準エラーにも出す。未設定または空欄のときは重複出力しない。stdout は標準出力、stderr は標準エラー出力
+
+# pptmergeコマンドの設定
+pptmerge:
+
+# 出力ファイル名設定
+output: 
+  outputdir: ../build  # 出力ファイルを書き込むディレクトリ
+  targetbasefilename: pdf1_minimum_target  # 出力ファイルの基準ファイル名
+  force: true             # 既存の出力ファイルを上書きする（既定: false）
+
+  # ワークファイル名の指定。　以下の設定が空欄または省略なら、ワークファイル名はtargetbasefilenameをもとに自動付与されます
+  # mdfilename:             # 結合後のmdファイルのファイル名
+  # pdffilename:            # 結合後のmdファイルをPandocでレンダーして生成されるpdfファイルのファイル名
+  # pptxfilename:           # 結合後のpptxファイルのファイル名
+  # idcollectfilename:      # 結合後のmdファイルから{{#id:...}}マーカーを抽出して生成されるインベントリファイルのファイル名
+  # idresolvedfilename:     # インベントリファイルを読み込んでnumberとlabelを付与したID解決済みマップファイルのファイル名
+  # renderedfilename:       # 結合後のmdファイルに対してタイトル置換・参照置換を行ったレンダー済みmdファイルのファイル名
+  # puremdfilename:         # rendered.mdファイルからlatex命令を削除した純粋なmdファイルのファイル名。MD自体でプレビューを見るときはこれを使う
+  # texfilename:            # 結合後のmdファイルをPandocでレンダーして生成されるtexファイルのファイル名
+  # resourcepathfilename:   # 結合後のmdファイルで使用するリソースパスを書き込むtexファイルのファイル名
+  # htmlfilename:           # 結合後のmdファイルをPandocでレンダーして生成されるhtmlファイルのファイル名
+  # revealfilename:         # 結合後のmdファイルをPandocでレンダーして生成されるhtmlファイルのファイル名
+
+
+indexer:
+  # 章節番号付与方式の設定
+  pptxnumbering: "no"       # "no" 章節番号付番は行わない。"idresolve" は {{#id:...}} マーカーを抽出して番号付与する。"chapt_section" は★★★★。
+
+
+# MDファイルを結合する merge サブコマンドのオプション。
+merge:
+  # この設定は、結合した MD ファイルのサブディレクトリに個別画像を集めます。
+  copy-images: true # trueなら個別画像ファイルのコピーおよびパス書き換えを行う。（既定値true）
+  image-dir: ../build/images         # 画像コピー先サブディレクトリ名
+
+  # ↓すべての画像を<outputdir>/<image-dir>/ にフラット集約する。同名ファイルは _1, _2 … のサフィックスを付けて上書きを回避する（既定: false）
+  flatten-images: true 
+
+  # insertmd の md や include 先のファイルが見つからないとき、エラーで中断するか警告で済ませて処理を続けるか。既定は false(警告のみ)
+  strict: true         # ファイルが見つからないときはエラーとして扱う
+
+
+input:
+  # 結合対象とするファイルを探すディレクトリ。相対パス指定時は recipe.yaml が基点になる。
+  dirs: 
+    - .
+    - ../mds
+
+  # 画像を探すディレクトリ。相対パス指定時は recipe.yaml が基点になる。
+  imagesdir: 
+    - ../images
+
+  # pptxから画像を取得してくるための設定
+  cropsrc:
+    pptx: pdf1_minimum.pptx           # 画像のソースとなる pptx ファイル名
+    pdf: ../temppdfs/pdf1_minimum.pdf         # スライド全体画像取得用のPDF。省略・空値のときは outputdir に作る
+
+
+transfer:
+  dataentry_input: ..  # 出力先（必須）
+  slug: readme-images          # 必須。画像を置くサブフォルダ名と出力 MD 名になる（英小文字・数字・-）
+  inputmd: pdf1_minimum_target_github.md         # 省略すると output.renderedfilename を使う
+  outputmd: README.md     # 省略すると {slug}.md
+  image_naming: sanitize  # 既定は preserve（元のファイル名のまま）
+  image_collision: overwrite  # 既定は rename（_1, _2 の連番）
+
+
+
+pandoc:
+  # pandoc がPDF生成時に画像、埋め込みファイルなどを探しに行く基準ディレクトリ。 HTML生成時は処理しない。
+  # YAMLリストで複数指定可能
+  # 相対パス指定時は recipe.yaml が基点になる。 data-dir ではないので注意。
+  # ↓↓↓↓↓↓
+  resource-path: 
+    - ../build
+
+  # PDF生成時のシンタックスハイライトスタイル
+  syntax-highlighting: tango
+
+  # 表紙用テンプレートファイル。
+  # 名前だけ書くとレシピyamlのディレクトリから探し、なければ同梱の src/md_merge/templates/ を探す
+  # （cover_standard.md は COVER_* を使う標準の表紙であり、src/md_merge/templates/cover_standard.md に同梱されている）。
+  # 表紙をカスタマイズする際は、同梱の cover_standard.md をコピーして使う。
+  # ↓cover_standard_minimum.md は既定の表紙（src/md_merge/templates/cover_standard）のコピー
+  cover-md: cover_standard_minimum.md   
+  # ↑これを削除するとPDFに表紙がつかない
+
+  # ↓「Pandoc がユーザー専用の資材（テンプレート、カスタムフィルタ、ユーザーデータなど）を探しに行く基準ディレクトリ」
+  # 主な対象はテンプレート、フィルタ、スタイルファイル。Pandoc の「設定ファイル群」の置き場所
+  # このディレクトリ及びその下の templates, filters, defaults ディレクトリも探しに行く。
+  # --template や --lua-filter で指定した名前
+  # 複数指定は不可（1つだけ指定する）
+  data-dir: ../../../user_settings
+
+  # ↓以下、pandoc の設定項目。 data-dir 以下のディレクトリを探しに行く。
+  # ↓ pdf生成に使用する基本設定ファイル。 ↓省略時は同梱の src/md_merge/templates/report_base_defaults.yaml を使う
+  defaults: pandoc/defaults/report_base_defaults_toc2level.yaml 
+
+  # ↓ html生成に使う基本設定ファイルの指定。 省略時は無指定になる
+  # ↓ html生成を行う場合は下記コメントを外す。
+  # htmldefaults: defaults/html_pandoc_defaults_semantic.yaml
+
+  # ↓ reveal生成に使う基本設定ファイルの指定。 省略時は無指定になる
+  # ↓ reveal生成を行う場合は下記コメントを外す。
+  # revealdefaults: defaults/reveal_pandoc_defaults.yaml
+
+
+# 結合手順： "insertmd" で、結合したいファイルを結合順に記載する
+procedure:
+
+  # slide1 は表紙画像生成のみに使っており、本文としてはslide2から読み込む
+  - insertmd: pdf1_minimum_slide2.md
+
+  - insertvfill: #============= VFILL =============
+  - insertpagebreak: #============= PAGEBREAK =============
+  - insertmd: pdf1_minimum_slide3.md
+
+  - insertvfill: #============= VFILL =============
+  - insertpagebreak: #============= PAGEBREAK =============
+  - insertmd: pdf1_minimum_slide4.md
+
+  - insertvfill: #============= VFILL =============
+  - insertpagebreak: #============= PAGEBREAK ============= 
+  - insertmdpages: pdf1_minimum_slide[5-20].md

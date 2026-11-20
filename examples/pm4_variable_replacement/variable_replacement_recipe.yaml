@@ -17,7 +17,7 @@ input:
   dirs: 
     - .
     - extracted
-    - ../../defaults/common_assets
+    - ../../user_settings/common_assets
 
 procedure:
   - chapter: "+"

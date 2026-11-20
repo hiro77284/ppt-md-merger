@@ -51,7 +51,7 @@ _OUTPUT_KEYS = frozenset({
     "targetbasefilename",
     "mdfilename", "idcollectfilename", "idresolvedfilename",
     "renderedfilename", "pdffilename", "htmlfilename",
-    "revealfilename", "puremdfilename", "notecomyamlfilename", "pptxfilename",
+    "revealfilename", "puremdfilename", "githubmdfilename", "notecomyamlfilename", "pptxfilename",
     "checkfilename", "insertsamplefilename",
 })
 
