@@ -19,4 +19,26 @@ cd examples\pdf1_minimum\src
 pptmdmerge ppt_to_pdf pdf1_minimum_recipe.yaml
 ```
 
-結果、build フォルダに pdf1_minimum_target.pdf が生成されれば成功です。
+成果物は
+
+PDFファイル： build/pdf1_minimum_target.pdf
+
+です。　その他に、
+
+```bash
+pptmdmerge ppt_to_puremd src/pdf1_minimum_pdf_recipe.yaml --keep-work
+```
+で、
+
+MDファイル： build/pdf1_minimum_target_puremd.md
+
+を生成します。PDFではなくMDで配付したい場合はこれをbuild/images ディレクトリとともに配付します。
+
+```bash
+pptmdmerge ppt_to_githubmd src/pdf1_minimum_pdf_recipe.yaml --keep-work
+```
+で、
+
+GitHub 仕様のMDファイル： build/pdf1_minimum_target_github.md
+
+を生成します。

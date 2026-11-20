@@ -71,8 +71,8 @@ python -m pip install -e .
 
 サンプル文書をコンパイルしてみる
 ```powershell
-cd src/examples/pdf1_minimum/
-pptmdmerge ppt_to_pdf src/pdf1_minimum_recipe.yaml
+cd examples/pdf1_minimum/
+pptmdmerge ppt_to_pdf src/pdf1_minimum_pdf_recipe.yaml --keep-work
 ```
 動作ログが表示されたのち、最後に完了メッセージが流れれば成功です。所要時間は環境により異なります。
 
@@ -82,3 +82,27 @@ pptmdmerge ppt_to_pdf src/pdf1_minimum_recipe.yaml
   所要時間: 7.7秒
 ========================================
 ```
+
+成果物は
+
+PDFファイル： build/pdf1_minimum_target.pdf
+
+です。　その他に、
+
+```powershell
+pptmdmerge ppt_to_puremd src/pdf1_minimum_pdf_recipe.yaml --keep-work
+```
+で、
+
+MDファイル： build/pdf1_minimum_target_puremd.md
+
+を生成します。PDFではなくMDで配付したい場合はこれをbuild/images ディレクトリとともに配付します。
+
+```powershell
+pptmdmerge ppt_to_githubmd src/pdf1_minimum_pdf_recipe.yaml --keep-work
+```
+で、
+
+GitHub 仕様のMDファイル： build/pdf1_minimum_target_github.md
+
+を生成します。
