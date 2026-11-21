@@ -41,33 +41,33 @@ DEFAULT_SUBCOMMAND="ppt_to_puremd"
 
 RECIPES=$(cat <<'EOF'
 # path                                                                  | subcommand    | parameters
-pm1_simple_ppt_merge/simple_ppt_merge_recipe.yaml                       | pptmerge | --force
-pm1_simple_ppt_merge/simple_ppt_merge_pdf_recipe.yaml                   | ppt_to_githubmd | --transfer
-pm2_simple_numbering/simple_numbering_recipe.yaml                       | pptmerge |
-pm2_simple_numbering/simple_numbering_pdf_recipe.yaml                   | ppt_to_githubmd | --transfer
-pm3_chapter_marker_numbering/chapter_marker_numbering_recipe.yaml       | pptmerge |
-pm3_chapter_marker_numbering/chapter_marker_numbering_pdf_recipe.yaml   | ppt_to_githubmd | --transfer
-pm4_variable_replacement/variable_replacement_recipe.yaml               | pptmerge |
-pm4_variable_replacement/variable_replacement_pdf_recipe.yaml           | ppt_to_githubmd | --transfer
-pm5_chapter_cover_insertion/chapter_cover_insertion_recipe.yaml         | pptmerge |
-pm5_chapter_cover_insertion/chapter_cover_insertion_pdf_recipe.yaml     | ppt_to_githubmd | --transfer
-pm6_stylebase/stylebase_recipe.yaml                                     | pptmerge |
-pm6_stylebase/stylebase_pdf_recipe.yaml                                 | ppt_to_githubmd | --transfer
-pm7_splitted_insertion/splitted_insertion_recipe.yaml                   | pptmerge |
-pm7_splitted_insertion/splitted_insertion_pdf_recipe.yaml               | ppt_to_githubmd | --transfer
-pm8_delete_csp/delete_csp_recipe.yaml                                   | pptmerge |
-pm8_delete_csp/delete_csp_pdf_recipe.yaml                               | ppt_to_githubmd | --transfer
-pm9_delete_csl/delete_csl_recipe.yaml                                   | pptmerge |
-pm9_delete_csl/delete_csl_pdf_recipe.yaml                               | ppt_to_githubmd | --transfer
-pm10_memo_temp/memo_temp_recipe.yaml                                    | pptmerge |
-pm10_memo_temp/memo_temp_pdf_recipe.yaml                                | ppt_to_githubmd | --transfer
-pm11_title_filename/title_filename_recipe.yaml                          | pptmerge |
-pm11_title_filename/title_filename_pdf_recipe.yaml                      | ppt_to_githubmd | --transfer
-pdf1_minimum/src/pdf1_minimum_pdf_recipe.yaml                               | ppt_to_githubmd | --transfer --keep-work 
-#pdf2_minimum/src/pdf1_minimum_pdf_recipe.yaml                           | ppt_to_githubmd |  --transfer
-overview/overview_pdf_recipe.yaml                                           | ppt_to_githubmd | --transfer
-# semantic_notation_guide/semantic_notation_recipe.yaml                   | ppt_to_githubmd |  --transfer        # これは別種の方法でビルドするので除外
-readme_file/src/readme_file_pdf_recipe.yaml                                 | ppt_to_githubmd | --transfer --force
+pm1_simple_ppt_merge/src/simple_ppt_merge_guide_recipe.yaml             | pptmerge | --force
+pm1_simple_ppt_merge/src/simple_ppt_merge_guide_pdf_recipe.yaml         | ppt_build | --githubmd --transfer --pdf --yes-clear-dir
+pm2_simple_numbering/src/simple_numbering_guide_recipe.yaml             | pptmerge |
+pm2_simple_numbering/src/simple_numbering_guide_pdf_recipe.yaml         | ppt_build | --githubmd --transfer --pdf --yes-clear-dir
+pm3_chapter_marker_numbering/src/chapter_marker_numbering_guide_recipe.yaml | pptmerge |
+pm3_chapter_marker_numbering/src/chapter_marker_numbering_guide_pdf_recipe.yaml | ppt_build | --githubmd --transfer --pdf --yes-clear-dir
+pm4_variable_replacement/src/variable_replacement_guide_recipe.yaml     | pptmerge |
+pm4_variable_replacement/src/variable_replacement_guide_pdf_recipe.yaml | ppt_build | --githubmd --transfer --pdf --yes-clear-dir
+pm5_chapter_cover_insertion/src/chapter_cover_insertion_guide_recipe.yaml | pptmerge |
+pm5_chapter_cover_insertion/src/chapter_cover_insertion_guide_pdf_recipe.yaml | ppt_build | --githubmd --transfer --pdf --yes-clear-dir
+pm6_stylebase/src/stylebase_guide_recipe.yaml                           | pptmerge |
+pm6_stylebase/src/stylebase_guide_pdf_recipe.yaml                       | ppt_build | --githubmd --transfer --pdf --yes-clear-dir
+pm7_splitted_insertion/src/splitted_insertion_guide_recipe.yaml         | pptmerge |
+pm7_splitted_insertion/src/splitted_insertion_guide_pdf_recipe.yaml     | ppt_build | --githubmd --transfer --pdf --yes-clear-dir
+pm8_delete_csp/src/delete_csp_guide_recipe.yaml                         | pptmerge |
+pm8_delete_csp/src/delete_csp_guide_pdf_recipe.yaml                     | ppt_build | --githubmd --transfer --pdf --yes-clear-dir
+pm9_delete_csl/src/delete_csl_guide_recipe.yaml                         | pptmerge |
+pm9_delete_csl/src/delete_csl_guide_pdf_recipe.yaml                     | ppt_build | --githubmd --transfer --pdf --yes-clear-dir
+pm10_memo_temp/src/memo_temp_guide_recipe.yaml                          | pptmerge |
+pm10_memo_temp/src/memo_temp_guide_pdf_recipe.yaml                      | ppt_build | --githubmd --transfer --pdf --yes-clear-dir
+pm11_title_filename/src/title_filename_guide_recipe.yaml                | pptmerge |
+pm11_title_filename/src/title_filename_guide_pdf_recipe.yaml            | ppt_build | --githubmd --transfer --pdf --yes-clear-dir
+pdf1_minimum/src/pdf1_minimum_pdf_recipe.yaml                           | ppt_build | --githubmd --transfer --pdf --yes-clear-dir
+#pdf2_minimum/src/pdf1_minimum_pdf_recipe.yaml                          | ppt_build | --githubmd --transfer --pdf --yes-clear-dir
+overview/src/overview_pdf_recipe.yaml                                   | ppt_build | --githubmd --transfer --pdf --yes-clear-dir
+# semantic_notation_guide/semantic_notation_recipe.yaml                 | ppt_build | --githubmd --transfer --pdf --yes-clear-dir     # これは別種の方法でビルドするので除外
+readme_file/src/readme_file_pdf_recipe.yaml                             | ppt_build | --githubmd --transfer --pdf --yes-clear-dir
 EOF
 )
 

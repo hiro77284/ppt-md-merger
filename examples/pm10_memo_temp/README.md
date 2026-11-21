@@ -1,4 +1,4 @@
-<!-- source: extracted/memo_temp_guide_slide1_md.md -->
+<!-- source: ../mds/memo_temp_guide_slide1_md.md -->
 <!-- md_merge_rawtitle: 作業用のメモを書く -->
 <!-- #id:section:memo_temp_guide:slide1 -->
 ## 作業用のメモを書く
@@ -24,7 +24,7 @@ MEMO、TEMP の動作は同じです。
 
 
 
-<!-- source: extracted/memo_temp_guide_slide2_md.md -->
+<!-- source: ../mds/memo_temp_guide_slide2_md.md -->
 <!-- md_merge_rawtitle: MEMO, TEMP サンプル -->
 <!-- #id:section:memo_temp_guide:slide2 -->
 ## MEMO, TEMP サンプル
@@ -40,7 +40,7 @@ MEMO、TEMP の動作は同じです。
 
 
 
-<!-- source: extracted/memo_temp_guide_slide3_md.md -->
+<!-- source: ../mds/memo_temp_guide_slide3_md.md -->
 <!-- md_merge_rawtitle: テーブルシェイプはテーブルごと消去 -->
 <!-- #id:section:memo_temp_guide:slide3 -->
 ## テーブルシェイプはテーブルごと消去

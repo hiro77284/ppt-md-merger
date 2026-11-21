@@ -20,6 +20,9 @@ procedure を先頭から処理するだけでよい。
   ``_group_when`` に持つ。filter_procedure はこのキーを取り除いてから後段に渡す。
 - サブコマンドの照合はトップレベルで起動したコマンド名で行う。パイプラインは各段に同じ
   ``args`` を渡すので、``ppt_to_pdf`` 内の merge 段でも command は ``ppt_to_pdf`` になる。
+- ``ppt_build`` は選んだ出力に対応する ppt_to_*（--pdf → ppt_to_pdf 等）の名前で照合する。
+  対応するコマンドごとに残る項目が異なる場合は、1 回の merge では作れないのでエラーにする。
+  ``ppt_build`` 自体は when.command に書けない。
 - checkgen / checkverify / validate は条件を無視して全項目を対象にする。
 """
 
@@ -69,7 +72,9 @@ class Context:
 
 def build_context(args: argparse.Namespace, vars_map: dict | None = None) -> Context:
     """*vars_map* はレシピの ``vars:``（load_yaml で ``--var`` 上書き済み）。"""
-    command = getattr(args, "subcommand", "") or ""
+    # ppt_build は 1 回の merge で複数の出力を作るので、照合に使う同等の ppt_to_* 名を
+    # ``condition_command`` に入れて渡す（ppt_build/__init__.py）。
+    command = getattr(args, "condition_command", None) or getattr(args, "subcommand", "") or ""
     return Context(
         command=_COMMAND_ALIASES.get(command, command),
         vars=dict(vars_map or {}),

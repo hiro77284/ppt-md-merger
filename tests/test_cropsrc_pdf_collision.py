@@ -20,7 +20,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
 from md_merge._cropsrc import auto_cropsrc_pdf_path, cropsrc_pdf_paths  # noqa: E402
 from md_merge._output import EXIT_BAD_INPUT, EXIT_OK  # noqa: E402
 from md_merge.merge._recipe import load_yaml, resolve_out_file  # noqa: E402
-from md_merge.ppt_to_pdf import _check_pdf_collision  # noqa: E402
+from md_merge.ppt_to_pdf import check_pdf_collision  # noqa: E402
 
 
 def _write(root: Path, cropsrc_pdf: str = "") -> Path:
@@ -55,13 +55,13 @@ class TestCropsrcPdfCollision(unittest.TestCase):
     def test_pipeline_ok_with_auto_name(self):
         with tempfile.TemporaryDirectory() as d:
             recipe = _write(Path(d))
-            self.assertEqual(_check_pdf_collision(argparse.Namespace(input=str(recipe), workdir=None)), EXIT_OK)
+            self.assertEqual(check_pdf_collision(argparse.Namespace(input=str(recipe), workdir=None)), EXIT_OK)
 
     def test_pipeline_rejects_explicit_collision(self):
         with tempfile.TemporaryDirectory() as d:
             recipe = _write(Path(d), cropsrc_pdf="build/強調表示.pdf")
             with self.assertLogs(level="ERROR"):
-                code = _check_pdf_collision(argparse.Namespace(input=str(recipe), workdir=None))
+                code = check_pdf_collision(argparse.Namespace(input=str(recipe), workdir=None))
             self.assertEqual(code, EXIT_BAD_INPUT)
 
 

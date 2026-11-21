@@ -5,11 +5,14 @@ puremd の出力は Astro（transfer）・note.com（notecomexport）・その�
 属性記法で幅を効かせている）。GitHub は pandoc 属性を解釈せず ``{ width=40% }`` を文字列の
 まま表示するため、GitHub 専用の変換はこのサブコマンドで行う。
 
-変換内容（画像のみ）:
+変換内容:
   - ``![alt](src){ width=40% }`` → ``<img src="src" alt="alt" width="40%">``
     （width / height のうち ``%`` か px の値だけを HTML 属性に移す）
   - 上記以外の属性（``8cm`` 等の単位、``#id``、``.class``、その他の key=value）は
     GitHub で表現できないので警告して捨てる。残る属性が無ければ ``![alt](src)`` に戻す
+  - 見た目だけのクラス（``blockindent`` / ``largefontblock``）で puremd が付けたラベル行
+    ``> **BLOCKINDENT**`` ＋直後の ``>`` 行を取り除き、ラベルなしの引用にする
+    （入れ子の引用 ``> > **BLOCKINDENT**`` も同様）
   - コードフェンス内・インラインコード内・YAML frontmatter 内は変換しない
 
 入力は ``output.puremdfilename``、出力は ``output.githubmdfilename``。
@@ -41,6 +44,25 @@ _INLINE_CODE_RE = re.compile(r'(`+)(?:(?!\1).)+?\1')
 _SIZE_RE = re.compile(r'^(\d+(?:\.\d+)?)(%|px)?$')
 
 _SIZE_KEYS = ("width", "height")
+
+# puremd がラベル付き引用（``> **CLASS**`` ＋ ``>``）にする fenced div のうち、ラベルが
+# GitHub 上で意味を持たない見た目だけのクラス。githubmd ではラベル行を落とす。
+_UNLABEL_CLASSES = ("blockindent", "largefontblock")
+
+# ラベル行。group(1) は引用の接頭辞（``>`` / ``> >`` …）、group(2) はラベル。
+_LABEL_LINE_RE = re.compile(r'^((?:> ?)*>) \*\*([^*\n]+)\*\*[ \t]*\r?\n?$')
+
+_UNLABEL_LABELS = {c.upper() for c in _UNLABEL_CLASSES}
+
+
+def _drop_label(lines: list[str], i: int) -> bool:
+    """lines[i] が除去対象のラベル行で、次行がその空引用行なら True。"""
+    m = _LABEL_LINE_RE.match(lines[i])
+    if not m or m.group(2) not in _UNLABEL_LABELS:
+        return False
+    if i + 1 >= len(lines):
+        return False
+    return lines[i + 1].rstrip("\r\n").rstrip() == m.group(1)
 
 
 def _parse_attrs(attr_text: str) -> list[str]:
@@ -82,7 +104,12 @@ def convert(text: str, source_name: str = "") -> tuple[str, int]:
     count = 0
     fence: str | None = None
     tracker = FrontmatterTracker()
-    for lineno, line in enumerate(text.splitlines(keepends=True), start=1):
+    lines = text.splitlines(keepends=True)
+    skip = 0
+    for lineno, line in enumerate(lines, start=1):
+        if skip:
+            skip -= 1
+            continue
         if tracker.feed(line):
             out.append(line)
             continue
@@ -96,6 +123,9 @@ def convert(text: str, source_name: str = "") -> tuple[str, int]:
         if m:
             fence = m.group(1)
             out.append(line)
+            continue
+        if _drop_label(lines, lineno - 1):
+            skip = 1
             continue
         where = f"{source_name}:{lineno}" if source_name else f"line {lineno}"
 

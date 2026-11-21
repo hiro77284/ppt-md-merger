@@ -2,7 +2,7 @@
 <!-- #id:chapter:AUTOCHAPTER:AUTOID_1 -->
 # 1) PPT & MD merger とは？
 
-<!-- source: extracted/ppt_md_merger_overview_slide1_md.md -->
+<!-- source: ../mds/ppt_md_merger_overview_slide1_md.md -->
 <!-- md_merge_rawtitle: PPT & MD merger とは？ -->
 <!-- #id:section:ppt_md_merger_overview:slide1 -->
 ## 1.1) PPT \& MD merger とは？
@@ -23,7 +23,7 @@ PPT \& MD merger は、「pptxファイルを文書部品として扱い、多�
 <!-- #id:chapter:AUTOCHAPTER:AUTOID_2 -->
 # 2) 大きなPowerPointファイルを作る時の悩みとは？
 
-<!-- source: extracted/ppt_md_merger_overview_slide2_md.md -->
+<!-- source: ../mds/ppt_md_merger_overview_slide2_md.md -->
 <!-- md_merge_rawtitle: どんな人のためのツール？ -->
 <!-- #id:section:ppt_md_merger_overview:slide2 -->
 ## 2.1) どんな人のためのツール？
@@ -42,7 +42,7 @@ PPT \& MD merger は、「pptxファイルを文書部品として扱い、多�
 
 
 
-<!-- source: extracted/ppt_md_merger_overview_slide3_md.md -->
+<!-- source: ../mds/ppt_md_merger_overview_slide3_md.md -->
 <!-- md_merge_rawtitle: 悩み１： ちょっとずつ違うPowerPointのコピーが増殖 -->
 <!-- #id:section:ppt_md_merger_overview:slide3 -->
 ## 2.2) 悩み１： ちょっとずつ違うPowerPointのコピーが増殖
@@ -61,7 +61,7 @@ PowerPoint で研修用のテキストを作るときは、こんな悩みがよ
 
 
 
-<!-- source: extracted/ppt_md_merger_overview_slide4_md.md -->
+<!-- source: ../mds/ppt_md_merger_overview_slide4_md.md -->
 <!-- md_merge_rawtitle: 悩み２： 章・節番号をつけるのが面倒くさい -->
 <!-- #id:section:ppt_md_merger_overview:slide4 -->
 ## 2.3) 悩み２： 章・節番号をつけるのが面倒くさい
@@ -74,7 +74,7 @@ PowerPoint で研修用のテキストを作るときは、こんな悩みがよ
 
 
 
-<!-- source: extracted/ppt_md_merger_overview_slide5_md.md -->
+<!-- source: ../mds/ppt_md_merger_overview_slide5_md.md -->
 <!-- md_merge_rawtitle: なんとかこの悩みを解決できないか？ -->
 <!-- #id:section:ppt_md_merger_overview:slide5 -->
 ## 2.4) なんとかこの悩みを解決できないか？
@@ -94,7 +94,7 @@ PowerPoint 部品マージツール、 PPT \& MD merger を作りました！
 <!-- #id:chapter:AUTOCHAPTER:AUTOID_3 -->
 # 3) 問題構造の整理と解決策
 
-<!-- source: extracted/ppt_md_merger_overview_slide6_md.md -->
+<!-- source: ../mds/ppt_md_merger_overview_slide6_md.md -->
 <!-- md_merge_rawtitle: まずは問題の構造を整理すると・・・ -->
 <!-- #id:section:ppt_md_merger_overview:slide6 -->
 ## 3.1) まずは問題の構造を整理すると・・・
@@ -107,7 +107,7 @@ PowerPoint 部品マージツール、 PPT \& MD merger を作りました！
 
 たとえばＡ社向け、Ｂ、Ｃ社向けと3種類の .pptx があるとして、その中には３社共通の部品もあれば２社共通の部品、各社専用の部品もあります。その組合せが各社違うということです。
 
-<!-- source: extracted/ppt_md_merger_overview_slide7_md.md -->
+<!-- source: ../mds/ppt_md_merger_overview_slide7_md.md -->
 <!-- md_merge_rawtitle: 部品を組み合わせて完成版を構成する仕組みを作る -->
 <!-- #id:section:ppt_md_merger_overview:slide7 -->
 ## 3.2) 部品を組み合わせて完成版を構成する仕組みを作る
@@ -122,7 +122,7 @@ pptx部品単位でマスターを管理し、更新は必ずマスターに対�
 
 
 
-<!-- source: extracted/ppt_md_merger_overview_slide8_md.md -->
+<!-- source: ../mds/ppt_md_merger_overview_slide8_md.md -->
 <!-- md_merge_rawtitle: 自動マージするときに章・節番号を付与する -->
 <!-- #id:section:ppt_md_merger_overview:slide8 -->
 ## 3.3) 自動マージするときに章・節番号を付与する
@@ -135,7 +135,7 @@ pptx部品単位でマスターを管理し、更新は必ずマスターに対�
 
 
 
-<!-- source: extracted/ppt_md_merger_overview_slide9_md.md -->
+<!-- source: ../mds/ppt_md_merger_overview_slide9_md.md -->
 <!-- md_merge_rawtitle: 補助機能：変数置換 -->
 <!-- #id:section:ppt_md_merger_overview:slide9 -->
 ## 3.4) 補助機能：変数置換
@@ -148,7 +148,7 @@ pptx部品単位でマスターを管理し、更新は必ずマスターに対�
 
 
 
-<!-- source: extracted/ppt_md_merger_overview_slide10_md.md -->
+<!-- source: ../mds/ppt_md_merger_overview_slide10_md.md -->
 <!-- md_merge_rawtitle: 補助機能： シェイプ/スライドの自動削除 -->
 <!-- #id:section:ppt_md_merger_overview:slide10 -->
 ## 3.5) 補助機能： シェイプ/スライドの自動削除
@@ -165,7 +165,7 @@ pptx部品単位でマスターを管理し、更新は必ずマスターに対�
 
 
 
-<!-- source: extracted/ppt_md_merger_overview_slide11_md.md -->
+<!-- source: ../mds/ppt_md_merger_overview_slide11_md.md -->
 <!-- md_merge_rawtitle: 補助機能： 一時メモ用シェイプの自動削除 -->
 <!-- #id:section:ppt_md_merger_overview:slide11 -->
 ## 3.6) 補助機能： 一時メモ用シェイプの自動削除
@@ -184,7 +184,7 @@ pptx部品単位でマスターを管理し、更新は必ずマスターに対�
 <!-- #id:chapter:AUTOCHAPTER:AUTOID_4 -->
 # 4) 現時点の機能解説はPPTX生成機能のみ
 
-<!-- source: extracted/ppt_md_merger_overview_slide12_md.md -->
+<!-- source: ../mds/ppt_md_merger_overview_slide12_md.md -->
 <!-- md_merge_rawtitle: PPTX生成機能と、その他の形式文書生成機能 -->
 <!-- #id:section:ppt_md_merger_overview:slide12 -->
 ## 4.1) PPTX生成機能と、その他の形式文書生成機能
@@ -200,7 +200,7 @@ pptx部品単位でマスターを管理し、更新は必ずマスターに対�
 <!-- #id:chapter:AUTOCHAPTER:AUTOID_5 -->
 # 5) Requirements & Quick Start
 
-<!-- source: extracted/ppt_md_merger_overview_slide13_md.md -->
+<!-- source: ../mds/ppt_md_merger_overview_slide13_md.md -->
 <!-- md_merge_rawtitle: システム要件 -->
 <!-- #id:section:ppt_md_merger_overview:slide13 -->
 ## 5.1) システム要件
@@ -235,7 +235,7 @@ Test環境
 
 
 
-<!-- source: extracted/ppt_md_merger_overview_slide14_md.md -->
+<!-- source: ../mds/ppt_md_merger_overview_slide14_md.md -->
 <!-- md_merge_rawtitle: インストール方法 -->
 <!-- #id:section:ppt_md_merger_overview:slide14 -->
 ## 5.2) インストール方法
@@ -276,7 +276,7 @@ pip install -e .
 
 
 
-<!-- source: extracted/ppt_md_merger_overview_slide15_md.md -->
+<!-- source: ../mds/ppt_md_merger_overview_slide15_md.md -->
 <!-- md_merge_rawtitle: Quick Start -->
 <!-- #id:section:ppt_md_merger_overview:slide15 -->
 ## 5.3) Quick Start
@@ -292,7 +292,7 @@ parts/
 └── 20_example.pptx
 ```
 
-<!-- source: extracted/ppt_md_merger_overview_slide16_md.md -->
+<!-- source: ../mds/ppt_md_merger_overview_slide16_md.md -->
 <!-- md_merge_rawtitle: Quick Start -->
 <!-- #id:subsection:ppt_md_merger_overview:slide16_2 --> 
 ### 5.3.1) 2. Create merge recipe YAML
@@ -312,7 +312,7 @@ procedure:
     pptxfilename: 20_example.pptx
 ```
 
-<!-- source: extracted/ppt_md_merger_overview_slide17_md.md -->
+<!-- source: ../mds/ppt_md_merger_overview_slide17_md.md -->
 <!-- md_merge_rawtitle: Quick Start -->
 <!-- #id:subsection:ppt_md_merger_overview:slide17_3 --> -->
 ### 5.3.2) 3. Run merge
@@ -335,7 +335,7 @@ merged.pptx
 
 
 
-<!-- source: extracted/ppt_md_merger_overview_slide18_md.md -->
+<!-- source: ../mds/ppt_md_merger_overview_slide18_md.md -->
 <!-- md_merge_rawtitle: Examples -->
 <!-- #id:section:ppt_md_merger_overview:slide18 -->
 ## 5.4) Examples

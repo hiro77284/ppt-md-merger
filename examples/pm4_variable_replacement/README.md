@@ -2,7 +2,7 @@
 <!-- #id:chapter:AUTOCHAPTER:AUTOID_1 -->
 # 
 
-<!-- source: extracted/variable_replacement_guide_slide1_md.md -->
+<!-- source: ../mds/variable_replacement_guide_slide1_md.md -->
 <!-- md_merge_rawtitle: スライド中の変数置換 -->
 <!-- #id:section:variable_replacement_guide:slide1 -->
 ## スライド中の変数置換
@@ -18,7 +18,7 @@
 
 
 
-<!-- source: extracted/variable_replacement_guide_slide2_md.md -->
+<!-- source: ../mds/variable_replacement_guide_slide2_md.md -->
 <!-- md_merge_rawtitle: 結合指示書サンプル -->
 <!-- #id:section:variable_replacement_guide:slide2 -->
 ## 結合指示書サンプル

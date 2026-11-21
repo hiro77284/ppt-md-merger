@@ -1,4 +1,4 @@
-<!-- source: extracted/stylebase_guide_slide1_md.md -->
+<!-- source: ../mds/stylebase_guide_slide1_md.md -->
 <!-- md_merge_rawtitle: stylebaseを別に指定する機能 -->
 <!-- #id:section:stylebase_guide:slide1 -->
 ## stylebaseを別に指定する機能
@@ -14,7 +14,7 @@ pptxをマージする際、基準とするスタイルをコンテンツとは�
 
 
 
-<!-- source: extracted/stylebase_guide_slide2_md.md -->
+<!-- source: ../mds/stylebase_guide_slide2_md.md -->
 <!-- md_merge_rawtitle: なぜstylebaseを別途指定すべき？ -->
 <!-- #id:section:stylebase_guide:slide2 -->
 ## なぜstylebaseを別途指定すべき？
@@ -38,7 +38,7 @@ pptxをマージする際、基準とするスタイルをコンテンツとは�
 
 
 
-<!-- source: extracted/stylebase_guide_slide3_md.md -->
+<!-- source: ../mds/stylebase_guide_slide3_md.md -->
 <!-- md_merge_rawtitle: stylebaseを別途指定するしくみ -->
 <!-- #id:section:stylebase_guide:slide3 -->
 ## stylebaseを別途指定するしくみ
@@ -53,7 +53,7 @@ pptxをマージする際、基準とするスタイルをコンテンツとは�
 
 
 
-<!-- source: extracted/stylebase_guide_slide4_md.md -->
+<!-- source: ../mds/stylebase_guide_slide4_md.md -->
 <!-- md_merge_rawtitle: 結合指示書サンプル -->
 <!-- #id:section:stylebase_guide:slide4 -->
 ## 結合指示書サンプル
@@ -70,7 +70,7 @@ different_style_sample.pptx は simple_stylebase.pptx とは違うスタイル�
 
 
 
-<!-- source: extracted/different_style_sample_slide1_md.md -->
+<!-- source: ../mds/different_style_sample_slide1_md.md -->
 <!-- md_merge_rawtitle: styleの違うサンプル -->
 <!-- #id:section:different_style_sample:slide1 -->
 ## styleの違うサンプル

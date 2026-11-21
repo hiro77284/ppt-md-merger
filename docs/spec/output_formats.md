@@ -8,7 +8,7 @@
 
 ### 概要
 
-`render` で生成したレンダー済み MD を pandoc に渡し、PDF（typst）・HTML・reveal.js を生成する。pandoc の設定はレシピ YAML の `pandoc` セクションと文書プロジェクト内の defaults ファイルで管理する。LaTeX（lualatex）の経路は 2026-11-15 に撤去した（[design_typst_migration.md](../design_typst_migration.md) Phase 7）。
+`render` で生成したrender済み MD を pandoc に渡し、PDF（typst）・HTML・reveal.js を生成する。pandoc の設定はレシピ YAML の `pandoc` セクションと文書プロジェクト内の defaults ファイルで管理する。LaTeX（lualatex）の経路は 2026-11-15 に撤去した（[design_typst_migration.md](../design_typst_migration.md) Phase 7）。
 
 ### 使用例
 
@@ -192,7 +192,7 @@ typst compile --root <root> <pdfstem>.typ <pdfstem>.pdf
 ### エラー条件
 
 * 入力 YAML に `output.renderedfilename` / `output.pdffilename`（または対応する出力キー）も `output.targetbasefilename` も未定義
-* レンダー済み MD が存在しない
+* render済み MD が存在しない
 * version 4 のレシピに廃止したキー（`typst-cover-md` / `typstdefaults` / `engine` / `template` / `include-in-header` / `include-before-body` / `conditional-process-*` / `format` / `metadata-file`）がある（終了コード 2）
 * version 3 以前のレシピの `pandoc.engine` に typst 以外が書いてある（終了コード 2）
 * defaults・表紙に指定したファイルが存在しない
@@ -231,7 +231,7 @@ my_document/
 
 ### 概要
 
-レンダー済み MD ファイル（`output.renderedfilename`）から LaTeX の raw ブロック等を削除し、さらに pandoc の fenced div（`::: {.note}` 等）・インライン span・リーフ記法を GitHub Flavored Markdown（GFM）へ降格して、純粋な MD ファイル（`output.puremdfilename`）を生成する。出力は GFM（`::: {.note}`→`> [!NOTE]` 等）だが、`transfer`（Astro 等）・`notecomexport`・他の Markdown ビューアと共有する中間形式なので、画像の pandoc 属性（`![](a.png){ width=40% }`）はそのまま残す（Astro 側は属性記法で幅を効かせる）。GitHub はこの属性を解釈しないため、GitHub 向けの仕上げは [githubmd](#githubmd) で行う。
+render済み MD ファイル（`output.renderedfilename`）から LaTeX の raw ブロック等を削除し、さらに pandoc の fenced div（`::: {.note}` 等）・インライン span・リーフ記法を GitHub Flavored Markdown（GFM）へ降格して、純粋な MD ファイル（`output.puremdfilename`）を生成する。出力は GFM（`::: {.note}`→`> [!NOTE]` 等）だが、`transfer`（Astro 等）・`notecomexport`・他の Markdown ビューアと共有する中間形式なので、画像の pandoc 属性（`![](a.png){ width=40% }`）はそのまま残す（Astro 側は属性記法で幅を効かせる）。GitHub はこの属性を解釈しないため、GitHub 向けの仕上げは [githubmd](#githubmd) で行う。
 
 以前は `githubmd` が本サブコマンドの別名だったが、GitHub 専用の別サブコマンドになった（`when.command: [githubmd]` も puremd ではなく githubmd を指す）。
 
@@ -258,7 +258,7 @@ pptmdmerge puremd recipe.yaml --dry-run
 
 | キー | 型 | 説明 |
 |---|---|---|
-| `output.renderedfilename` | string | 入力となるレンダー済み MD のファイル名（必須） |
+| `output.renderedfilename` | string | 入力となるrender済み MD のファイル名（必須） |
 | `output.puremdfilename` | string | 出力 MD のファイル名（必須） |
 | `puremd.strip_config` | string | プロジェクト独自の**追加** strip パターン設定ファイルのパス（任意）。生 raw ブロックの除去は組み込みのため不要 |
 | `puremd.fenced_div.enabled` | bool | fenced div 変換の有効/無効（省略時 `true`） |
@@ -334,7 +334,8 @@ pandoc の fenced div（`::: {.class ...}` … `:::`、または bare 形式 `::
 |---|---|
 | `alerts` マップに対応するクラス（既定: `note`→`NOTE`、`warning`→`WARNING`、`leadline`→`IMPORTANT`） | GitHub 風アラート `> [!TYPE]` + 内容（各行を `> ` で引用） |
 | `plain_blockquote` に含まれるクラス（既定: `widequote`） | ラベルなしの素の blockquote（各行を `> ` で引用） |
-| それ以外の名前付きクラス（`largefontblock` / `blockindent` / `keep-together` 等） | ラベル付き引用 `> **CLASS**`（大文字化）+ 空行 + 内容 |
+| レジストリで `gfm.unwrap` のクラス（`keep-together` / `center`） | unwrap（フェンスを除去し内容のみ残す） |
+| それ以外の名前付きクラス（`largefontblock` / `blockindent` 等） | ラベル付き引用 `> **CLASS**`（大文字化）+ 空行 + 内容。githubmd では `blockindent` / `largefontblock` のラベル行を落とす（[githubmd](#githubmd)） |
 | クラスを持たない div（`::: {#id}` のように属性のみ） | unwrap（フェンスを除去し内容のみ残す） |
 
 判定順は **`alerts` → `plain_blockquote` → ラベル付き引用 → unwrap**。すなわち同じクラスが `alerts` と `plain_blockquote` の両方にある場合は `alerts` を優先する。
@@ -404,7 +405,7 @@ pandoc の fenced div（`::: {.class ...}` … `:::`、または bare 形式 `::
 | `puremd.fenced_div.plain_blockquote` がリストでない | エラー終了 | 2 |
 | 正規表現が無効 | エラー終了 | 2 |
 | 出力ファイルが既存で `--force` なし | エラー終了 | 1 |
-| レンダー済み MD が見つからない | エラー終了 | 3 |
+| render済み MD が見つからない | エラー終了 | 3 |
 
 ---
 
@@ -412,7 +413,7 @@ pandoc の fenced div（`::: {.class ...}` … `:::`、または bare 形式 `::
 
 ### 概要
 
-puremd 処理済み MD（`output.puremdfilename`）を GitHub で表示するための MD（`output.githubmdfilename`）に変換する。puremd の出力は transfer / notecomexport と共有するため変えず、GitHub 専用の変換だけをこの段で行う。現在の変換は画像の属性のみ。
+puremd 処理済み MD（`output.puremdfilename`）を GitHub で表示するための MD（`output.githubmdfilename`）に変換する。puremd の出力は transfer / notecomexport と共有するため変えず、GitHub 専用の変換だけをこの段で行う。変換は画像の属性と、見た目だけのクラスのラベル行の除去の 2 つ。
 
 | 入力 | 出力 |
 |---|---|
@@ -426,6 +427,14 @@ puremd 処理済み MD（`output.puremdfilename`）を GitHub で表示するた
 * それ以外の属性（`cm` / `in` 等の単位、`#id`、`.class`、その他の `key=value`）は GitHub で表現できない（`style` 属性も GitHub が除去する）ため、警告して捨てる。移せる属性が 1 つも無ければ `![alt](src)` に戻す。
 * `alt` と `src` は HTML エスケープする。GitHub は画像のキャプションを表示しないので、キャプション文字列は `alt` になるだけで見た目は変わらない。
 * コードフェンス内・インラインコード内・YAML frontmatter 内は変換しない。画像と属性の間の空白・タブは許容する。
+* `blockindent` / `largefontblock` は GitHub では字下げ量・文字サイズを表せず、`**BLOCKINDENT**` / `**LARGEFONTBLOCK**` のラベルも読み手に意味を持たないので、puremd が付けたラベル行と直後の空の引用行 `>` を取り除き、ラベルなしの引用にする（入れ子の `> > **BLOCKINDENT**` も同様）。puremd の出力は変えない。ラベル行の直後が空の引用行でない場合とコードフェンス内は変更しない。
+
+  | puremd | githubmd |
+  |---|---|
+  | `> **BLOCKINDENT**`<br>`>`<br>`> - 表紙をつけたい` | `> - 表紙をつけたい` |
+  | `> **LARGEFONTBLOCK**`<br>`>`<br>`> 本文` | `> 本文` |
+  | `> **MYBOX**`<br>`>`<br>`> 本文`（その他のクラス） | 変更しない |
+
 * 画像のパスは書き換えず、画像のコピーもしない（puremd と同じ相対パスのまま）。`transfer --source githubmd`（または `ppt_to_githubmd --transfer`）で転送すると、`<img src>` の画像もコピーしてパスを書き換える。
 
 ### 使用例

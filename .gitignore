@@ -247,12 +247,15 @@ sandbox/
 !examples/
 !examples/**/
 
-# examples 以下の build / extracted フォルダは生成物なので管理対象にしない
+# examples の各サンプルは src/ に原稿と設定（pptx・レシピ yaml・COVER_VARS.yaml など）だけを置き、
+# images/（pptx から切り出した画像）・mds/（note から書き出した md）・build/（ビルド結果）は
+# すべて生成物なので管理対象にしない。src/ があれば他は再生成できる。
 # （上の !examples/**/ で探索対象に戻っているため、改めて無視する）
+# README.md と readme-images/ は transfer の生成物だが、GitHub 表示用に管理対象にする。
 examples/**/build/
+examples/**/images/
+examples/**/mds/
 examples/**/extracted/
-# ただし README.md が参照する build/figures/ の画像だけは git add -f で個別に管理している
-# （公開用スナップショットで README の画像が切れないように。tools/RELEASE.md 参照）
 
 # examples_work は管理対象にしない。こちらでサンプルファイルを作ってから、
 # 切りの良いところで examples フォルダにコピーしてコミットする

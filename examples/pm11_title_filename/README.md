@@ -1,4 +1,4 @@
-<!-- source: extracted/title_filename_guide_slide1_md.md -->
+<!-- source: ../mds/title_filename_guide_slide1_md.md -->
 <!-- md_merge_rawtitle: TITLE、FILENAME置換 -->
 <!-- #id:section:title_filename_guide:slide1 -->
 ## TITLE、FILENAME置換

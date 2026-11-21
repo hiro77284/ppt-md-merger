@@ -30,6 +30,7 @@ pptmdmerge merge sample.yaml
 | `--flatten-yamls` | YAML ファイルを `<outdir>/<yaml-dir>/` にフラット集約する | 任意 |
 | `--overwrite-yamls` | 別の YAML ファイルが同じコピー先になったとき、警告して上書きする（既定は `_1` 連番で回避） | 任意 |
 | `--clear-dir-before-merge` | image-dir 指定時、merge 前に image-dir 内を全削除する（**既定 on**。削除前に確認、後述） | 任意 |
+| `--yes-clear-dir` | clear-dir-before-merge の削除確認を省略して削除する（承認とみなす）。`--force` とは別のオプション | 任意 |
 | `--no-check` | チェックデータ（`output.checkfilename`）が存在しても insertmd 整合性チェックをスキップする | 任意 |
 | `--force` | 既存の出力ファイルを上書きする | 任意 |
 
@@ -116,8 +117,11 @@ output:
 - **既定が `true`**。無効化するにはレシピで `clear-dir-before-merge: false` を指定する。
 - **削除前の確認**: 削除対象があるとき、解決済みのフルパスと項目数を提示して確認を求める（`[y/N]`）。
   - `y` で削除して続行、それ以外（`n`・EOF 等）は **merge 全体を中止**（終了コード 1）。
-  - 単体の `merge` サブコマンドでは、`--force` 指定時は確認を省いて削除する（承認とみなす）。
-  - パイプライン（`ppt_to_pdf` / `ppt_to_transfer` / `ppt_to_puremd` / `crop_to_pdf`）では、**全処理を始める前**に一度だけ確認する（承認後は後段の merge ステップで再確認しない）。パイプラインでは `--force` の有無に関係なく**必ず確認する**（承認なしに image-dir を破壊しない）。このため非対話環境では中止となる。
+  - 確認を省けるのは **`--yes-clear-dir`** だけ（承認とみなす）。`--force`（レシピの `output.force` も同じ）は既存出力ファイルの上書き用で、**削除の承認にはならない**。影響の性質（上書き＝同じ物の再生成 / 全削除＝既存物の消去）が違うため分けている。レシピ側に承認キーは設けない（毎回の実行時に明示する）。
+  - 非対話環境（stdin が TTY でない）では、`--yes-clear-dir` がなければ確認できないため中止する。
+  - パイプライン（`ppt_build` / `ppt_to_pdf` / `ppt_to_transfer` / `ppt_to_puremd` / `ppt_to_githubmd` / `ppt_to_notecom` / `crop_to_pdf`）では、**全処理を始める前**に一度だけ確認する（承認後は後段の merge ステップで再確認しない）。`--yes-clear-dir` もここで効く。
+  - merge を含まないサブコマンドに `--yes-clear-dir` を付けた場合は警告して無視する。
+  - 変更履歴: 2.0.5 までは単体 `merge` の `--force` で確認が省略されていた。`--force` だけで非対話実行していた場合は、`--yes-clear-dir` を追加する。
 - 削除対象は image-dir の**中身**（ディレクトリ自体は残す）。
 - `--dry-run` 時は削除しない。
 - 安全のため、image-dir が出力ディレクトリ配下の真のサブディレクトリでない場合（`.` / `..` / 絶対パス等）は削除を中止しエラーを出す（merge は続行）。
@@ -310,6 +314,7 @@ procedure:
 
 - 値は文字列 1 つ、または文字列のリスト。リスト内は OR、キー同士は AND。
 - **サブコマンドはトップレベルで起動したコマンド名で照合する。** パイプラインは各段に同じ引数を渡すため、`ppt_to_pdf` の中の merge 段では command は `ppt_to_pdf` になる。逆に `merge` を単独実行すると command は `merge` なので、`command: [ppt_to_puremd]` の項目は除外される。`githubmd` は puremd の別名ではなく独立したサブコマンドなので、`command: [puremd]` は `githubmd` 単独実行には一致しない。
+- **`ppt_build` は選んだ出力に対応する `ppt_to_*` の名前で照合する**（`--pdf` → `ppt_to_pdf`、`--githubmd` → `ppt_to_githubmd` 等）。出力ごとに残る項目が異なるとエラーになる（[ppt_build](pipelines.md#ppt_build) を参照）。
 - `var` の変数はレシピの `vars:` に、全サブコマンド共通の `--var NAME=VALUE`（`--var NAME` だけなら true）を上書きしたもの。真偽判定は行単位の IF ブロックと同じ（偽 = 未定義 / null / 空文字 / false / 文字列 `false`・`0`・`no`・`off`・`none`・`null`）。
 - 旧 `tag` / `not_tag`（`--tag`）は廃止した。`when:` に書かれていると読み込み時・validate ともにエラーになる。`tag: X` は `var: X`、`not_tag: X` は `var: '!X'` に、`--tag X` は `--var X` に置き換える（`!` で始まる値は YAML のタグ記法と衝突するので引用符で囲む）。
 - 条件判定はレシピ読み込み直後に 1 回だけ行い、除外した項目は procedure から取り除いてから後段に渡す（除外した項目は info ログに `procedure[N] (...) をスキップ` と出る）。章・節を除外すると、以降の番号はそのぶん詰まる。
@@ -667,7 +672,7 @@ pptmdmerge idresolve recipe.yaml
 
 ### 概要
 
-`merge` で生成した結合済み MD と `idresolve` で生成した ID解決済み YAML を読み込み、タイトル置換・参照置換を行ってレンダー済み MD を出力する。
+`merge` で生成した結合済み MD と `idresolve` で生成した ID解決済み YAML を読み込み、タイトル置換・参照置換を行ってrender済み MD を出力する。
 
 ### 使用例
 
@@ -680,7 +685,7 @@ pptmdmerge render recipe.yaml
 | オプション | 説明 | 必須 |
 | ---------- | ---- | ---- |
 | `--workdir` / `-w` DIR | input / output の相対パスをこのディレクトリ基準で解釈する | 任意 |
-| `--force` | 既存のレンダー済みファイルを上書きする | 任意 |
+| `--force` | 既存のrender済みファイルを上書きする | 任意 |
 
 ### 入力
 
@@ -692,7 +697,7 @@ pptmdmerge render recipe.yaml
 
 ### 出力
 
-* `output.outputdir / output.renderedfilename` にレンダー済み MD を出力する
+* `output.outputdir / output.renderedfilename` にrender済み MD を出力する
 
 ### エラー条件
 

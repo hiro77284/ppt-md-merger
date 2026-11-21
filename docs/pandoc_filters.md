@@ -129,7 +129,7 @@ PDF（Typst）: #semblockindent[ … ]              / #semblockindent(indent: 6e
 HTML        : <div class="blockindent"> … </div> / <div class="blockindent" style="margin-left:6em"> … </div>
 ```
 
-既定の 2em は Typst 側が `templates/semantic_macros.typ` の `semblockindent(indent: 2em, …)`、HTML 側が `user_settings/pandoc/semantic.css` の `div.blockindent { margin-left: 2em; }` で決まる（両方を変えないと PDF と HTML で既定がずれる）。puremd（GFM）はこのフィルタを通らず、`> **BLOCKINDENT**` のラベル付き引用になり `indent` は破棄される（[spec/output_formats.md](spec/output_formats.md#fenced-div-の変換)）。
+既定の 2em は Typst 側が `templates/semantic_macros.typ` の `semblockindent(indent: 2em, …)`、HTML 側が `user_settings/pandoc/semantic.css` の `div.blockindent { margin-left: 2em; }` で決まる（両方を変えないと PDF と HTML で既定がずれる）。puremd（GFM）はこのフィルタを通らず、`> **BLOCKINDENT**` のラベル付き引用になり `indent` は破棄される（githubmd ではラベル行を落としてラベルなしの引用にする。[spec/output_formats.md](spec/output_formats.md#fenced-div-の変換)）。
 
 ---
 

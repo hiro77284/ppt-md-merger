@@ -33,8 +33,8 @@ pptmdmerge merge input.yaml
 * `merge`: mdファイルを結合する。当ツールスイートの主目的
 * `idcollect`: 結合済み MD から `{{#id:...}}` マーカーを抽出し、IDインベントリ YAML を生成する
 * `idresolve`: IDインベントリ YAML を読み込み、number と label を付与した ID解決済み YAML を生成する
-* `render`: 結合済み MD に対してタイトル置換・参照置換を行い、レンダー済み MD を生成する
-* `pandoc`: レンダー済み MD を pandoc に渡して PDF（typst）・HTML 等を生成する
+* `render`: 結合済み MD に対してタイトル置換・参照置換を行い、render済み MD を生成する
+* `pandoc`: render済み MD を pandoc に渡して PDF（typst）・HTML 等を生成する
 
 ### 含めない機能
 
@@ -52,8 +52,8 @@ pptmdmerge merge input.yaml
 | `checkverify`      | insertmd の内容をチェック YAML と照合する（merge を行わない）。大きな変化があれば終了コード 1                                                                          | yamlファイル | （なし。検査結果のみ）   |
 | `idcollect`        | 結合済み MD から ID マーカーを抽出してインベントリ YAML を生成する                                                                                            | yamlファイル | インベントリ YAML   |
 | `idresolve`        | IDインベントリ YAML から number / label を付与した ID解決済み YAML を生成する                                                                             | yamlファイル | ID解決済み YAML   |
-| `render`           | 結合済み MD のタイトル・参照を ID解決済みマップで置換してレンダー済み MD を生成する                                                                                     | yamlファイル | レンダー済み MD     |
-| `pandoc`           | レンダー済み MD を pandoc に渡して PDF（typst）・HTML 等を生成する                                                                                            | yamlファイル | PDF / HTML 等 |
+| `render`           | 結合済み MD のタイトル・参照を ID解決済みマップで置換して render済み MD を生成する                                                                                     | yamlファイル | render済み MD     |
+| `pandoc`           | render済み MD を pandoc に渡して PDF（typst）・HTML 等を生成する                                                                                            | yamlファイル | PDF / HTML 等 |
 | `pptmerge`         | 複数の PowerPoint ファイルをレシピに従って結合する                                                                                                     | yamlファイル | pptxファイル      |
 | `pptimgexport`     | PPTX スライドのノートに記述された指示に従い PDF から画像を切り出して保存する                                                                                         | yamlファイル | PNG ファイル群     |
 | `pptmdexport`      | PPTX スライドのノートのブロック構造から MD テキストを抽出してファイルに出力する                                                                                        | yamlファイル | MD ファイル群      |
@@ -61,13 +61,16 @@ pptmdmerge merge input.yaml
 | `pptpdfexport`     | PowerPoint COM 自動化を使って PPTX を PDF に変換する（Windows 専用）                                                                                 | yamlファイル | PDF ファイル      |
 | `pptdeletecsl`     | 既存 pptx（マージ後ファイル）に対して `#CSL#` の処理だけを単独で行う。入力のみ **pptx を CLI で直接指定** する                                                              | pptxファイル | pptxファイル      |
 | `ppt_to_pdf`       | pptpdfexport → pptimgexport → pptmdexport → merge → idcollect → idresolve → render → pandoc を順に連続実行する                             | yamlファイル | PDF 等         |
-| `puremd`           | レンダー済み MD から LaTeX 等の raw ブロックを除去して純粋な MD を生成する                                                                                     | yamlファイル | MD ファイル       |
+| `puremd`           | render済み MD から LaTeX 等の raw ブロックを除去して純粋な MD を生成する                                                                                     | yamlファイル | MD ファイル       |
+| `githubmd`         | puremd 処理済み MD を GitHub 表示用 MD に変換する（画像の width / height 属性を `<img>` タグへ変換、`blockindent` / `largefontblock` のラベル行を除去）                                                       | yamlファイル | MD ファイル       |
 | `transfer`         | render 済み MD と画像を静的サイト生成用の dataentry 入力ディレクトリにコピーする                                                                                 | yamlファイル | MD・画像ファイル     |
 | `notecomexport`    | puremd 処理済み MD（frontmatter ＋ GFM）を note.com 投稿用 YAML（ブロック列）に変換する。投入は `tools/notecom_autopilot.py`                                   | yamlファイル | YAML ファイル     |
 | `crop_to_pdf`      | crop → merge → idcollect → idresolve → render → pandoc を順に連続実行する                                                                    | yamlファイル | PDF 等         |
 | `ppt_to_transfer`  | pptpdfexport → pptimgexport → pptmdexport → merge → idcollect → idresolve → render → puremd → transfer を順に連続実行する                    | yamlファイル | MD・画像ファイル     |
 | `ppt_to_puremd`    | `ppt_to_transfer` から末尾の transfer を除いた版。pptpdfexport → … → render → puremd まで実行し、puremd 処理済み MD を成果物として残す                            | yamlファイル | MD・画像ファイル     |
+| `ppt_to_githubmd`  | `ppt_to_puremd` の末尾に githubmd を足した版。pptpdfexport → … → render → puremd → githubmd を連続実行し、GitHub 表示用 MD を成果物として残す。`--transfer` で末尾に transfer を追加（`ppt_to_puremd` も同様） | yamlファイル | MD・画像ファイル     |
 | `ppt_to_notecom`   | `ppt_to_transfer` の末尾 transfer を notecomexport に差し替えた版。pptpdfexport → … → puremd → notecomexport を連続実行し、note.com 投稿用 YAML を成果物として残す | yamlファイル | YAML・画像ファイル   |
+| `ppt_build`        | pptpdfexport → … → render を 1 回だけ実行し、`--pdf` / `--puremd` / `--githubmd` / `--notecom` / `--transfer` で選んだ出力だけを作る（`ppt_to_*` を複数回実行する代わり） | yamlファイル | PDF・MD・YAML・画像ファイル |
 | `validate`         | レシピ YAML の整合性（未知キー・vars 値の生 LaTeX・params: と変数/条件/番号マーカー）を検査し、cropsrc と procedure の対応を info 表示する                                   | yamlファイル | （検査結果のみ）      |
 | `explain`          | `--var` のもとで procedure のどの項目が採用／除外されるかを理由つきで表示（`--matrix` で値ごとの差分、`--blocks` で `{{#if}}` の判定） | yamlファイル | （表示のみ）      |
 
@@ -314,7 +317,7 @@ version 2 以降では次をエラーにする（読み込んだ時点で全サ�
 
 ### output.force（全サブコマンド共通）
 
-レシピ YAML の `output.force` を `true` にすると、CLI で `--force` を指定したのと同等の動作をすべてのサブコマンドに対して適用する。CLI で `--force` を明示指定した場合はその値を優先する。
+レシピ YAML の `output.force` を `true` にすると、CLI で `--force` を指定したのと同等の動作をすべてのサブコマンドに対して適用する。CLI で `--force` を明示指定した場合はその値を優先する。`--force` / `output.force` は既存出力の上書きだけを許可し、merge の clear-dir-before-merge（image-dir 全削除）の確認は省略しない（省略は `--yes-clear-dir`）。
 
 ```yaml
 output:
@@ -368,7 +371,7 @@ sample.yaml → sample_merge.md
 | [spec/md_pipeline.md](spec/md_pipeline.md) | [merge](spec/md_pipeline.md#merge) / [idcollect](spec/md_pipeline.md#idcollect) / [idresolve](spec/md_pipeline.md#idresolve) / [render](spec/md_pipeline.md#render) |
 | [spec/output_formats.md](spec/output_formats.md) | [pandoc](spec/output_formats.md#pandoc) / [puremd](spec/output_formats.md#puremd) / [githubmd](spec/output_formats.md#githubmd) / [表紙](spec/output_formats.md#表紙cover-md--htmlcover) / [transfer](spec/output_formats.md#transfer) / [notecomexport](spec/output_formats.md#notecomexport) |
 | [spec/pptx.md](spec/pptx.md) | [pptmerge](spec/pptx.md#pptmerge) / [pptimgexport](spec/pptx.md#pptimgexport) / [pptmdexport](spec/pptx.md#pptmdexport) / [pptyamlexport](spec/pptx.md#pptyamlexport) / [pptpdfexport](spec/pptx.md#pptpdfexport) / [pptdeletecsl](spec/pptx.md#pptdeletecsl) |
-| [spec/pipelines.md](spec/pipelines.md) | [crop_to_pdf](spec/pipelines.md#crop_to_pdf) / [ppt_to_pdf](spec/pipelines.md#ppt_to_pdf) / [ppt_to_transfer](spec/pipelines.md#ppt_to_transfer) / [ppt_to_puremd](spec/pipelines.md#ppt_to_puremd) / [ppt_to_notecom](spec/pipelines.md#ppt_to_notecom) |
+| [spec/pipelines.md](spec/pipelines.md) | [crop_to_pdf](spec/pipelines.md#crop_to_pdf) / [ppt_to_pdf](spec/pipelines.md#ppt_to_pdf) / [ppt_to_transfer](spec/pipelines.md#ppt_to_transfer) / [ppt_to_puremd](spec/pipelines.md#ppt_to_puremd) / [ppt_to_githubmd](spec/pipelines.md#ppt_to_githubmd) / [ppt_to_notecom](spec/pipelines.md#ppt_to_notecom) / [ppt_build](spec/pipelines.md#ppt_build) |
 | [spec/validation.md](spec/validation.md) | [checkgen](spec/validation.md#checkgen) / [checkverify](spec/validation.md#checkverify) / [validate](spec/validation.md#validate) / [explain](spec/validation.md#explain) |
 
 レシピ YAML の全キー一覧は [recipe_key_reference.md](recipe_key_reference.md) を正典とする。分冊側は各キーの**挙動**を記述し、キーの網羅列挙は行わない。
@@ -467,7 +470,7 @@ md_merge/
 │   │   ├── md_pipeline.md          #   merge / idcollect / idresolve / render
 │   │   ├── output_formats.md       #   pandoc / puremd / 表紙 / transfer / notecomexport
 │   │   ├── pptx.md                 #   pptmerge / pptimgexport / pptmdexport / pptyamlexport / pptpdfexport
-│   │   ├── pipelines.md            #   crop_to_pdf / ppt_to_pdf / ppt_to_transfer / ppt_to_puremd / ppt_to_notecom
+│   │   ├── pipelines.md            #   crop_to_pdf / ppt_to_pdf / ppt_to_transfer / ppt_to_puremd / ppt_to_githubmd / ppt_to_notecom / ppt_build
 │   │   └── validation.md           #   checkgen / checkverify / validate / explain
 │   ├── md_pptx_merge_spec.yaml     # レシピ YAML スキーマ仕様
 │   ├── md_inventory_spec.yaml      # インベントリ YAML スキーマ仕様

@@ -1,4 +1,4 @@
-<!-- source: extracted/splitted_insertion_guide_slide1_md.md -->
+<!-- source: ../mds/splitted_insertion_guide_slide1_md.md -->
 <!-- md_merge_rawtitle: ファイルを分割して挿入する -->
 <!-- #id:section:splitted_insertion_guide:slide1 -->
 ## ファイルを分割して挿入する
@@ -14,7 +14,7 @@ pptxをマージする際、ファイル全体ではなく一部を選択して�
 
 
 
-<!-- source: extracted/splitted_insertion_guide_slide2_md.md -->
+<!-- source: ../mds/splitted_insertion_guide_slide2_md.md -->
 <!-- md_merge_rawtitle: 分割挿入を使いたいのはどんなとき？ -->
 <!-- #id:section:splitted_insertion_guide:slide2 -->
 ## 分割挿入を使いたいのはどんなとき？
@@ -34,7 +34,7 @@ pptxをマージする際、ファイル全体ではなく一部を選択して�
 
 
 
-<!-- source: extracted/splitted_insertion_guide_slide3_md.md -->
+<!-- source: ../mds/splitted_insertion_guide_slide3_md.md -->
 <!-- md_merge_rawtitle: 結合指示書サンプル -->
 <!-- #id:section:splitted_insertion_guide:slide3 -->
 ## 結合指示書サンプル

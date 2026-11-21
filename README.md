@@ -22,8 +22,6 @@ PPT \& MD merger の主な用途の１つが、複数の PowerPoint ファイル
 
 さらに、このときに生じる
 
-> **BLOCKINDENT**
->
 > - 複数のPPTXをまとめて１つの配布用PDFにしたい
 > - 口頭で説明していた内容を詳細説明Textとして追加したい
 > - プレーンテキストでは物足りない。文字サイズ、フォント、配色などを変えてメリハリをつけられるようにしたい
@@ -53,8 +51,6 @@ PPT \& MD merger の主な用途の２つめは、複数の PowerPoint ファイ
 
 しかも、研修を何度も行うと、その都度少しずつ内容が変わっていくのが普通で、一度作った大きな１冊を何度も流用するのは難しいものです。　その都度小テーマ PPTXを更新して組み替えて結合して、という作業をしなければなりませんが、この労力は馬鹿になりません。　というのは、たいてい「単なる結合」では済まないからです。
 
-> **BLOCKINDENT**
->
 > - 複数のPPTXをまとめたい
 > - 表紙をつけたい
 > - 章/節番号をつけたい
@@ -123,20 +119,23 @@ Tag           Name           Managed By  Version  Alias
 
 ### Pandoc
 
+文書フォーマット変換ツール Pandoc をインストールする
+
 ```powershell
 winget install --id JohnMacFarlane.Pandoc -e
 ```
 
 ### Typst
 
-Typst をインストールする
+PDF組版ツール Typst をインストールする
+
 ```powershell
 winget install --id Typst.Typst -e
 ```
 
 ### ppt-md-merger
 
-ppt-md-merger インストール用の親ディレクトリを作って GitHub から ppt-md-merge の最新バージョンを入手
+ppt-md-merger インストール用の親ディレクトリ tools を作って GitHub から ppt-md-merge の最新バージョンを入手
 ```powershell
 mkdir c:\tools
 cd c:\tools

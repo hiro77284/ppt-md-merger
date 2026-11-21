@@ -122,7 +122,7 @@ build/merged.md  build/<image-dir>/名前     # merge が集約。参照は <ima
 
 > **移行時の注意:** `clear-dir-before-merge` は既定 `true` だが、`image-dir` が空のときは何もしない（[merge/__init__.py:77](../src/md_merge/merge/__init__.py)）。既定値を入れると、これまで `image-dir` を指定していなかったレシピで **merge 前の `build/images/` 全削除が初めて有効になる**（削除前にフルパスを提示して確認する動作は変わらない）。併せて、それらのレシピの画像コピー先が `build/` 直下から `build/images/` に変わり、結合済み MD 内の参照パスもそれに追従する。
 
-> 実装時に確認した挙動（2026-10-06）: 初回実行では `build/images/` が存在しないため確認は出ない。2 回目以降は中身があるので、単体 `merge` は `--force` で確認を省略でき、パイプラインは `--force` に関係なく毎回確認する（既に `image-dir` を明示していたレシピと同じ扱いになる）。確認を出したくない場合はレシピで `clear-dir-before-merge: false`。旧挙動（`outputdir` 直下に画像を置く）を維持したい場合は `image-dir: ""` と空文字を明示する。
+> 実装時に確認した挙動（2026-10-06）: 初回実行では `build/images/` が存在しないため確認は出ない。2 回目以降は中身があるので、単体 `merge` は `--force` で確認を省略でき、パイプラインは `--force` に関係なく毎回確認する（既に `image-dir` を明示していたレシピと同じ扱いになる）。確認を出したくない場合はレシピで `clear-dir-before-merge: false`。（2026-11-21 追記: 確認の省略は `--force` から専用の `--yes-clear-dir` に分離した。単体 merge・パイプラインとも `--yes-clear-dir` でのみ省略できる）旧挙動（`outputdir` 直下に画像を置く）を維持したい場合は `image-dir: ""` と空文字を明示する。
 
 ### 4.3 命名と衝突回避の統一
 

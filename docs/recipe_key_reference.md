@@ -49,7 +49,7 @@
 | キー                            | mg  | ic  | ir  | rd  | pd  | ur  | pm  | ie  | me  | pe  | cr  | tr  | 備考                                                                    |
 | ----------------------------- | :-: | :-: | :-: | :-: | :-: | :-: | :-: | :-: | :-: | :-: | :-: | :-: | --------------------------------------------------------------------- |
 | `output.outputdir`            |  W  |  R  |  R  |  R  |  R  |  R  |  W  |     |     |     |     |  R  | 省略時は `workdir` と同じディレクトリ                                              |
-| `output.force`                |  R  |  R  |  R  |  R  |  R  |  R  |  R  |  R  |  R  |  R  |  R  |  R  | `true` で全コマンドに `--force` 相当                                           |
+| `output.force`                |  R  |  R  |  R  |  R  |  R  |  R  |  R  |  R  |  R  |  R  |  R  |  R  | `true` で全コマンドに `--force` 相当（既存出力の上書き。clear-dir-before-merge の削除承認にはならない） |
 | `output.targetbasefilename`   |  R  |  R  |  R  |  R  |  R  |  R  |  R  |     |     |     |     |     | 出力ファイル名のベース部分。指定すると他の出力キーを省略時に自動生成。拡張子を含む場合は警告して除去                    |
 | `output.mdfilename`           |  W  |  R  |     |  R  |     |     |     |     |     |     |     |     | 省略時は `targetbasefilename` から自動生成                                      |
 | `output.checkfilename`        |  R  |     |     |     |     |     |  R  |     |     |     |     |     | `checkgen` が生成（W）、`mg` が読んで insertmd を、`pm` が読んで insertpptx を整合性チェック。省略時は `targetbasefilename` から `{base}_check.yaml` を自動生成 |
@@ -123,7 +123,7 @@
 | `merge.yaml-dir` | R | `--yaml-dir` 相当。YAML ファイルのコピー先サブディレクトリ。**省略時は `image-dir` と同じ** |
 | `merge.flatten-yamls` | R | `--flatten-yamls` 相当。YAML ファイルをフラット集約 |
 | `merge.overwrite-yamls` | R | `--overwrite-yamls` 相当。別の YAML ファイルが同じコピー先になったとき警告して上書き（既定は `_1` 連番で回避） |
-| `merge.clear-dir-before-merge` | R | **既定 `true`**。`image-dir` が空でないとき merge 前に image-dir 内を全削除（削除前にフルパスを提示して確認。単体 merge は `--force` で確認省略、パイプラインは `--force` に関係なく必ず確認、`false` で無効化）。merge 入力が参照する画像が image-dir 内にあるときは削除をスキップして警告 |
+| `merge.clear-dir-before-merge` | R | **既定 `true`**。`image-dir` が空でないとき merge 前に image-dir 内を全削除（削除前にフルパスを提示して確認。確認を省くのは CLI の `--yes-clear-dir` のみで、`--force` / `output.force` では省略しない。`false` で無効化）。merge 入力が参照する画像が image-dir 内にあるときは削除をスキップして警告 |
 | `merge.strict` | R | `--strict` 相当 |
 
 ---

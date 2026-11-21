@@ -175,7 +175,7 @@ build/sample_doc.pdf          ← 完成した PDF（ppt_to_pdf）
 | `MD file not found: ..._slide1.md — skipping` | `mds/` に切り出せていない（上と同じ原因）か、`input.dirs` に `mds` が入っていない |
 | `シェイプ 'exportrange' が見つかりません` | 図形の**名前**が `exportrange` になっていない（表示テキストではなく選択ウィンドウ上の名前） |
 | `シェイプ 'exportrange' はグループ内にあります` | 対象の図形が他の図形とグループ化されている。**グループを解除する**（グループ内の座標は親の子座標系になるため使えない） |
-| 2 回目の実行で「全削除してよいですか？」と聞かれる | `build/images/` を merge 前に空にする確認（既定で有効）。`y` で続行。確認を出したくなければレシピに `merge: clear-dir-before-merge: false` |
+| 2 回目の実行で「全削除してよいですか？」と聞かれる | `build/images/` を merge 前に空にする確認（既定で有効）。`y` で続行。確認なしで削除させるなら `--yes-clear-dir`（`--force` では省略されない）。削除自体をやめるならレシピに `merge: clear-dir-before-merge: false` |
 | `build/sample.pdf` が文書 PDF で上書きされる | pptx 名と `targetbasefilename` が同じだと衝突する。**違う名前にする**（例 pptx が `sample.pptx` なら `sample_doc`） |
 | 見出しに番号が付かない | `indexer.pptxnumbering: idresolve` を書き忘れている（既定は `no` ＝番号を付けない） |
 

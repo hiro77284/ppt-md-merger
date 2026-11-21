@@ -1,4 +1,4 @@
-<!-- source: extracted/simple_numbering_guide_slide1_md.md -->
+<!-- source: ../mds/simple_numbering_guide_slide1_md.md -->
 <!-- md_merge_rawtitle: simple_numbering 簡易ナンバリング -->
 <!-- #id:section:simple_numbering_guide:slide1 -->
 ## simple_numbering　簡易ナンバリング
@@ -17,7 +17,7 @@ chapter とは日本語でいえば「章」のことで、 「1章2節」 の�
 
 
 
-<!-- source: extracted/simple_numbering_guide_slide2_md.md -->
+<!-- source: ../mds/simple_numbering_guide_slide2_md.md -->
 <!-- md_merge_rawtitle: simple_numbering サンプル実行例 -->
 <!-- #id:section:simple_numbering_guide:slide2 -->
 ## simple_numbering サンプル実行例
@@ -29,10 +29,10 @@ simple_numbering_guide.pptx は、２つのpptxファイルを結合して簡易
 
 | 番号 | ファイル名         |          内容                |
 | --- | --------------- | ------------------------ |
-| 1 | simple_numbering_recipe.yaml | 結合指示書：簡易ナンバリング処理の仕様を示す  |
-| 2 | simple_numbering_guide.pptx  |  このサンプルの説明書ソースpptx  |
-| 3 | second.pptx                  | 結合元ファイルサンプル（3スライド）   |
-| 4 | simple_numbering_merged.pptx       | 2と3の結合結果   |
+| 1 | src/simple_numbering_guide_recipe.yaml | 結合指示書：簡易ナンバリング処理の仕様を示す  |
+| 2 | src/simple_numbering_guide.pptx  |  このサンプルの説明書ソースpptx  |
+| 3 | src/second.pptx                  | 結合元ファイルサンプル（3スライド）   |
+| 4 | build/simple_numbering_merged.pptx       | 2と3の結合結果   |
 
 ファイル2 + ファイル3 → ファイル4 という結合処理を行い、スライドタイトルに章・節番号をつけます。
 
@@ -43,14 +43,14 @@ simple_numbering_guide.pptx は、２つのpptxファイルを結合して簡易
 以下の命令で実行します。サブコマンド pptmerge の引数に結合指示書を指定します。途中、一時的に PowerPoint が起動します。 --force は既出力ファイルを上書きするオプションです。
 
 ```bash
-pptmdmerge pptmerge PROJECT_ROOT/examples/pm2_simple_numbering_recipe.yaml --force
+pptmdmerge pptmerge PROJECT_ROOT/examples/pm2_simple_numbering/src/simple_numbering_guide_recipe.yaml --force
 ```
 
 結果、ファイル4が生成されれば成功です
 
 
 
-<!-- source: extracted/simple_numbering_guide_slide3_md.md -->
+<!-- source: ../mds/simple_numbering_guide_slide3_md.md -->
 <!-- md_merge_rawtitle: 簡易ナンバリング結果 -->
 <!-- #id:section:simple_numbering_guide:slide3 -->
 ## 簡易ナンバリング結果
@@ -63,7 +63,7 @@ pptmdmerge pptmerge PROJECT_ROOT/examples/pm2_simple_numbering_recipe.yaml --for
 
 
 
-<!-- source: extracted/simple_numbering_guide_slide4_md.md -->
+<!-- source: ../mds/simple_numbering_guide_slide4_md.md -->
 <!-- md_merge_rawtitle: 結合指示書サンプル -->
 <!-- #id:section:simple_numbering_guide:slide4 -->
 ## 結合指示書サンプル
@@ -82,7 +82,7 @@ procedure の operation: chapter という項目で章番号のカウントア�
 
 
 
-<!-- source: extracted/simple_numbering_guide_slide5_md.md -->
+<!-- source: ../mds/simple_numbering_guide_slide5_md.md -->
 <!-- md_merge_rawtitle: chap_section方式のアルゴリズム -->
 <!-- #id:section:simple_numbering_guide:slide5 -->
 ## chap_section方式のアルゴリズム

@@ -1,4 +1,4 @@
-<!-- source: extracted/chapter_cover_insertion_guide_slide1_md.md -->
+<!-- source: ../mds/chapter_cover_insertion_guide_slide1_md.md -->
 <!-- md_merge_rawtitle: Chapter Cover 挿入運用 -->
 <!-- #id:section:chapter_cover_insertion_guide:slide1 -->
 ## Chapter Cover 挿入運用
@@ -21,7 +21,7 @@
 
 
 
-<!-- source: extracted/chapter_cover_insertion_guide_slide2_md.md -->
+<!-- source: ../mds/chapter_cover_insertion_guide_slide2_md.md -->
 <!-- md_merge_rawtitle: operation: chapter が使いにくい問題 -->
 <!-- #id:section:chapter_cover_insertion_guide:slide2 -->
 ## operation: chapter が使いにくい問題
@@ -38,7 +38,7 @@ Chapter Cover 挿入運用の詳しい説明をします。
 
 
 
-<!-- source: extracted/chapter_cover_insertion_guide_slide3_md.md -->
+<!-- source: ../mds/chapter_cover_insertion_guide_slide3_md.md -->
 <!-- md_merge_rawtitle: Chapter Cover で話題の転換を明示したい -->
 <!-- #id:section:chapter_cover_insertion_guide:slide3 -->
 ## Chapter Cover で話題の転換を明示したい
@@ -55,7 +55,7 @@ Chapter Cover 挿入運用の詳しい説明をします。
 
 
 
-<!-- source: extracted/chapter_cover_insertion_guide_slide4_md.md -->
+<!-- source: ../mds/chapter_cover_insertion_guide_slide4_md.md -->
 <!-- md_merge_rawtitle: Chapter Cover の挿入方法 -->
 <!-- #id:section:chapter_cover_insertion_guide:slide4 -->
 ## Chapter Cover の挿入方法
@@ -72,7 +72,7 @@ Chapter Cover 挿入運用の詳しい説明をします。
 
 
 
-<!-- source: extracted/chapter_cover_insertion_guide_slide5_md.md -->
+<!-- source: ../mds/chapter_cover_insertion_guide_slide5_md.md -->
 <!-- md_merge_rawtitle: Chapter Cover テンプレートファイルの作り方 -->
 <!-- #id:section:chapter_cover_insertion_guide:slide5 -->
 ## Chapter Cover テンプレートファイルの作り方

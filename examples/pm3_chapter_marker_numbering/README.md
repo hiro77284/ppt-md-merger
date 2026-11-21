@@ -2,7 +2,7 @@
 <!-- #id:chapter:AUTOCHAPTER:AUTOID_1 -->
 # 
 
-<!-- source: extracted/chapter_marker_numbering_guide_slide1_md.md -->
+<!-- source: ../mds/chapter_marker_numbering_guide_slide1_md.md -->
 <!-- md_merge_rawtitle: chapter_marker によるナンバリング -->
 <!-- #id:section:chapter_marker_numbering_guide:slide1 -->
 ## 1.1) chapter_marker によるナンバリング
@@ -21,7 +21,7 @@ chapt_section ナンバリングにおいて、operation: chapter ではなく�
 
 
 
-<!-- source: extracted/chapter_marker_numbering_guide_slide2_md.md -->
+<!-- source: ../mds/chapter_marker_numbering_guide_slide2_md.md -->
 <!-- md_merge_rawtitle: #CHAPT# マーカーの埋め込み -->
 <!-- #id:section:chapter_marker_numbering_guide:slide2 -->
 ## 1.2) #CHAPT# マーカーの埋め込み
@@ -36,7 +36,7 @@ chapt_section ナンバリングにおいて、operation: chapter ではなく�
 
 
 
-<!-- source: extracted/chapter_marker_numbering_guide_slide3_md.md -->
+<!-- source: ../mds/chapter_marker_numbering_guide_slide3_md.md -->
 <!-- md_merge_rawtitle: 1ファイル中の複数 #CHAPT# も可能 -->
 <!-- #id:section:chapter_marker_numbering_guide:slide3 -->
 ## 1.3) 1ファイル中の複数 #CHAPT# も可能
@@ -47,7 +47,7 @@ chapt_section ナンバリングにおいて、operation: chapter ではなく�
 
 
 
-<!-- source: extracted/chapter_marker_numbering_guide_slide4_md.md -->
+<!-- source: ../mds/chapter_marker_numbering_guide_slide4_md.md -->
 <!-- md_merge_rawtitle: #SECTION# マーカーは節番号をリセット -->
 <!-- #id:section:chapter_marker_numbering_guide:slide4 -->
 ## 1.4) #SECTION# マーカーは節番号をリセット
@@ -61,7 +61,7 @@ chapt_section ナンバリングにおいて、operation: chapter ではなく�
 
 
 
-<!-- source: extracted/chapter_marker_numbering_guide_slide5_md.md -->
+<!-- source: ../mds/chapter_marker_numbering_guide_slide5_md.md -->
 <!-- md_merge_rawtitle: 結合指示書サンプル -->
 <!-- #id:section:chapter_marker_numbering_guide:slide5 -->
 ## 1.5) 結合指示書サンプル

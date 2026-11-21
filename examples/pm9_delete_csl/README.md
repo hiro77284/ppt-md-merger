@@ -1,4 +1,4 @@
-<!-- source: extracted/delete_csl_guide_slide2_md.md -->
+<!-- source: ../mds/delete_csl_guide_slide2_md.md -->
 <!-- md_merge_rawtitle: 指定したスライドを削除する -->
 <!-- #id:section:delete_csl_guide:slide2 -->
 ## 指定したスライドを削除する
@@ -19,7 +19,7 @@
 
 
 
-<!-- source: extracted/delete_csl_guide_slide3_md.md -->
+<!-- source: ../mds/delete_csl_guide_slide3_md.md -->
 <!-- md_merge_rawtitle: スライド削除機能の動作イメージ -->
 <!-- #id:section:delete_csl_guide:slide3 -->
 ## スライド削除機能の動作イメージ
@@ -36,7 +36,7 @@
 
 
 
-<!-- source: extracted/delete_csl_guide_slide5_md.md -->
+<!-- source: ../mds/delete_csl_guide_slide5_md.md -->
 <!-- md_merge_rawtitle: CSLマーカーの入れ方と結合指示書の記入 -->
 <!-- #id:section:delete_csl_guide:slide5 -->
 ## CSLマーカーの入れ方と結合指示書の記入

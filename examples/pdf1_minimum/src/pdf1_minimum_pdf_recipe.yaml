@@ -9,7 +9,7 @@ version: 4
 # ppt-md-merger の src/md_merge/templates/ または defaults/ ディレクトリ以下のファイルを意味します。
 
 vars:
-  COVER_IMAGE: ../images/cover_image.png
+  COVER_IMAGE: ../images/cover_image.webp
   COVER_TITLE: "単純なPDFを生成するサンプル"
   COVER_SUBTITLE: "PPTX->MD->PDF生成の最小事例"
   COVER_DATE: __DATETIME__
@@ -40,7 +40,7 @@ output:
   # pptxfilename:           # 結合後のpptxファイルのファイル名
   # idcollectfilename:      # 結合後のmdファイルから{{#id:...}}マーカーを抽出して生成されるインベントリファイルのファイル名
   # idresolvedfilename:     # インベントリファイルを読み込んでnumberとlabelを付与したID解決済みマップファイルのファイル名
-  # renderedfilename:       # 結合後のmdファイルに対してタイトル置換・参照置換を行ったレンダー済みmdファイルのファイル名
+  # renderedfilename:       # 結合後のmdファイルに対してタイトル置換・参照置換を行ったrender済みmdファイルのファイル名
   # puremdfilename:         # rendered.mdファイルからlatex命令を削除した純粋なmdファイルのファイル名。MD自体でプレビューを見るときはこれを使う
   # texfilename:            # 結合後のmdファイルをPandocでレンダーして生成されるtexファイルのファイル名
   # resourcepathfilename:   # 結合後のmdファイルで使用するリソースパスを書き込むtexファイルのファイル名

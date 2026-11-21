@@ -25,7 +25,7 @@ output:
   pptxfilename:         # 結合後のpptxファイルのファイル名
   idcollectfilename:   # 結合後のmdファイルから{{#id:...}}マーカーを抽出して生成されるインベントリファイルのファイル名
   idresolvedfilename:   # インベントリファイルを読み込んでnumberとlabelを付与したID解決済みマップファイルのファイル名
-  renderedfilename:     # 結合後のmdファイルに対してタイトル置換・参照置換を行ったレンダー済みmdファイルのファイル名
+  renderedfilename:     # 結合後のmdファイルに対してタイトル置換・参照置換を行ったrender済みmdファイルのファイル名
   puremdfilename:         # rendered.mdファイルからlatex命令を削除した純粋なmdファイルのファイル名。MD自体でプレビューを見るときはこれを使う
   pdffilename:           # 結合後のmdファイルをPandocでレンダーして生成されるpdfファイルのファイル名
   htmlfilename:         # 結合後のmdファイルをPandocでレンダーして生成されるhtmlファイルのファイル名

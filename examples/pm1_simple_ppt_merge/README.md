@@ -1,4 +1,4 @@
-<!-- source: extracted/simple_ppt_merge_guide_slide1_md.md -->
+<!-- source: ../mds/simple_ppt_merge_guide_slide1_md.md -->
 <!-- md_merge_rawtitle: pptmerge 単純マージ -->
 <!-- #id:section:simple_ppt_merge_guide:slide1 -->
 ## pptmerge　単純マージ
@@ -15,7 +15,7 @@
 
 
 
-<!-- source: extracted/simple_ppt_merge_guide_slide2_md.md -->
+<!-- source: ../mds/simple_ppt_merge_guide_slide2_md.md -->
 <!-- md_merge_rawtitle: pm1_simple_ppt_merge 概要 -->
 <!-- #id:section:simple_ppt_merge_guide:slide2 -->
 ## pm1_simple_ppt_merge 概要
@@ -28,10 +28,10 @@ simple_ppt_merge_guide.pptx は、２つのpptxファイルを単に結合する
 
 | 番号 | ファイル名         |          内容                |
 | --- | --------------- | ------------------------ |
-| 1 | simple_ppt_merge_recipe.yaml | 結合指示書：マージ処理の仕様を示す  |
-| 2 | simple_ppt_merge_guide.pptx  |  このサンプルの説明書ソースpptx  |
-| 3 | second.pptx                  | 結合元ファイルサンプル（3スライド）   |
-| 4 | simple_ppt_merge_merged.pptx       | 2と3の結合結果   |
+| 1 | src/simple_ppt_merge_guide_recipe.yaml | 結合指示書：マージ処理の仕様を示す  |
+| 2 | src/simple_ppt_merge_guide.pptx  |  このサンプルの説明書ソースpptx  |
+| 3 | src/second.pptx                  | 結合元ファイルサンプル（3スライド）   |
+| 4 | build/simple_ppt_merge_merged.pptx       | 2と3の結合結果   |
 
 ファイル2 + ファイル3 → ファイル4 という結合処理を行います。
 
@@ -42,14 +42,14 @@ simple_ppt_merge_guide.pptx は、２つのpptxファイルを単に結合する
 以下の命令で実行します。サブコマンド pptmerge の引数に結合指示書を指定します。途中、一時的に PowerPoint が起動します。 --force は既出力ファイルを上書きするオプションです。
 
 ```bash
-pptmdmerge pptmerge PROJECT_ROOT\examples\pm1_simple_ppt_merge_recipe.yaml --force
+pptmdmerge pptmerge PROJECT_ROOT\examples\pm1_simple_ppt_merge\src\simple_ppt_merge_guide_recipe.yaml --force
 ```
 
 結果、ファイル4が生成されれば成功です
 
 
 
-<!-- source: extracted/simple_ppt_merge_guide_slide3_md.md -->
+<!-- source: ../mds/simple_ppt_merge_guide_slide3_md.md -->
 <!-- md_merge_rawtitle: マージ結果 -->
 <!-- #id:section:simple_ppt_merge_guide:slide3 -->
 ## マージ結果
@@ -62,7 +62,7 @@ pptmdmerge pptmerge PROJECT_ROOT\examples\pm1_simple_ppt_merge_recipe.yaml --for
 
 
 
-<!-- source: extracted/simple_ppt_merge_guide_slide4_md.md -->
+<!-- source: ../mds/simple_ppt_merge_guide_slide4_md.md -->
 <!-- md_merge_rawtitle: 結合指示書サンプル -->
 <!-- #id:section:simple_ppt_merge_guide:slide4 -->
 ## 結合指示書サンプル

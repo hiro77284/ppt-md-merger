@@ -1,6 +1,6 @@
 """Shared runner for the ppt_to_* pipeline subcommands.
 
-`ppt_to_transfer` and `ppt_to_puremd` share the same step machinery: a fixed
+Every ppt_to_* pipeline (and ppt_build) shares the same step machinery: a fixed
 sequence of sub-runs, a pre-merge insertmd drift gate, optional preprocessing,
 work-file cleanup, and an end-of-run warning summary. The only differences are
 the step list, which output files count as deliverables (and so must survive
@@ -29,7 +29,7 @@ from md_merge.merge._recipe import (
 
 # Output-file recipe keys produced by the pipeline steps. A given pipeline keeps
 # the subset that are its deliverables and deletes the rest as work files.
-_ALL_WORK_FILE_KEYS = (
+ALL_WORK_FILE_KEYS = (
     "mdfilename",
     "idcollectfilename",
     "idresolvedfilename",

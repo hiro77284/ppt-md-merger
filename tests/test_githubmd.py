@@ -11,6 +11,51 @@ from pathlib import Path
 from md_merge.githubmd import convert, run
 
 
+class TestGithubmdBlockLabel(unittest.TestCase):
+    """puremd の ``> **BLOCKINDENT**`` ラベル行を落としてラベルなし引用にする。"""
+
+    def test_blockindent_from_puremd(self):
+        from md_merge.puremd import _transform_fenced_divs
+        src = (
+            "::: {.blockindent indent=2em}\n"
+            "- 表紙をつけたい\n"
+            "- 目次をつけたい\n"
+            ":::\n"
+        )
+        puremd = _transform_fenced_divs(src, {}, set(), set())
+        self.assertIn("> **BLOCKINDENT**", puremd)  # puremd は変えない
+        out, _ = convert(puremd)
+        self.assertEqual(out, "> - 表紙をつけたい\n> - 目次をつけたい\n")
+
+    def test_nested_blockindent(self):
+        src = "> [!NOTE]\n> > **BLOCKINDENT**\n> >\n> > 本文\n"
+        out, _ = convert(src)
+        self.assertEqual(out, "> [!NOTE]\n> > 本文\n")
+
+    def test_largefontblock(self):
+        out, _ = convert("> **LARGEFONTBLOCK**\n>\n> 本文\n")
+        self.assertEqual(out, "> 本文\n")
+
+    def test_other_labels_kept(self):
+        src = "> **MYBOX**\n>\n> 本文\n"
+        out, _ = convert(src)
+        self.assertEqual(out, src)
+
+    def test_label_without_empty_quote_line_kept(self):
+        src = "> **BLOCKINDENT**\n> 本文\n"
+        out, _ = convert(src)
+        self.assertEqual(out, src)
+
+    def test_label_in_code_fence_kept(self):
+        src = "```\n> **BLOCKINDENT**\n>\n```\n"
+        out, _ = convert(src)
+        self.assertEqual(out, src)
+
+    def test_crlf(self):
+        out, _ = convert("> **BLOCKINDENT**\r\n>\r\n> 本文\r\n")
+        self.assertEqual(out, "> 本文\r\n")
+
+
 class TestGithubmdConvert(unittest.TestCase):
     def test_width_percent_to_img(self):
         out, n = convert("![図1](images/a.png){ width=40% }\n")

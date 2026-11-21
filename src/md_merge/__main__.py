@@ -17,6 +17,7 @@ from md_merge.pptyamlexport import run as run_pptyamlexport
 from md_merge.ppt_to_pdf import run as run_ppt_to_pdf
 from md_merge.ppt_to_puremd import run as run_ppt_to_puremd
 from md_merge.ppt_to_githubmd import run as run_ppt_to_githubmd
+from md_merge.ppt_build import run as run_ppt_build
 from md_merge.githubmd import run as run_githubmd
 from md_merge.merge import run as run_merge
 from md_merge.idcollect import run as run_idcollect
@@ -54,7 +55,13 @@ def _make_common_parser() -> argparse.ArgumentParser:
     )
     p.add_argument(
         "--keep-work", action="store_true", dest="keep_work",
-        help="Retain work_ intermediate files after completion (only effective for ppt_to_pdf / ppt_to_transfer / ppt_to_puremd / ppt_to_githubmd / ppt_to_notecom; ignored with a warning elsewhere)",
+        help="Retain work_ intermediate files after completion (only effective for ppt_build / ppt_to_pdf / ppt_to_transfer / ppt_to_puremd / ppt_to_githubmd / ppt_to_notecom; ignored with a warning elsewhere)",
+    )
+    p.add_argument(
+        "--yes-clear-dir", action="store_true", dest="yes_clear_dir",
+        help="Approve clear-dir-before-merge without the confirmation prompt (empties the merge image-dir). "
+             "Separate from --force, which only overwrites output files. Only effective for subcommands that "
+             "run merge; ignored with a warning elsewhere",
     )
     return p
 
@@ -128,7 +135,7 @@ def _make_parser() -> argparse.ArgumentParser:
         action="store_true",
         dest="clear_dir_before_merge",
         help="Delete everything inside the image-dir before merging (default: on; asks for "
-             "confirmation showing the full path, --force skips it, recipe clear-dir-before-merge: false disables)",
+             "confirmation showing the full path, --yes-clear-dir skips it, recipe clear-dir-before-merge: false disables)",
     )
     merge.add_argument("--force", action="store_true", help="Overwrite existing output files")
 
@@ -356,6 +363,31 @@ def _make_parser() -> argparse.ArgumentParser:
     p2gh.add_argument("--no-check", action="store_true", dest="no_check", help="Skip the pre-merge insertmd drift check (no confirmation prompt)")
     p2gh.add_argument("--transfer", action="store_true", help="Run transfer as the last step: copy the GitHub MD (output.githubmdfilename) and its images to transfer.dataentry_input (needs the transfer: section)")
 
+    # ── ppt_build ─────────────────────────────────────────────────────────
+    pb = sub.add_parser(
+        "ppt_build",
+        parents=[common],
+        help="Run pptpdfexport → … → render once, then only the selected outputs (--pdf / --puremd / --githubmd / --notecom / --transfer)",
+    )
+    pb.add_argument("input", nargs="?", metavar="INPUT", help="Input YAML file")
+    pb.add_argument("--workdir", "-w", metavar="DIR", help="Base directory for relative paths")
+    pb.add_argument("--force", action="store_true", help="Overwrite existing output files")
+    pb.add_argument("--rebuild", action="store_true", help="Force the pptpdfexport step to rebuild PDFs even when newer than the source PPTX")
+    pb.add_argument("--preprocess", action="store_true", help="Preprocess each input.cropsrc.pptx (single-file pptmerge, slides:all) and use the preprocessed pptx for the pptx-consuming steps")
+    pb.add_argument("--deletecsl", nargs="?", const="on", choices=["on", "off"], default=None, dest="delete_csl", metavar="[on|off]", help="[非推奨/無視] パイプラインでは CSL 処理を行わないため効果がない。指定すると警告する")
+    pb.add_argument("--deletecsp", nargs="?", const="on", choices=["on", "off"], default=None, dest="delete_csp", metavar="[on|off]", help="Preprocess: delete shapes containing #CSP#. Bare flag = on; 'off' forces off; omitted = recipe indexer.deletecsp. Effective only with --preprocess")
+    pb.add_argument("--no-check", action="store_true", dest="no_check", help="Skip the pre-merge insertmd drift check (no confirmation prompt)")
+    pb_out = pb.add_argument_group("outputs (at least one)")
+    pb_out.add_argument("--pdf", action="store_true", help="PDF via pandoc (output.pdffilename), like ppt_to_pdf")
+    pb_out.add_argument("--puremd", action="store_true", help="puremd MD (output.puremdfilename), like ppt_to_puremd")
+    pb_out.add_argument("--githubmd", action="store_true", help="GitHub MD (output.githubmdfilename), like ppt_to_githubmd")
+    pb_out.add_argument("--notecom", action="store_true", help="note.com posting YAML (output.notecomyamlfilename), like ppt_to_notecom")
+    pb_out.add_argument("--transfer", action="store_true", help="Copy the GitHub MD (with --githubmd) or else the puremd MD and its images to transfer.dataentry_input (needs the transfer: section)")
+    pb.add_argument(
+        "--source", choices=["puremd", "githubmd", "rendered", "merged"], dest="source",
+        help="Transfer source MD override (wins over transfer.inputmd). Effective only with --transfer",
+    )
+
     # ── transfer ──────────────────────────────────────────────────────────
     transfer = sub.add_parser(
         "transfer",
@@ -464,7 +496,9 @@ def _make_parser() -> argparse.ArgumentParser:
 
 
 # Subcommands that actually honor --keep-work; others accept it but ignore with a warning.
-_KEEP_WORK_SUBCOMMANDS = {"ppt_to_pdf", "ppt_to_transfer", "ppt_to_puremd", "ppt_to_githubmd", "ppt_to_notecom"}
+_KEEP_WORK_SUBCOMMANDS = {"ppt_build", "ppt_to_pdf", "ppt_to_transfer", "ppt_to_puremd", "ppt_to_githubmd", "ppt_to_notecom"}
+# Subcommands that run merge (and so clear-dir-before-merge); --yes-clear-dir is ignored elsewhere.
+_YES_CLEAR_DIR_SUBCOMMANDS = _KEEP_WORK_SUBCOMMANDS | {"merge", "crop_to_pdf"}
 
 
 def main() -> None:
@@ -479,6 +513,14 @@ def main() -> None:
         setup_logging(getattr(args, "log_level", "info"))
         logging.warning(
             "--keep-work は %s では効果がありません。無視して続行します。", args.subcommand
+        )
+
+    if getattr(args, "yes_clear_dir", False) and args.subcommand not in _YES_CLEAR_DIR_SUBCOMMANDS:
+        import logging
+        from md_merge._output import setup_logging
+        setup_logging(getattr(args, "log_level", "info"))
+        logging.warning(
+            "--yes-clear-dir は %s では効果がありません（merge を含まない）。無視して続行します。", args.subcommand
         )
 
     if args.constants:
@@ -545,6 +587,8 @@ def main() -> None:
                 code = run_ppt_to_puremd(args)
             case "ppt_to_githubmd":
                 code = run_ppt_to_githubmd(args)
+            case "ppt_build":
+                code = run_ppt_build(args)
             case "transfer":
                 code = run_transfer(args)
             case "notecomexport":

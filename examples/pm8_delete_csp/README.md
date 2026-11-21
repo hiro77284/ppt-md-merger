@@ -1,4 +1,4 @@
-<!-- source: extracted/delete_csp_guide_slide1_md.md -->
+<!-- source: ../mds/delete_csp_guide_slide1_md.md -->
 <!-- md_merge_rawtitle: 指定したシェイプを消去する -->
 <!-- #id:section:delete_csp_guide:slide1 -->
 ## 指定したシェイプを消去する
@@ -19,7 +19,7 @@
 
 
 
-<!-- source: extracted/delete_csp_guide_slide2_md.md -->
+<!-- source: ../mds/delete_csp_guide_slide2_md.md -->
 <!-- md_merge_rawtitle: 消去したいシェイプにCSPマーカーを入れておく -->
 <!-- #id:section:delete_csp_guide:slide2 -->
 ## 消去したいシェイプにCSPマーカーを入れておく
@@ -36,7 +36,7 @@ deletecsp がfalseまたは未指定の場合は、#CSP#マーカーだけが消
 
 
 
-<!-- source: extracted/delete_csp_guide_slide4_md.md -->
+<!-- source: ../mds/delete_csp_guide_slide4_md.md -->
 <!-- md_merge_rawtitle: CSPマーカー利用例 -->
 <!-- #id:section:delete_csp_guide:slide4 -->
 ## CSPマーカー利用例
@@ -53,7 +53,7 @@ CSPマーカーの基本的な利用イメージです。左側が原本ファ�
 
 
 
-<!-- source: extracted/delete_csp_guide_slide6_md.md -->
+<!-- source: ../mds/delete_csp_guide_slide6_md.md -->
 <!-- md_merge_rawtitle: テーブルシェイプはテーブルごと消去 -->
 <!-- #id:section:delete_csp_guide:slide6 -->
 ## テーブルシェイプはテーブルごと消去
@@ -68,7 +68,7 @@ CSPマーカーの基本的な利用イメージです。左側が原本ファ�
 
 
 
-<!-- source: extracted/delete_csp_guide_slide7_md.md -->
+<!-- source: ../mds/delete_csp_guide_slide7_md.md -->
 <!-- md_merge_rawtitle: シェイプを残して文字列だけ消去するには？ -->
 <!-- #id:section:delete_csp_guide:slide7 -->
 ## シェイプを残して文字列だけ消去するには？

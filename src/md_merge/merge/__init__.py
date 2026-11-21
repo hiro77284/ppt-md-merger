@@ -149,21 +149,20 @@ def run(args: argparse.Namespace) -> int:
 # ── helpers ────────────────────────────────────────────────────────────────
 
 
-def _confirm_clear(target: Path, count: int, args: argparse.Namespace, *, ignore_force: bool = False) -> bool:
+def _confirm_clear(target: Path, count: int, args: argparse.Namespace) -> bool:
     """image-dir の全削除を確認する。True=削除実行 / False=中止。
 
-    削除対象のフルパスと項目数を提示する。``--force`` 指定時は確認を省いて実行
-    （ただし ``ignore_force=True`` の場合は ``--force`` があっても必ず確認する。
-    パイプライン先頭の事前確認で使用）。
-    非対話環境（stdin が TTY でない）では確認できないため中止する。
+    削除対象のフルパスと項目数を提示する。``--yes-clear-dir`` 指定時は確認を省いて
+    実行する。``--force``（既存ファイルの上書き）は影響の性質が違うため、ここでは
+    承認とみなさない。非対話環境（stdin が TTY でない）では確認できないため中止する。
     """
     if getattr(args, "clear_dir_confirmed", False):
         return True  # パイプライン先頭で事前確認済み（再確認しない）
     print("\n⚠ clear-dir-before-merge: 次のディレクトリ内の全項目を削除します。", file=sys.stderr)
     print(f"    パス   : {target}", file=sys.stderr)
     print(f"    項目数 : {count}", file=sys.stderr)
-    if not ignore_force and getattr(args, "force", False):
-        logging.warning("clear-dir-before-merge: --force のため確認なしで削除します。")
+    if getattr(args, "yes_clear_dir", False):
+        logging.warning("clear-dir-before-merge: --yes-clear-dir のため確認なしで削除します。")
         return True
     try:
         ans = input("全削除してよいですか？ [y/N]: ").strip().lower()
@@ -171,7 +170,8 @@ def _confirm_clear(target: Path, count: int, args: argparse.Namespace, *, ignore
         print(file=sys.stderr)
         logging.error(
             "clear-dir-before-merge: 確認入力が得られないため中止します"
-            "（承認するなら --force、無効化するなら recipe で clear-dir-before-merge: false）。",
+            "（承認するなら --yes-clear-dir、無効化するなら recipe で clear-dir-before-merge: false。"
+            "--force は上書き用で、削除の承認にはなりません）。",
         )
         return False
     return ans in ("y", "yes")
@@ -265,8 +265,8 @@ def preflight_clear_confirm(args: argparse.Namespace) -> int:
 
     削除対象があれば解決済みフルパスを提示して確認し、承認されたら
     ``args.clear_dir_confirmed`` を立てて後段 merge の再確認を省く。これにより
-    「全処理を始める前」に一度だけ確認できる。``--force`` の有無に関係なく
-    必ず確認する（承認なしにパイプラインが image-dir を破壊しないため）。
+    「全処理を始める前」に一度だけ確認できる。確認を省けるのは ``--yes-clear-dir``
+    だけで、``--force`` では省かない（承認なしに image-dir を破壊しないため）。
     戻り値: EXIT_OK=続行（確認不要 or 承認）/ EXIT_FAILURE=中止。
     """
     if getattr(args, "dry_run", False):
@@ -299,7 +299,7 @@ def preflight_clear_confirm(args: argparse.Namespace) -> int:
     entries = list(target.iterdir())
     if not entries:
         return EXIT_OK
-    if not _confirm_clear(target, len(entries), args, ignore_force=True):
+    if not _confirm_clear(target, len(entries), args):
         logging.error("clear-dir-before-merge: 確認が得られなかったためパイプラインを中止しました。")
         return EXIT_FAILURE
     args.clear_dir_confirmed = True

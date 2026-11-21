@@ -98,6 +98,7 @@ indent=6em で深く字下げしています。
   | PDF（Typst） | `#semblockindent[…]`（`pad(left: 2em)`） | `#semblockindent(indent: 6em)[…]` |
   | HTML | `<div class="blockindent">`（`semantic.css` の `margin-left: 2em`） | `<div class="blockindent" style="margin-left:6em">` |
   | GFM（puremd） | `> **BLOCKINDENT**` ＋空行＋内容を引用 | 同左（`indent` は破棄。字下げ量は表現できない） |
+  | GitHub MD（githubmd） | ラベルなしで内容を引用 | 同左 |
 
 - `fontsize` などの box 系属性は効かない。文字を大きくしたいときは `largefontblock` を入れ子にする（外側のフェンスを `::::` と長くする）。
 - 実例は `examples/semantic_notation_guide/src/sn02_blocks.md` と `sandbox/semantics_sample`。
