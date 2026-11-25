@@ -54,7 +54,7 @@ pptmdmerge pptmerge recipe.yaml --pptxnumbering idresolve
 
 | 項目 | 内容 |
 | ---- | ---- |
-| 前処理対象 | `procedure` 内の各 `insertpptx` に指定した pptx（`input` のディレクトリ基準で解決。同一 pptx は 1 回だけ前処理） |
+| 前処理対象 | `procedure` 内の各 `insertpptx` に指定した pptx（`fragment.dirs` を順に探して解決。同一 pptx は 1 回だけ前処理） |
 | 前処理の内容 | 単一ファイルに対する pptmerge。対象 pptx を `insertpptx`（`slides: all`）1 件として処理する。**一般マーカー処理のみ**（`--deletecsp`、`#TEMP#`/`#MEMO#`、`#CHAPT#`/`#SECTION#`/`#SUBSECTION#`/`#STAY#` 等）と、レシピ `vars` による `{{v:..}}` 置換を適用する。`pptmerge.stylebase` は適用しない |
 | CSL マーカーの扱い | **一切処理しない**（`#CSL#` はそのまま残す）。`indexer.deletecsl` / `--deletecsl` を指定しても前処理の挙動は変わらない。CSL 処理は結合後にのみ行う |
 | 出力ファイル名 | 元の pptx 名に `_preprocessed` を付加（例 `deck.pptx` → `deck_preprocessed.pptx`） |
@@ -62,7 +62,7 @@ pptmdmerge pptmerge recipe.yaml --pptxnumbering idresolve
 | 利用範囲 | マージ本体は前処理済み pptx を**内容の読み込み**にのみ使用する。`<__BASEFILENAME__>` / `<__FILENAME__>` 等のプレースホルダやログ表示は元の pptx 名のまま |
 | 削除 | `--keep-work` 未指定時は、マージ完了後に前処理済み pptx を削除する |
 
-Windows 専用（前処理が PowerPoint COM を使用する）。`--dry-run` 時は前処理を実行しない。パイプライン（`ppt_to_pdf` 等）の `--preprocess` が `input.cropsrc.pptx` を対象とするのに対し、`pptmerge` の `--preprocess` は `procedure` の `insertpptx` ソースを対象とする（どちらも「そのコマンドがマージ／エクスポートで消費する pptx」を前処理する点で一貫している）。
+Windows 専用（前処理が PowerPoint COM を使用する）。`--dry-run` 時は前処理を実行しない。パイプライン（`ppt_to_pdf` 等）の `--preprocess` が `source.cropsrc.pptx` を対象とするのに対し、`pptmerge` の `--preprocess` は `procedure` の `insertpptx` ソースを対象とする（どちらも「そのコマンドがマージ／エクスポートで消費する pptx」を前処理する点で一貫している）。
 
 ### レシピ YAML スキーマ
 
@@ -70,8 +70,9 @@ Windows 専用（前処理が PowerPoint COM を使用する）。`--dry-run` �
 workdir: .                    # 入出力パスの基準ディレクトリ（省略時: YAML と同じディレクトリ）
                               # --workdir CLI 引数で上書き可能
 
-input:                        # セクション全体省略可。省略時は各キーの既定値を使用する
-  pptxdir: src                # 入力 PPTX が格納されたディレクトリ（省略時: workdir と同じディレクトリ）
+fragment:                     # 部品ファイルの探し方
+  dirs: [., src]              # insertpptx の pptx を先頭から順に探すディレクトリ（レシピ YAML のあるディレクトリ基準）
+                              # 省略時は警告のうえ workdir と同じディレクトリ。旧 input.pptxdir はエラー
 
 output:
   outputdir: out              # 出力先ディレクトリ（省略時: workdir と同じディレクトリ）
@@ -100,8 +101,8 @@ procedure:
   - subsection: 1       # サブセクションカウンタを設定する値（chapt_section では次の #SUBSECTION# スライドから反映）
   - beginstay  # この行以降、連番カウンタを凍結する
   - endstay  # 連番カウンタ凍結を解除する
-  - insertpptx: doc_a.pptx   # input.pptxdir 基準のファイル名
-    slides: all                 # 挿入するスライド（省略または all で全スライド）
+  - insertpptx: doc_a.pptx   # fragment.dirs から探すファイル名
+    slides: all                 # 挿入するスライド（省略または all で全スライド。3-END で 3 から最後まで）
                                 # カンマ区切り文字列: "1, 3-5, 7"
                                 # 配列: [1, "3-5", 7]
     separator_before: false     # 直前に空白スライドを挿入するか（省略時は separator.enabled に従う）
@@ -118,7 +119,7 @@ log:
 
 ### 入力
 
-* `input.pptxdir` 配下の PPTX ファイル群（`procedure` の `insertpptx` で指定）。`input` セクションまたは `input.pptxdir` 省略時は YAML と同じディレクトリを使用する
+* `fragment.dirs` から探す PPTX ファイル群（`procedure` の `insertpptx` で指定）。`fragment.dirs` 省略時は警告のうえ workdir（省略時は YAML と同じディレクトリ）を使用する
 
 ### 出力
 
@@ -286,8 +287,9 @@ procedure:
 | 単一整数（引用符なし） | `slides: 5` | YAML の整数値として解釈され、スライド5だけ挿入する |
 | 単一整数文字列 | `slides: "5"` | スライド5だけ挿入する |
 | 単一範囲文字列 | `slides: 3-7` | スライド3〜7を挿入する |
+| 最後まで | `slides: 3-END` / `slides: 1, 4-END` | スライド3から最後のスライドまで。他の指定と混在できる |
 
-範囲記法 `N-M` は `N ≤ M`、`N ≥ 1` でなければエラーとなる。
+範囲記法 `N-M` は `N ≤ M`、`N ≥ 1` でなければエラーとなる。`N-END` の `END` は insertmd のファイル名レンジ `[from-END]` と共通の「範囲の終端＝最後まで」を表す語（大文字小文字は区別しない）。挿入元 pptx のスライド枚数で展開し、`N` が枚数を超える・`N < 1` ならエラー。全スライドは従来どおり `all`（`all` は単独の値で、範囲の終端には書けない）。
 
 ### `#STAY#` マーカーの動作（chapt_section モード）
 
@@ -318,6 +320,8 @@ procedure:
 | `#CSP#` テキスト除去（`deletecsp: false` 時） | 実行 | スキップ |
 | 章・節番号付きタイトル書き換え（chapt_section） | 実行 | **実行**（スキップしない） |
 | `{{#id:...}}` タイトル書き換え（idresolve） | 実行 | スキップ |
+
+`#NOREPLACE#` はスライド単位でノートの置換もまとめてスキップする。ノートの一部の行だけを置換したくないときは `{{noref:begin}}` … `{{noref:end}}` で囲む。範囲内の行はノート置換（`<__X__>`・`{{v:}}`・`{{num/title/label:}}`）の対象外になり、マーカーはノートに残る（pptmdexport・render でも同じ範囲を置換せず、render がマーカーを除去する。[md_pipeline](md_pipeline.md#置換抑制範囲norefbegin--norefend)）。
 
 ### `#NONUMBERING#` マーカーの動作
 
@@ -413,14 +417,14 @@ pptmdmerge pptimgexport recipe.yaml --dry-run
 ### レシピ YAML スキーマ
 
 ```yaml
-input:
+source:
   cropsrc:                    # 単一エントリ（辞書形式）または複数エントリ（リスト形式）
     pptx: slides/deck.pptx   # 読み込む PPTX ファイル（必須）。workdir 基準
     pdf: slides/deck.pdf      # 切り出し元 PDF（必須）。workdir 基準
     dpi: 150                  # PDF レンダリング解像度（省略時: 150）
 
 # 複数ペア指定の場合はリスト形式
-# input:
+# source:
 #   cropsrc:
 #     - pptx: slides/deck1.pptx
 #       pdf: slides/deck1.pdf
@@ -520,7 +524,7 @@ export-image: ../images/<__BASEFILENAME__>_slide<__SLIDENUM__>_step<__STEP__>.pn
 
 | 項目 | 説明 |
 | ---- | ---- |
-| 入力 YAML | `input.cropsrc.pptx` で PPTX ファイルを、`input.cropsrc.pdf` で PDF ファイルを指定する |
+| 入力 YAML | `source.cropsrc.pptx` で PPTX ファイルを、`source.cropsrc.pdf` で PDF ファイルを指定する |
 | PPTX ファイル | 各スライドのノートにエクスポート指示メタデータを記述しておく |
 | PDF ファイル | PPTX と同じスライド順でレンダリングされた PDF（必須） |
 
@@ -532,7 +536,7 @@ export-image: ../images/<__BASEFILENAME__>_slide<__SLIDENUM__>_step<__STEP__>.pn
 
 ### エラー条件
 
-* `input.cropsrc.pptx` が未定義
+* `source.cropsrc.pptx` が未定義
 * PPTX ファイルが存在しない
 * PDF ファイルが存在しない
 * PDF のページ数が対象スライド番号より少ない
@@ -555,7 +559,7 @@ export-image: ../images/<__BASEFILENAME__>_slide<__SLIDENUM__>_step<__STEP__>.pn
 
 | ステップ | 内容 |
 | -------- | ---- |
-| パス解決 | `input.cropsrc.pptx` と `input.cropsrc.pdf` を解決し、両ファイルの存在を確認する |
+| パス解決 | `source.cropsrc.pptx` と `source.cropsrc.pdf` を解決し、両ファイルの存在を確認する |
 | PPTX 読み込み | python-pptx で PPTX を開き、スライドサイズ（幅・高さ）を取得する |
 | プレースホルダー置換 | 各スライドのノートテキストに `<__TITLE__>` / `<__FILENAME__>` / `<__BASEFILENAME__>` / `<__SLIDENUM__>` を置換する（ノート解析前） |
 | ノート解析 | 置換済みノートテキストを NOTE_CONTENT_FORMAT として解析し、すべての `IMAGE_BLOCK` の `CONTENT_BODY` をキー: 値として読み取る。`export-image-mode` が既知の値のブロックを処理対象とする |
@@ -594,12 +598,12 @@ pptmdmerge pptmdexport recipe.yaml --dry-run
 ### レシピ YAML スキーマ
 
 ```yaml
-input:
+source:
   cropsrc:                    # 単一エントリ（辞書形式）または複数エントリ（リスト形式）
     pptx: slides/deck.pptx   # 読み込む PPTX ファイル（必須）。workdir 基準
 
 # 複数ペア指定の場合はリスト形式
-# input:
+# source:
 #   cropsrc:
 #     - pptx: slides/deck1.pptx
 #     - pptx: slides/deck2.pptx
@@ -660,7 +664,7 @@ export-note: ../extracted/overview_slide1_md.md
 
 | 項目 | 説明 |
 | ---- | ---- |
-| 入力 YAML | `input.cropsrc.pptx` で PPTX ファイルを指定する |
+| 入力 YAML | `source.cropsrc.pptx` で PPTX ファイルを指定する |
 | PPTX ファイル | 各スライドのノートにブロック構造で MD テキストを記述しておく |
 
 ### プレースホルダー置換
@@ -751,11 +755,11 @@ export-note: s1.md
     description: 次のスライドのタイトル
 ```
 
-`description` は、insertmd では各 MD の**最初の Markdown 見出し**、insertpptx ではその**スライドのタイトル枠テキスト**。いずれも `<__TITLE__>` / `<__BASEFILENAME__>` 等のスライドプレースホルダー（置換済み）に加えて、レシピ `vars:` による `{{v:VARIABLE}}` 置換を適用する（未定義の変数はそのまま残す）。`{{num/title/label:FULL_ID}}` 等の `#id` 参照変換は行わない。insertpptx の値（ファイル名）は `input.cropsrc[].pptx` の指定値、`slides` は 1 始まりのスライド番号。`description` は merge / pptmerge では無視される補助情報。
+`description` は、insertmd では各 MD の**最初の Markdown 見出し**、insertpptx ではその**スライドのタイトル枠テキスト**。いずれも `<__TITLE__>` / `<__BASEFILENAME__>` 等のスライドプレースホルダー（置換済み）に加えて、レシピ `vars:` による `{{v:VARIABLE}}` 置換を適用する（未定義の変数はそのまま残す）。`{{num/title/label:FULL_ID}}` 等の `#id` 参照変換は行わない。insertpptx の値（ファイル名）は `source.cropsrc[].pptx` の指定値、`slides` は 1 始まりのスライド番号。`description` は merge / pptmerge では無視される補助情報。
 
 ### エラー条件
 
-* `input.cropsrc.pptx` が未定義
+* `source.cropsrc.pptx` が未定義
 * PPTX ファイルが存在しない
 * 出力先に既存ファイルがあり `--force` 未指定
 
@@ -836,7 +840,7 @@ export-note: ../mds/<__BASEFILENAME__>_slide<__SLIDENUM__>_md.md
 
 PPTX スライドのノートの `YAML_BLOCK`（`{{BLOCK:YAML}}`）から、別システム投入用の図版定義 YAML を書き出すサブコマンド。python-pptx のみを使用しクロスプラットフォームで動作する。
 
-`pptmdexport` とは扱うデータが根本的に異なる（PDF 文書用の散文 MD ではなく、座標を持つ構造化データ）ため、別サブコマンドとして独立している。共通するのは `input.cropsrc` の解決とスライド走査だけで、MD 側の後処理（バックスラッシュエスケープ・`rawtitle` コメント付与・`latex_check`・insertsample 生成）は一切行わない。
+`pptmdexport` とは扱うデータが根本的に異なる（PDF 文書用の散文 MD ではなく、座標を持つ構造化データ）ため、別サブコマンドとして独立している。共通するのは `source.cropsrc` の解決とスライド走査だけで、MD 側の後処理（バックスラッシュエスケープ・`rawtitle` コメント付与・`latex_check`・insertsample 生成）は一切行わない。
 
 ノート本文は**投入先 YAML そのものをテンプレートとして**記述し、slot の座標には `auto` を書く。`auto` はスライド上の名前付きシェイプの実位置から、`baseframe` シェイプの矩形内の相対値（0〜1）として算出して埋める。トップレベルの `regions`（領域の定義）も slot とまったく同じ規則で解決する。
 
@@ -863,10 +867,10 @@ pptmdmerge pptyamlexport --dry-run recipe.yaml
 
 ### レシピ YAML スキーマ
 
-`pptmdexport` / `pptimgexport` と同じ `input.cropsrc` を使う。固有の設定キーは持たない。
+`pptmdexport` / `pptimgexport` と同じ `source.cropsrc` を使う。固有の設定キーは持たない。
 
 ```yaml
-input:
+source:
   cropsrc:
     pptx: slides/deck.pptx
 ```
@@ -1128,7 +1132,7 @@ regions:
 
 PowerPoint COM 自動化（win32com）を使い、PPTX ファイルを PDF に変換するサブコマンド。Windows 専用（pywin32 が必要）。
 
-生成した PDF は `pptimgexport` の入力（`input.cropsrc.pdf`）として使用できる。
+生成した PDF は `pptimgexport` の入力（`source.cropsrc.pdf`）として使用できる。
 
 **増分ビルド（既定動作）**: 出力 PDF が既に存在し、その更新時刻がソース PPTX 以上に新しい場合は、そのエントリの変換をスキップする（PDF が無い、または PPTX のほうが新しい場合のみ変換する）。全エントリがスキップ対象の場合は PowerPoint を起動せずに正常終了する。タイムスタンプを無視して常に作り直すには `--rebuild` を指定する。`--force` / `output.force` は再生成のトリガーにはならない（増分判定はそのまま有効）。
 
@@ -1160,13 +1164,13 @@ pptmdmerge pptpdfexport recipe.yaml --dry-run
 ### レシピ YAML キー
 
 ```yaml
-input:
+source:
   cropsrc:                    # 単一エントリ（辞書形式）または複数エントリ（リスト形式）
     pptx: slides/deck.pptx   # 変換元 PPTX（必須）。workdir 基準
     pdf: slides/deck.pdf      # 出力先 PDF（必須）。workdir 基準
 
 # 複数ペア指定の場合はリスト形式
-# input:
+# source:
 #   cropsrc:
 #     - pptx: slides/deck1.pptx
 #       pdf: slides/deck1.pdf
@@ -1178,7 +1182,7 @@ input:
 
 ### エラー条件
 
-* `input.cropsrc.pptx` が未定義
+* `source.cropsrc.pptx` が未定義
 * PPTX ファイルが存在しない
 * win32com（pywin32）がインポートできない（Windows 以外または未インストール）
 
@@ -1186,7 +1190,7 @@ input:
 
 | ステップ | 内容 |
 | -------- | ---- |
-| パス解決 | `input.cropsrc.pptx` と `input.cropsrc.pdf` を解決する |
+| パス解決 | `source.cropsrc.pptx` と `source.cropsrc.pdf` を解決する |
 | PPTX 存在確認 | PPTX ファイルが存在しない場合エラー終了 |
 | 上書き確認 | 出力 PDF が存在し `--force` 未指定の場合エラー終了 |
 | COM 起動 | `PowerPoint.Application` を起動し PPTX を開く |

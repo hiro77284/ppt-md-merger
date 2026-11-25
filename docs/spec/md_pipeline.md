@@ -52,7 +52,7 @@ pptmdmerge merge sample.yaml
 | ステップ | 内容 |
 | ------ | ---- |
 | 入力解決 | 位置引数 `INPUT` で指定された YAML ファイルを読み込む |
-| `input.mddir` 解決 | `input` セクションまたは `input.mddir` 省略時は YAML ファイルと同じディレクトリを使用する。相対パスは `workdir`（省略時は YAML ファイルの親ディレクトリ）基準で解決する |
+| `fragment.dirs` 解決 | insertmd の MD を探すディレクトリ一覧。相対パスはレシピ YAML のあるディレクトリ基準で解決する。省略時は警告のうえ `workdir`（省略時は YAML ファイルの親ディレクトリ）を使う。旧 `fragment.dirs` は非推奨（読み替えて警告）、`input.mddir` はエラー（[recipe_key_reference.md](../recipe_key_reference.md) の「旧 input セクション」） |
 | ファイル収集 | `procedure` を走査し、`insertmd` はファイルパスを収集（ファイル名のレンジ展開を含む。後述）、`insertvar` は変数の値を引く（後述）、`chapter`/`section`/`subsection` はマーカーコメント行を、`insertvspace`/`insertpagebreak`/`insertvfill` は semantic リーフ記法（`{{vspace:N}}` 等）を生成する |
 | 出力先解決 | `output.mdfilename` > `output.targetbasefilename`（`<base>_merged.md`）> 自動生成（`<yaml_stem>_merge.md`）の優先順で決定する。`output.outputdir` が指定されている場合はその下に配置する |
 | 上書きガード | `--force` なしで出力先に既存ファイルがある場合はエラー（終了コード 1）とする |
@@ -74,6 +74,7 @@ pptmdmerge merge sample.yaml
 | 数値（降順） | `[4-2]` | `4`, `3`, `2` |
 | 数値（ゼロ埋め） | `[01-03]` | `01`, `02`, `03`（桁幅を維持） |
 | 単一英字 | `[a-c]` / `[A-C]` | `a,b,c` / `A,B,C`（降順も可） |
+| 数値（残り全部） | `[1-END]` | `1` から数え、**存在するファイルだけ**（後述） |
 
 仕様・制約:
 
@@ -82,6 +83,29 @@ pptmdmerge merge sample.yaml
 * 全角文字を含むレンジ、`[1-2-3]` のような不正書式は **ValueError** となり、merge ではその insertmd エントリを警告してスキップする。
 * レンジを含まない通常のファイル名はそのまま 1 件として扱う。
 * この展開は `checkgen` / `checkverify` / `validate` の insertmd 判定でも同様に行われる。
+
+#### 残り全部（`[from-END]`）
+
+to に `END` を書くと「残り全部」になる。from から 1 ずつ数え、ファイルが見つかれば挿入し、見つからなければその番号を飛ばして次へ進む。数える上限は同じ項目の `range-max` で指定する（省略時 **99**）。
+
+```yaml
+procedure:
+  - insertmd: sourcemd[1-END].md          # sourcemd1.md 〜 sourcemd99.md のうち存在するもの
+  - insertmd: chap[01-END].md             # ゼロ埋めは from の桁幅（chap01.md, chap02.md, …）
+    range-max: 30                         # 30 まで探す
+```
+
+* 存在判定は通常の insertmd と同じ解決規則（`fragment.dirs` を順に探す／絶対パス／レシピからの相対）。
+* 飛ばした番号と、実際に見つかったファイルの最大番号を info ログに出す。飛ばした番号は「見つかった最大番号」より小さいものだけで、それより後ろは数えない（何も出さない）。
+  例: 上限 99 で `sourcemd1.md` `2` `3` `5` が存在する → `→ 4 件（見つかった最大番号 5、探索上限 99）`、`スキップした番号: 4`。6〜99 は無視。
+  連続した番号はまとめて表示する（`2-4, 6`）。
+* 1 つも見つからなければ warning（`--strict` でも中断はしない）。
+* from は数値のみ（`[a-END]` は不可）。`END` は大文字小文字を区別しない（`end` も可）。
+* `range-max` は 1 以上の整数で、from 以上であること（不正なら ValueError としてその insertmd を警告してスキップ）。`[from-END]` 以外のファイル名に書いた `range-max` は無視され、`validate` が警告する。
+* ファイルの有無で挿入内容が決まるため、`[from-END]` の展開は merge のファイル収集の時点（直前のステップで MD が書き出された後）に行う。
+* `validate`（cropsrc の使用チェック）のように名前だけを見る処理では、from〜上限の全番号を候補として扱う。
+* 追加的な変更（従来 `[1-END]` は書式エラー）なので、レシピの `version` は上げない。
+* `END` は pptmerge の insertpptx `slides: 3-END`（スライド 3 から最後まで）と共通の語。`all`（単独で「全部」）とは使い分ける。
 
 ### レシピ YAML による merge オプションの指定
 
@@ -193,7 +217,7 @@ MDファイル内のローカル画像参照を検出し、画像を出力ディ
 
 | オプション | 動作 |
 | ---------- | ---- |
-| なし（既定） | `<outdir>/images/` に `input.dirs` の先頭からの相対構造を保持してコピーする（`image-dir` の既定値は `images`） |
+| なし（既定） | `<outdir>/images/` に `fragment.dirs` の先頭からの相対構造を保持してコピーする（`image-dir` の既定値は `images`） |
 | `--image-dir NAME` | コピー先として `<outdir>/NAME/` サブディレクトリを使用する。レシピで `image-dir: ""` と空文字を明示すると `<outdir>/` 直下に置く |
 | `--flatten-images` | すべての画像を `<outdir>/<image-dir>/` にフラット集約する（相対構造を保持しない） |
 | `--image-naming MODE` | コピー名の変換。`preserve`（既定・元名のまま）/ `sanitize`（NFKC 正規化・小文字化して非 ASCII 連続を `-` に畳む。空になれば `img`） |
@@ -228,7 +252,7 @@ MDファイル内のローカル画像参照を検出し、画像を出力ディ
 | レシピキー / CLI | 動作 |
 | ---------- | ---- |
 | `merge.yaml-dir` / `--yaml-dir NAME` | コピー先 `<outdir>/NAME/`。**省略時は `image-dir` と同じ**（画像と同じディレクトリに入る） |
-| `merge.flatten-yamls` / `--flatten-yamls` | フラット集約（相対構造を保持しない）。省略時は `input.dirs` 先頭からの相対構造を保持 |
+| `merge.flatten-yamls` / `--flatten-yamls` | フラット集約（相対構造を保持しない）。省略時は `fragment.dirs` 先頭からの相対構造を保持 |
 | `merge.overwrite-yamls` / `--overwrite-yamls` | 衝突時に警告して上書き（既定は `_1`, `_2` … で回避）。衝突の定義は画像と同じ |
 | `merge.copy-yamls: false` / `--no-copy-yamls` | YAML のコピーおよびパス書き換えを行わない（旧キー `no-copy-yamls: true` も可） |
 
@@ -285,6 +309,30 @@ procedure:
 | `AUTOCHAPTER` | リテラル文字列 `AUTOCHAPTER`（固定） |
 | `AUTOID_N` | `N` は `chapter`/`section`/`subsection` 共通の登場順連番（1 始まり） |
 
+### #id の自動付与（`indexer.autoid`）
+
+`indexer.autoid: true` のとき、merge は結合済み MD の見出しのうち `{{#id:}}` の無いものに ID マーカーを自動で付ける。以後は通常どおり idcollect → idresolve → render が番号を振るので、**#id を書いていないプレーンな MD にも章・節番号が付く**。原稿 MD は書き換えない（結合済み MD にだけ入る）。
+
+```yaml
+indexer:
+  pptxnumbering: idresolve   # no（既定）のままだと見出しが置き換わらない（validate / merge が警告）
+  autoid: true               # 既定 false
+```
+
+| 見出し | 付ける ID |
+| ------ | --------- |
+| `# ...` | `{{#id:chapter:AUTOHEAD:N}}` |
+| `## ...` | `{{#id:section:AUTOHEAD:N}}` |
+| `### ...` | `{{#id:subsection:AUTOHEAD:N}}` |
+
+- `N` は付けた順の連番（1 始まり、種別共通）。ID 行は見出しの直前の行に入る。
+- **直前の行に `{{#id:...}}` がある見出しは飛ばす**（手書きの ID、procedure の `chapter`/`section`/`subsection` が入れる見出し、`{{#id:...}} {{nonum}}` で番号を付けない見出し）。render が ID と見出しを結び付ける規則と同じ。
+- 対象外: `####` 以下、`` ``` `` / `~~~` フェンスの中、複数行の HTML コメントの中、YAML frontmatter の中。`#` の後に空白が無い行（`#tag` 等）は見出しではない。
+- 自動の ID は章の追加・削除で番号がずれるので、`{{num:}}` / `{{label:}}` で参照する見出しには手で ID を書く。
+- PART 名 `AUTOHEAD` は予約語。原稿に `{{#id:TYPE:AUTOHEAD:...}}` があると merge はエラーで止まる。
+- 章（`#`）より前に節（`##`/`###`）があると、番号は `0.1` のように 0 章から始まる（merge が警告する）。
+- pptx のスライドタイトルには効かない（pptmerge は結合済み MD を読まない）。ノートから来た見出しを自動で採番すると、PDF などには番号が付くが結合 pptx のタイトルには付かない。
+
 ### procedure の条件付き適用（`when:`）
 
 `procedure` の各項目（操作の種類を問わない）に `when:` を書くと、条件を満たすときだけその項目を適用する。`when:` が無い項目は従来どおり常に適用する。
@@ -319,7 +367,7 @@ procedure:
 - 旧 `tag` / `not_tag`（`--tag`）は廃止した。`when:` に書かれていると読み込み時・validate ともにエラーになる。`tag: X` は `var: X`、`not_tag: X` は `var: '!X'` に、`--tag X` は `--var X` に置き換える（`!` で始まる値は YAML のタグ記法と衝突するので引用符で囲む）。
 - 条件判定はレシピ読み込み直後に 1 回だけ行い、除外した項目は procedure から取り除いてから後段に渡す（除外した項目は info ログに `procedure[N] (...) をスキップ` と出る）。章・節を除外すると、以降の番号はそのぶん詰まる。
 - 対象: `merge`、`pptmerge`（`--preprocess` の前処理対象も含む）、パイプラインの insertmd ドリフトゲート。`checkgen` / `checkverify` / `validate` は条件を無視して**全項目**を対象にする（チェックデータはどの組み合わせで実行しても照合できるよう全項目分を作る）。
-- `pptpdfexport` / `pptimgexport` / `pptmdexport` は procedure を参照しない（`input.cropsrc` が対象）ので、除外した pptx の書き出しはそのまま行われる。
+- `pptpdfexport` / `pptimgexport` / `pptmdexport` は procedure を参照しない（`source.cropsrc` が対象）ので、除外した pptx の書き出しはそのまま行われる。
 - 実装は `src/md_merge/_conditions.py`。
 
 #### 複数項目にまとめて掛ける（`group:`）
@@ -476,14 +524,15 @@ procedure:
 ```
 
 - 区切りはファイルの**間**にだけ入る（先頭・末尾には入らない）。ファイルが 1 つ（レンジなし、または `[1-1]`）なら `insertmd` 1 つと同じ。
-- 読み込み時に展開されるので、`merge` 以降・`explain`・`validate` からは上の並びと区別できない（スキップ時の info ログや explain の番号は展開後の位置）。`pptmerge` では insertmd と同じく無視される。
+- 読み込み時に展開されるので、`merge` 以降・`explain`・`validate` からは上の並びと区別できない（スキップ時の info ログや explain の番号は展開後の位置）。
+- `[from-END]`（「残り全部」、前述）の場合は存在するファイルが merge 時まで決まらないので、読み込み時には insertmd 1 つのまま残し、merge のファイル収集で**見つかったファイルの間**に `insertvfill` + `insertpagebreak` を挟む（飛ばした番号の位置には入らない）。`range-max` も書ける。`explain` では `insertmdpages <ファイル名>` の 1 項目として表示される。`pptmerge` では insertmd と同じく無視される。
 - `when:` は展開したすべての項目（区切りを含む）に掛かる。`group:` の中にも書ける。`description` などその他の兄弟キーは先頭の insertmd にだけ残る。
 - 値が文字列でない・値を省略した・`mdfilename` キーを併記した場合はエラー。レンジの書式が不正な場合は insertmd と同じ扱い（その値の insertmd 1 つとして merge が警告してスキップする）。
 - 追加的な変更なので、レシピの `version` は上げない。version 1 のレシピでは使えない（エラー）。
 
 #### 見出し内の強制改行（`{{br}}`）
 
-章・節タイトルの途中に `{{br}}` を書くと、その位置で**強制改行**する。長いタイトルが単語の途中で折り返して見栄えが悪くなるのを、著者が改行位置を指定して防ぐためのマーカー。タイトルのテキストにインラインで埋め込む（`chapter` 操作の見出し文字列や、pptx ノートの見出しに直接記述）。
+章・節タイトルの途中に `{{br}}` を書くと、その位置で**強制改行**する。長いタイトルが単語の途中で折り返して見栄えが悪くなるのを、著者が改行位置を指定して防ぐためのマーカー。タイトルのテキストにインラインで埋め込む（`chapter` 操作の見出し文字列や、pptx ノートの見出しに直接記述）。大文字小文字は区別しない（`{{BR}}` / `{{Br}}` も同じ）。表紙（`cover-md`）の `{{v:COVER_SUBTITLE}}` などに差し込む変数の値に書いてもよい（PDF の文書プロパティでは空白になる。`docs/spec/output_formats.md`「PDF の文書プロパティ」）。
 
 各出力形式での挙動:
 
@@ -496,7 +545,7 @@ procedure:
 
 変換は pandoc の場合 `filters/semantic-break.lua`（インライン。`semantics.yaml` の他リーフと異なり Str を分割）、GFM は `semantics.yaml` の `leaves.br`（`gfm.drop: true`）を puremd が処理する。あわせて章タイトルは `\hyphenpenalty=10000` 等で単語途中のハイフン改行を抑止している。
 
-注: 見出し以外の本文中に `{{br}}` を書いた場合、PDF では `\hdbreak` の既定（空白）になり改行しない（改行は見出しの `\titleformat` 内でのみ有効）。HTML では常に `<br>`、GFM では常に除去。
+注: 見出し以外の本文中（表紙の変数の値を含む）に `{{br}}` を書いた場合も、PDF（Typst）では `#linebreak();` で改行する。HTML では常に `<br>`、GFM では常に除去。
 
 #### `VALUE` による番号の加算・リセット
 
@@ -741,6 +790,28 @@ ID マーカー行のコメント変換・参照変換・変数置換は `pptxnu
 {{#id:subsection:foo:qux}} {{nolabel}} {{noref}}
 ### タイトル（label 置換なし、参照変換なし）
 ```
+
+#### 置換抑制範囲（`{{noref:begin}}` … `{{noref:end}}`）
+
+`{{noref}}` を本文に広げたもの。単独行の `{{noref:begin}}` と `{{noref:end}}` で囲んだ行は、スライドの `#NOREPLACE#` と同様に文字列置換の対象外になる。記法の説明など、`{{v:NAME}}` や `<__TITLE__>` をそのまま載せたい本文に使う。
+
+| 段 | 範囲内でスキップする処理 |
+| -- | ------------------------ |
+| pptmerge | 結合後 pptx のノートの `<__TITLE__>` 等・`{{v:}}`・`{{num/title/label:}}` 置換 |
+| pptmdexport | ノートの `<__TITLE__>` / `<__FILENAME__>` / `<__BASEFILENAME__>` / `<__SLIDENUM__>` 置換 |
+| render | 参照変換・変数置換・`{{sectionlist}}` 展開。`{{#id:}}` 行は `{{noref}}` 付きと同じ扱い（HTML コメント化と見出しの label 置換は行う） |
+
+```markdown
+{{noref:begin}}
+変数は {{v:NAME}} と書くと、レシピ vars: の値に置き換わる。
+{{noref:end}}
+```
+
+- マーカーは行単独で書く（前後の空白は可）。pptmerge・pptmdexport は残し、render が除去する。
+- コードフェンス（バッククォート 3 つ以上 / `~~~`）内のマーカーは記法の例示とみなして無視する。フェンス自体は範囲内に置ける。
+- 範囲は入れ子にできない。閉じ忘れの `{{noref:begin}}` は末尾まで範囲とみなし、対応の無い `{{noref:end}}` は無視する（いずれも警告。validate も warning を出す）。
+- 置換以外の処理（`{{#if}}` 条件ブロック、`!include`、画像パスの書き換え、`{{#id:}}` の採番）は範囲内でも通常どおり行う。
+- MD ブロック全体を対象にするときは、`export-note:` 行の次からブロック末尾までを囲む。
 
 `{{nolabel}}` と `{{nonum}}` の違い:
 

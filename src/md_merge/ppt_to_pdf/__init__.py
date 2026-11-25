@@ -65,9 +65,9 @@ def check_pdf_collision(args: argparse.Namespace) -> int:
     for slide_pdf in cropsrc_pdf_paths(recipe, yaml_path, workdir):
         if slide_pdf.resolve() == out_pdf:
             logging.error(
-                "input.cropsrc の PDF と成果物 PDF（output.pdffilename）が同じパスです: %s"
+                "source.cropsrc の PDF と成果物 PDF（output.pdffilename）が同じパスです: %s"
                 " — pandoc の出力がスライド PDF を上書きしてしまうため、"
-                "input.cropsrc[].pdf か output.pdffilename / targetbasefilename を別名にしてください",
+                "source.cropsrc[].pdf か output.pdffilename / targetbasefilename を別名にしてください",
                 out_pdf,
             )
             return EXIT_BAD_INPUT

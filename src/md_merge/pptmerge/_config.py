@@ -91,9 +91,24 @@ def parse_log_duplicate(config: dict[str, Any]) -> str | None:
 
 
 _RANGE_RE = re.compile(r"^(\d+)-(\d+)$")
+# N-END: スライド N から最後まで（END は insertmd の [from-END] と共通、大文字小文字は区別しない）
+_OPEN_RANGE_RE = re.compile(r"^(\d+)-END$", re.IGNORECASE)
 
 
-def _parse_slides_entry(entry: Any, original: Any) -> list[int]:
+def _slides_entries(slides: Any) -> list:
+    if isinstance(slides, str):
+        return [p.strip() for p in slides.split(",") if p.strip()]
+    if isinstance(slides, list):
+        return slides
+    return []
+
+
+def slides_need_count(slides: Any) -> bool:
+    """slides 指定に ``N-END`` が含まれる（展開にスライド枚数が要る）なら True。"""
+    return any(isinstance(e, str) and _OPEN_RANGE_RE.match(e.strip()) for e in _slides_entries(slides))
+
+
+def _parse_slides_entry(entry: Any, original: Any, slide_count: int | None = None) -> list[int]:
     if isinstance(entry, bool):
         pass
     elif isinstance(entry, int) and entry > 0:
@@ -104,6 +119,18 @@ def _parse_slides_entry(entry: Any, original: Any) -> list[int]:
             n = int(s)
             if n > 0:
                 return [n]
+        m = _OPEN_RANGE_RE.match(s)
+        if m:
+            start = int(m.group(1))
+            if start < 1:
+                raise ConfigError(f"slides の範囲は1以上で指定してください: {entry!r}")
+            if slide_count is None:
+                raise ConfigError(f"slides の 'N-END' はスライド枚数が分かるときだけ展開できます: {entry!r}")
+            if start > slide_count:
+                raise ConfigError(
+                    f"slides の範囲の始端がスライド枚数（{slide_count} 枚）を超えています: {entry!r}"
+                )
+            return list(range(start, slide_count + 1))
         m = _RANGE_RE.match(s)
         if m:
             start, end = int(m.group(1)), int(m.group(2))
@@ -113,11 +140,15 @@ def _parse_slides_entry(entry: Any, original: Any) -> list[int]:
                 raise ConfigError(f"slides の範囲で終端が始端より小さいです: {entry!r}")
             return list(range(start, end + 1))
     raise ConfigError(
-        f"slides の要素は1以上の整数または 'N-M' 形式の範囲で指定してください: {entry!r}"
+        f"slides の要素は1以上の整数、'N-M' 形式の範囲、または 'N-END' で指定してください: {entry!r}"
     )
 
 
-def parse_slides(slides: Any) -> list[int] | None:
+def parse_slides(slides: Any, slide_count: int | None = None) -> list[int] | None:
+    """slides 指定をスライド番号のリストにする（all / 省略は None）。
+
+    ``N-END`` を展開するには挿入元のスライド枚数 *slide_count* が要る。
+    """
     if slides is None or slides == "all":
         return None
     if isinstance(slides, int) and not isinstance(slides, bool):
@@ -126,15 +157,15 @@ def parse_slides(slides: Any) -> list[int] | None:
         entries = [p.strip() for p in slides.split(",") if p.strip()]
         result = []
         for entry in entries:
-            result.extend(_parse_slides_entry(entry, slides))
+            result.extend(_parse_slides_entry(entry, slides, slide_count))
         return result
     if isinstance(slides, list):
         result = []
         for entry in slides:
-            result.extend(_parse_slides_entry(entry, slides))
+            result.extend(_parse_slides_entry(entry, slides, slide_count))
         return result
     raise ConfigError(
-        f"slides は all、カンマ区切り文字列、整数配列、または 'N-M' 範囲で指定してください: {slides}"
+        f"slides は all、カンマ区切り文字列、整数配列、'N-M' 範囲、または 'N-END' で指定してください: {slides}"
     )
 
 
@@ -144,13 +175,10 @@ def validate_config(config: dict[str, Any]) -> None:
             raise ConfigError(f"{key} がありません。")
 
     output = config["output"]
-    input_ = config.get("input") or {}
     procedure = config["procedure"]
 
     if not isinstance(output, dict):
         raise ConfigError("output は辞書で指定してください。")
-    if not isinstance(input_, dict):
-        raise ConfigError("input は辞書で指定してください。")
     if not isinstance(procedure, list):
         raise ConfigError("procedure は配列で指定してください。")
 

@@ -122,7 +122,7 @@ pptmdmerge checkverify recipe.yaml --json
 
 ### 概要
 
-レシピ YAML を読み込み、(1) **未知のキー**の検査、(2) **`input.cropsrc` と `procedure` の対応**の検査、(3) **`vars` 値の生 LaTeX** の検査、(4) **変数・条件・番号マーカー**の検査を行う。ファイルの生成・変更は行わない。
+レシピ YAML を読み込み、(1) **未知のキー**の検査、(2) **`source.cropsrc` と `procedure` の対応**の検査、(3) **`vars` 値の生 LaTeX** の検査、(4) **変数・条件・番号マーカー**の検査を行う。ファイルの生成・変更は行わない。
 
 ### 使用例
 
@@ -144,11 +144,11 @@ pptmdmerge validate recipe.yaml --var TARGET=RECIPRO   # --var の値も宣言�
 
 ### 1) 未知キー検査
 
-トップレベル・各セクション（`input` / `output` / `merge` / `pandoc` / `indexer` / `log` / `pptmerge` / `separator` / `puremd`）・`procedure` の各アイテム（操作ごとの許可キー）について、スキーマに無いキーを **warning** で報告する。`procedure` の `when:`（条件付き適用）はどの操作でも許可し、未知のキー・値の型（文字列または文字列のリスト）・実在しないサブコマンド名・同じ名前が `command` と `not_command` の両方にある場合を warning にする。廃止した `tag` / `not_tag` と、`var` の不正な条件式は **error** にする。`- group:`（項目の束）の `when:` も同じ基準で検査し、位置を `procedure[3].group[1]` のように示す。group 要素の書式誤り（値が空・リストでない、許可外のキー）は記法エラーとして **error**。`version` が未指定または `1`（operation 記法は非推奨）の場合も警告する。version 3 以前で `pandoc.typst-cover-md` が無く `cover-md` / `conditional-process-input` がある場合も警告する（version 2 以前は「暗黙の標準表紙を使っている」、version 3 は「LaTeX 用の表紙は使われず表紙が付かない」）。version 3 以前で LaTeX 専用の pandoc キー（`template` / `include-in-header` / `include-before-body` / `conditional-process-*` / `format`）があると「使わない」と警告する。version 3 以前で `pandoc.metadata-file` があると非推奨と警告する。version 4 で廃止した pandoc キー（`typst-cover-md` / `typstdefaults` / `engine` / `metadata-file` と上の LaTeX 専用キー）と、`pandoc.engine` に typst 以外を書いたものは **error**（移行先を案内する）。`version` と `procedure` 記法の不整合（version 2 以降に operation 記法、version 1 に操作キー記法、未対応の `version` 値など）は **error** として全件を報告し、終了コード 1 で終了する（[仕様書トップ](../md_merge_spec.md) 5.3）。`description` はどの階層でも人間用メモとして許可される。`--strict` 指定時、警告が1件以上あれば終了コード 1。
+トップレベル・各セクション（`fragment` / `source` / `output` / `merge` / `pandoc` / `indexer` / `log` / `pptmerge` / `separator` / `puremd`）・`procedure` の各アイテム（操作ごとの許可キー）について、スキーマに無いキーを **warning** で報告する。`procedure` の `when:`（条件付き適用）はどの操作でも許可し、未知のキー・値の型（文字列または文字列のリスト）・実在しないサブコマンド名・同じ名前が `command` と `not_command` の両方にある場合を warning にする。廃止した `tag` / `not_tag` と、`var` の不正な条件式は **error** にする。`- group:`（項目の束）の `when:` も同じ基準で検査し、位置を `procedure[3].group[1]` のように示す。group 要素の書式誤り（値が空・リストでない、許可外のキー）は記法エラーとして **error**。`version` が未指定または `1`（operation 記法は非推奨）の場合も警告する。version 3 以前で `pandoc.typst-cover-md` が無く `cover-md` / `conditional-process-input` がある場合も警告する（version 2 以前は「暗黙の標準表紙を使っている」、version 3 は「LaTeX 用の表紙は使われず表紙が付かない」）。version 3 以前で LaTeX 専用の pandoc キー（`template` / `include-in-header` / `include-before-body` / `conditional-process-*` / `format`）があると「使わない」と警告する。version 3 以前で `pandoc.metadata-file` があると非推奨と警告する。version 4 で廃止した pandoc キー（`typst-cover-md` / `typstdefaults` / `engine` / `metadata-file` と上の LaTeX 専用キー）と、`pandoc.engine` に typst 以外を書いたものは **error**（移行先を案内する）。`version` と `procedure` 記法の不整合（version 2 以降に operation 記法、version 1 に操作キー記法、未対応の `version` 値など）は **error** として全件を報告し、終了コード 1 で終了する（[仕様書トップ](../md_merge_spec.md) 5.3）。旧 `input` セクションの `input.dirs` / `input.imagesdir` / `input.cropsrc` は非推奨として **warning**（`fragment.dirs` / `source.cropimagedirs` / `source.cropsrc` へ移行を案内）、`input.mddir` / `input.pptxdir` と、旧キーと移行先の両方を書いたものは **error**（[recipe_key_reference.md](../recipe_key_reference.md) の「旧 input セクション」）。`description` はどの階層でも人間用メモとして許可される。`--strict` 指定時、警告が1件以上あれば終了コード 1。
 
 ### 2) cropsrc 使用状況チェック（info）
 
-`input.cropsrc` と `procedure` の対応を **info** で表示する（終了コードには影響しない。`cropsrc` 未指定時はスキップ）。
+`source.cropsrc` と `procedure` の対応を **info** で表示する（終了コードには影響しない。`cropsrc` 未指定時はスキップ）。
 
 | 種別 | 内容 |
 | ---- | ---- |
@@ -165,19 +165,21 @@ pptmdmerge validate recipe.yaml --var TARGET=RECIPRO   # --var の値も宣言�
 
 ### 4) 変数・条件・番号マーカー検査
 
-レシピに加え、procedure の **insertmd が参照する MD**、**insertvar が挿入する変数の値** と **`input.cropsrc` の pptx ノート**を読んで検査する（見つからないファイルは飛ばし、件数を info で表示する。生成前の MD は検査されないので、ノート側の `{{#if}}` は cropsrc で検査される）。` ``` ` / `~~~` のフェンス内は対象外。
+レシピに加え、procedure の **insertmd が参照する MD**、**insertvar が挿入する変数の値** と **`source.cropsrc` の pptx ノート**を読んで検査する（見つからないファイルは飛ばし、件数を info で表示する。生成前の MD は検査されないので、ノート側の `{{#if}}` は cropsrc で検査される）。` ``` ` / `~~~` のフェンス内は対象外。
 
 | 種別 | 内容 | 重さ |
 | ---- | ---- | ---- |
 | `params:` の誤り | 書式、`vars:` との重複、`--var` の未宣言名・範囲外の値、`when.var` の未宣言名・範囲外の比較値（[md_pipeline](md_pipeline.md#切り替え用の変数の宣言params) と同じ検査） | error |
 | 未宣言の変数（`params:` あり） | MD / ノートの `{{#if}}` が `params:` にも `vars:` にも無い名前、または取りうる値でない比較値を使っている（実行時もエラーになる） | error |
 | 未定義の変数（`params:` なし） | `when.var` / `{{#if}}` が `vars:` に無い名前を使っている（未定義は偽になり、打ち間違いでも黙って除外される）。名前ごとにまとめて場所を表示 | warning |
-| 未定義の `{{v:}}` | `vars:`・`params:`・insertpptx の `vars:` のどれにも無い名前（置換されずに残る） | warning |
+| 未定義の `{{v:}}` | `vars:`・`params:`・insertpptx の `vars:` のどれにも無い名前（置換されずに残る）。`{{noref:begin}}` … `{{noref:end}}` の範囲内は対象外 | warning |
+| 置換抑制範囲の誤り | `{{noref:begin}}` の閉じ忘れ・入れ子、対応の無い `{{noref:end}}` | warning |
 | 未定義の insertvar | procedure の `insertvar` の変数名が `vars:` にも `params:` にも無い（`--var` で渡さなければ何も挿入されない） | warning |
 | 未使用の param | `params:` で宣言したが when.var / insertvar / MD / ノートのどこからも参照されていない（表紙テンプレートだけで使う場合は無視してよい） | warning |
 | 結果が変わらない when | 値を列挙できる param（`values` / `bool`）だけを使う `when.var` で、どの値の組み合わせでも常に適用、または常に除外になる（group から引き継いだ条件も含めて判定。`command` 条件は見ない） | warning |
 | 深すぎる入れ子 | `{{#if}}` が 3 段以上、`group` が 2 段以上 | warning |
 | 番号マーカーの誤り | `{{nolabel}}` / `{{noref}}` / `{{nonum}}` が `{{#id:}}` の無い行にある（効かない）。`{{nolabel}}` と `{{nonum}}` の併用（`nonum` は採番しないので `nolabel` は不要） | warning |
+| `indexer.autoid` | 値が true / false 以外。`true` なのに `indexer.pptxnumbering` が `no`（番号が付かない） | warning |
 | 同じ when の連続 | トップレベルで同じ `when:` が 3 回以上続く（insertvfill 等の区切りは連続を切らない）。`- group:` にまとめる提案 | info |
 
 error が 1 件でもあれば終了コード 1。warning は `--strict` のときだけ終了コード 1。info は終了コードに影響しない。

@@ -37,8 +37,8 @@ NOREPLACE_MARKER = "#NOREPLACE#"
 NONUMBERING_MARKER = "#NONUMBERING#"
 
 # 見出し内強制改行マーカー {{br}}。HTML では <br>、GFM では除去されるが、pptx の
-# スライドタイトルは1行に収めるため置換時に除去する（空白入りの揺れも許容）。
-_BR_MARKER_RE = re.compile(r"\{\{\s*br\s*\}\}")
+# スライドタイトルは1行に収めるため置換時に除去する（空白入り・大文字小文字の揺れも許容）。
+_BR_MARKER_RE = re.compile(r"\{\{\s*br\s*\}\}", re.IGNORECASE)
 
 
 def _apply_index_counter(current: int, value: Any) -> int:

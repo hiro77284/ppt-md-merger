@@ -148,13 +148,13 @@ def run(args: argparse.Namespace) -> int:
     json_mode = getattr(args, "json", False)
 
     if not entries:
-        logging.error("input.cropsrc が指定されていません: %s", yaml_path)
+        logging.error("source.cropsrc が指定されていません: %s", yaml_path)
         return EXIT_BAD_INPUT
 
     # ── 全エントリのパス解決と存在確認（fail fast）────────────────────────
     resolved: list[tuple[Path, Path, int]] = []
     for i, entry in enumerate(entries):
-        label = f"input.cropsrc[{i}]" if len(entries) > 1 else "input.cropsrc"
+        label = f"source.cropsrc[{i}]" if len(entries) > 1 else "source.cropsrc"
         pptx_val = entry.get("pptx")
         pdf_val = entry.get("pdf")
         dpi = int(entry.get("dpi", _DEFAULT_DPI))

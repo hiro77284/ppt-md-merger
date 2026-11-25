@@ -14,7 +14,8 @@ from md_merge._params import apply_params
 from md_merge._conditions import filter_procedure
 from md_merge._imagerefs import FrontmatterTracker
 from md_merge._mdrange import expand_mdfilename as _expand_mdfilename
-from md_merge._procedure import normalize_recipe
+from md_merge._procedure import MDPAGES_INTERNAL_KEY, normalize_recipe
+from md_merge._source_keys import fragment_section
 
 _INCLUDE_RE = re.compile(r'^!include\s+(.+?)\s*$')
 
@@ -515,12 +516,32 @@ def _find_in_dirs(fname: str, in_dirs: list[Path]) -> Path | None:
     return found[0]
 
 
+def _md_exists(fname: str, in_dirs: list[Path], yaml_path: Path) -> bool:
+    """insertmd のファイル名 *fname* が実在するか（解決規則は collect_procedure_items と同じ）。"""
+    p = Path(fname)
+    if p.is_absolute():
+        return p.exists()
+    if in_dirs:
+        return _find_in_dirs(fname, in_dirs) is not None
+    return (yaml_path.parent / p).exists()
+
+
+def _expand_insertmd(item: dict, in_dirs: list[Path], yaml_path: Path, log: bool = True) -> list[str]:
+    """insertmd 項目の mdfilename をレンジ展開する（``[from-END]`` は実在ファイルだけ）。"""
+    return _expand_mdfilename(
+        item.get("mdfilename"),
+        exists=lambda name: _md_exists(name, in_dirs, yaml_path),
+        range_max=item.get("range-max"),
+        log=log,
+    )
+
+
 def iter_insertmd_entries(
     recipe: dict, in_dirs: list[Path], yaml_path: Path
 ) -> list[tuple[str, Path]]:
     """Return ``(mdfilename, resolved_path)`` for each insertmd file (deduped, in order).
 
-    Resolution mirrors :func:`collect_procedure_items` (range expansion + input.dirs
+    Resolution mirrors :func:`collect_procedure_items` (range expansion + fragment.dirs
     search). Used by ``checkgen`` (fingerprint generation) and merge-time verification.
     """
     result: list[tuple[str, Path]] = []
@@ -532,7 +553,7 @@ def iter_insertmd_entries(
         if not val:
             continue
         try:
-            filenames = _expand_mdfilename(val)
+            filenames = _expand_insertmd(item, in_dirs, yaml_path, log=False)
         except ValueError:
             continue
         for fname in filenames:
@@ -554,7 +575,7 @@ def iter_insertmd_entries(
 def iter_insertpptx_entries(recipe: dict, input_dirs: list[Path]) -> list[tuple[str, Path]]:
     """Return ``(pptxfilename, resolved_path)`` for each insertpptx entry (deduped, in order).
 
-    Resolution uses pptmerge's input.dirs search (resolve_file_in_dirs). Used by
+    Resolution uses pptmerge's fragment.dirs search (resolve_file_in_dirs). Used by
     ``checkgen`` and ``pptmerge``-time verification of the insertpptx fingerprint.
     """
     from md_merge.pptmerge._config import resolve_file_in_dirs  # lazy — avoid import cycle
@@ -679,11 +700,14 @@ def collect_procedure_items(
                 logging.warning("insertmd entry missing 'mdfilename' field — skipping")
                 continue
             try:
-                filenames = _expand_mdfilename(val)
+                filenames = _expand_insertmd(item, in_dirs, yaml_path)
             except ValueError as e:
                 logging.warning("insertmd mdfilename range error: %s — skipping", e)
                 continue
-            for fname in filenames:
+            for n, fname in enumerate(filenames):
+                if n and item.get(MDPAGES_INTERNAL_KEY):
+                    # insertmdpages の [from-END]: 見つかったファイルの間に insertvfill + insertpagebreak
+                    items.extend(("{{vfill}}", "{{pagebreak}}"))
                 p = Path(fname)
                 logging.debug("collect_procedure_items: %s", p)
                 if p.is_absolute():
@@ -915,14 +939,13 @@ def apply_recipe_force(args: argparse.Namespace, recipe: dict) -> None:
 
 
 def resolve_input_dirs(recipe: dict, yaml_path: Path, workdir: Path | None) -> list[Path]:
-    """Return the unified input file search path list from input.dirs.
+    """Return the fragment search path list from fragment.dirs.
 
     Relative paths (including '.') are resolved relative to the YAML file's directory.
-    input.mddir / input.pptxdir are accepted but deprecated: a recommendation
-    is logged and their entries are appended after input.dirs entries.
+    The deprecated input.dirs is read as fragment.dirs by normalize_recipe (_source_keys.py).
     Falls back to [workdir or yaml_path.parent] when nothing is specified.
     """
-    section = recipe.get("input", {})
+    section = fragment_section(recipe)
     yaml_dir = yaml_path.parent
     base = _base_dir(yaml_path, workdir)
     result: list[Path] = []
@@ -930,7 +953,7 @@ def resolve_input_dirs(recipe: dict, yaml_path: Path, workdir: Path | None) -> l
     dirs_val = section.get("dirs")
     if dirs_val is None:
         logging.warning(
-            "input.dirs が指定されていません。input.dirs の指定を推奨します。"
+            "fragment.dirs が指定されていません。fragment.dirs の指定を推奨します。"
         )
     else:
         entries = dirs_val if isinstance(dirs_val, list) else [dirs_val]
@@ -939,29 +962,9 @@ def resolve_input_dirs(recipe: dict, yaml_path: Path, workdir: Path | None) -> l
             result.append((yaml_dir / p).resolve() if not p.is_absolute() else p.resolve())
         if not entries or str(entries[0]).strip() != ".":
             logging.warning(
-                "input.dirs の先頭に '.' がありません。"
+                "fragment.dirs の先頭に '.' がありません。"
                 "通常は先頭に '.' (recipe YAML のあるディレクトリ) を指定します。"
             )
-
-    mddir_val = section.get("mddir")
-    if mddir_val:
-        logging.warning(
-            "input.mddir は非推奨です。input.dirs の使用を推奨します。"
-            "mddir の内容を dirs の末尾に追加します。"
-        )
-        for entry in (mddir_val if isinstance(mddir_val, list) else [mddir_val]):
-            p = Path(str(entry))
-            result.append(p if p.is_absolute() else (base / p).resolve())
-
-    pptxdir_val = section.get("pptxdir")
-    if pptxdir_val:
-        logging.warning(
-            "input.pptxdir は非推奨です。input.dirs の使用を推奨します。"
-            "pptxdir の内容を dirs の末尾に追加します。"
-        )
-        for entry in (pptxdir_val if isinstance(pptxdir_val, list) else [pptxdir_val]):
-            p = Path(str(entry))
-            result.append(p if p.is_absolute() else (base / p).resolve())
 
     if not result:
         result = [base]

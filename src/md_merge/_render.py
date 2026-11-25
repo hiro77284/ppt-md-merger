@@ -1,6 +1,8 @@
 import logging
 import re
 
+from md_merge._noref import MARKER, PROTECTED, classify_lines
+
 _ID_RE = re.compile(r'\{\{#id:([^:}]+):([^:}]+):([^}]+)\}\}')
 _REF_RE = re.compile(r'\{\{(num|title|label|rawtitle):([^:}]+:[^:}]+:[^}]+)\}\}')
 _VAR_RE = re.compile(r'\{\{v:([A-Za-z0-9_]+)\}\}')
@@ -27,6 +29,8 @@ def render_content(
 ) -> str:
     """Apply title substitution, reference substitution, and variable substitution."""
     lines = content.splitlines(keepends=True)
+    # {{noref:begin}}…{{noref:end}} の範囲内は参照・変数置換をしない（マーカー行は除去）。
+    kinds = classify_lines(lines, "render")
     output: list[str] = []
     i = 0
 
@@ -38,6 +42,11 @@ def render_content(
     while i < len(lines):
         line = lines[i]
         raw = line.rstrip("\n\r")
+        kind = kinds[i]
+        if kind == MARKER:
+            i += 1
+            continue
+        protected = kind == PROTECTED
         id_matches = list(_ID_RE.finditer(raw))
 
         if id_matches:
@@ -49,7 +58,7 @@ def render_content(
             # {{nonum}} entries have no number, so the heading is left as written
             # (label replacement is skipped just like {{nolabel}}).
             nolabel = bool(_NOLABEL_RE.search(raw)) or bool(_NONUM_RE.search(raw))
-            noref = bool(_NOREF_RE.search(raw))
+            noref = protected or bool(_NOREF_RE.search(raw))
             # Convert all {{#id:...}} markers on this line to HTML comments
             comment_line = _ID_RE.sub(
                 lambda m: f"<!-- #id:{m.group(1)}:{m.group(2)}:{m.group(3)} -->",
@@ -73,6 +82,8 @@ def render_content(
                 peek = lines[i]
                 peek_raw = peek.rstrip("\n\r").rstrip()
 
+                if kinds[i] == MARKER:
+                    break  # 範囲の境界をまたいで見出しを探さない
                 if peek_raw == "":
                     pending.append(peek)
                     blanks += 1
@@ -102,6 +113,10 @@ def render_content(
 
             if not heading_found:
                 output.extend(pending)
+
+        elif protected:
+            output.append(line)  # 置換抑制範囲: そのまま出力
+            i += 1
 
         elif _SECTIONLIST_RE.search(raw):
             # セクション一覧マーカーを展開する（生成物は resolved の label 済みなので

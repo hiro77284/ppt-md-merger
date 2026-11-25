@@ -202,7 +202,7 @@ class TestPptmdexportEndToEnd(unittest.TestCase):
             _add_slide(prs, note, 2)
             prs.save(str(root / "src" / "deck.pptx"))
             recipe = root / "r_recipe.yaml"
-            recipe.write_text("version: 2\ninput:\n  cropsrc:\n    pptx: src/deck.pptx\n", encoding="utf-8")
+            recipe.write_text("version: 2\nsource:\n  cropsrc:\n    pptx: src/deck.pptx\n", encoding="utf-8")
             env = dict(os.environ, PYTHONPATH=str(_SRC))
             r = subprocess.run(
                 [sys.executable, "-m", "md_merge", "pptmdexport", str(recipe), "--force"],

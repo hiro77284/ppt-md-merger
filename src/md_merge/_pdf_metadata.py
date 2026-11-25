@@ -63,11 +63,21 @@ def collect_metadata(defaults_paths: "list[Path]", metadata_file: "Path | None" 
     return merged
 
 
+# 表紙で改行に使う記法: {{br}}（大文字小文字・空白入りも可）と、Markdown の強制改行（行末の \）。
+_BR_RE = re.compile(r"\{\{\s*br\s*\}\}", re.IGNORECASE)
+_HARD_BREAK_RE = re.compile(r"\\(?=\r?\n)")
+
+
 def _plain(v) -> str:
-    """YAML の値を 1 行の文字列にする（空なら ""）。"""
+    """YAML の値を 1 行の文字列にする（空なら ""）。
+
+    表紙用の改行（``{{br}}`` と行末の ``\``）は空白にしてから、空白をまとめる。
+    """
     if v is None or v is False:
         return ""
-    return re.sub(r"\s+", " ", str(v)).strip()
+    s = _HARD_BREAK_RE.sub(" ", str(v))
+    s = _BR_RE.sub(" ", s)
+    return re.sub(r"\s+", " ", s).strip()
 
 
 def _plain_list(v) -> list[str]:

@@ -66,14 +66,15 @@ merge:
   strict: true         # ファイルが見つからないときはエラーとして扱う
 
 
-input:
+fragment:
   # 結合対象とするファイルを探すディレクトリ。相対パス指定時は recipe.yaml が基点になる。
   dirs: 
     - .
     - ../mds
 
+source:
   # 画像を探すディレクトリ。相対パス指定時は recipe.yaml が基点になる。
-  imagesdir: 
+  cropimagedirs: 
     - ../images
 
   # pptxから画像を取得してくるための設定

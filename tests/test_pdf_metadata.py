@@ -24,6 +24,21 @@ class TestDocumentProperties(unittest.TestCase):
         p = document_properties(COVER, {})
         self.assertEqual(p, {"title": "報告書", "author": ["山田太郎"], "subject": "副題"})
 
+    def test_cover_linebreaks_become_spaces(self):
+        cases = {
+            "一行目{{br}}二行目": "一行目 二行目",
+            "一行目{{BR}}二行目": "一行目 二行目",
+            "一行目{{ Br }}二行目": "一行目 二行目",
+            "一行目\\\n二行目": "一行目 二行目",
+            "一行目\\\r\n二行目{{br}}": "一行目 二行目",
+            "パス C:\\dir": "パス C:\\dir",  # 行末でない \ は残す
+        }
+        for src, want in cases.items():
+            with self.subTest(src=src):
+                p = document_properties({"COVER_SUBTITLE": src, "COVER_TITLE": src}, {})
+                self.assertEqual(p["subject"], want)
+                self.assertEqual(p["title"], want)
+
     def test_cover_date_is_not_used(self):
         code = typst_document_code(document_properties(COVER, {}))
         self.assertNotIn("date", code)

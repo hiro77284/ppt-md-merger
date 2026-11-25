@@ -8,7 +8,7 @@ output:
   outputdir: ../build  # 出力ファイルを書き込むディレクトリ
   pptxfilename: simple_ppt_merge_merged.pptx        # 結合後のpptxファイルのファイル名
 
-input:
+fragment:
   dirs: 
     - .
     - ../mds

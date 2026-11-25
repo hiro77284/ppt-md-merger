@@ -24,7 +24,7 @@ pandoc:
     - build
     - ../../user_settings/common_assets
 
-input:
+fragment:
   dirs:
     - .
     - src

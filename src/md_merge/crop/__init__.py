@@ -7,6 +7,7 @@ from pathlib import Path
 
 from PIL import Image, UnidentifiedImageError
 
+from md_merge._source_keys import source_section
 from md_merge._output import EXIT_BAD_INPUT, EXIT_FAILURE, EXIT_NOT_FOUND, EXIT_OK, emit, setup_logging
 from md_merge.merge._recipe import apply_recipe_force, load_yaml, resolve_input_path, resolve_workdir, setup_recipe_file_logging
 
@@ -78,9 +79,8 @@ def run(args: argparse.Namespace) -> int:
 
 
 def _resolve_imagesdirs(recipe: dict, yaml_path: Path, workdir: Path | None) -> list[Path]:
-    section = recipe.get("input", {})
     base = workdir if workdir else yaml_path.parent
-    val = section.get("imagesdir")
+    val = source_section(recipe).get("cropimagedirs")  # 旧 input.imagesdir は読み替え済み
     if not val:
         return [base.resolve()]
     entries = val if isinstance(val, list) else [val]

@@ -1,6 +1,6 @@
 """Shared --preprocess support for the ppt_to_pdf / ppt_to_transfer pipelines.
 
-When --preprocess is given, each ``input.cropsrc.pptx`` is run through a single-file
+When --preprocess is given, each ``source.cropsrc.pptx`` is run through a single-file
 pptmerge (procedure ignored; one ``insertpptx`` with ``slides: all``) applying
 **一般マーカー処理のみ**（``#CSP#`` / ``#TEMP#`` / ``#MEMO#`` / ``#CHAPT#`` 等、
 ``--deletecsp`` を含む）, producing ``<stem>_preprocessed.pptx`` in
@@ -78,7 +78,7 @@ def build_preprocess_config(
     """
     return {
         "output": {"outputdir": str(outdir), "pptxfilename": out_name, "force": True},
-        "input": {"dirs": ["."]},
+        "fragment": {"dirs": ["."]},
         "indexer": {"pptxnumbering": "no", "deletecsp": deletecsp},
         "vars": dict(vars_map or {}),
         "procedure": [{"operation": "insertpptx", "pptxfilename": str(src), "slides": "all"}],
@@ -190,14 +190,14 @@ def apply_preprocess(args: argparse.Namespace) -> int:
 
     entries = cropsrc_entries(recipe)
     if not entries:
-        logging.error("input.cropsrc が指定されていません: %s", yaml_path)
+        logging.error("source.cropsrc が指定されていません: %s", yaml_path)
         return EXIT_BAD_INPUT
 
     sources: list[Path] = []
     for entry in entries:
         pptx_val = entry.get("pptx")
         if not pptx_val:
-            logging.error("input.cropsrc.pptx が指定されていません: %s", yaml_path)
+            logging.error("source.cropsrc.pptx が指定されていません: %s", yaml_path)
             return EXIT_BAD_INPUT
         sources.append(resolve_cropsrc_path(str(pptx_val), yaml_path, workdir))
 

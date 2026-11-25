@@ -22,7 +22,7 @@ params:
   STEP:
     type: bool
     default: false
-input:
+fragment:
   dirs: [.]
 procedure:
   - insertmd: a.md

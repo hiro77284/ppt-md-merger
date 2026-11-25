@@ -6,8 +6,10 @@
 --
 -- {{br}} は Str の内部に埋め込まれる（例 "Part{{br}}Second"）ので、Str を分割して
 -- 置換する。用途は主に章・節タイトルの改行位置指定。
+-- 大文字小文字は区別しない（{{BR}} / {{Br}} も同じ扱い）。
 
-local MARK = "{{br}}"
+-- Lua パターン（{ } は特殊文字ではない）。大文字小文字を区別しないよう文字クラスで書く。
+local MARK = "{{[Bb][Rr]}}"
 
 local function break_inline()
   if FORMAT:match("html") or FORMAT:match("revealjs") then
@@ -23,13 +25,13 @@ local function break_inline()
 end
 
 function Str(el)
-  if not el.text:find(MARK, 1, true) then
+  if not el.text:find(MARK) then
     return nil
   end
   local out = {}
   local rest = el.text
   while true do
-    local s, e = rest:find(MARK, 1, true)
+    local s, e = rest:find(MARK)
     if not s then
       if rest ~= "" then out[#out + 1] = pandoc.Str(rest) end
       break

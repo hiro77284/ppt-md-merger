@@ -4,6 +4,7 @@ import shutil
 import sys
 from pathlib import Path
 
+from md_merge._autoid import AutoIdError, add_auto_ids, autoid_enabled
 from md_merge._params import condition_vars
 from md_merge._fingerprint import load_check_map, verify_against_check
 from md_merge._output import EXIT_BAD_INPUT, EXIT_FAILURE, EXIT_NOT_FOUND, EXIT_OK, emit, setup_logging
@@ -139,6 +140,19 @@ def run(args: argparse.Namespace) -> int:
             return EXIT_FAILURE
 
     merged = "\n\n".join(parts)
+    if autoid_enabled(recipe):
+        try:
+            merged, n_auto = add_auto_ids(merged)
+        except AutoIdError as e:
+            logging.error("%s", e)
+            return EXIT_BAD_INPUT
+        logging.info("indexer.autoid: #id の無い見出し %d 件に {{#id:...:AUTOHEAD:N}} を付けました", n_auto)
+        _numbering = (recipe.get("indexer") or {}).get("pptxnumbering", "no")
+        if _numbering in ("no", False):
+            logging.warning(
+                "indexer.autoid は indexer.pptxnumbering が no のため見出しに番号が付きません"
+                "（idresolve にしてください）"
+            )
     out_path.parent.mkdir(parents=True, exist_ok=True)
     out_path.write_text(merged, encoding="utf-8")
 

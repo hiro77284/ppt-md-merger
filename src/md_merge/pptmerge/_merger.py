@@ -34,9 +34,11 @@ from ._config import (
     resolve_file,
     resolve_file_in_dirs,
     parse_slides,
+    slides_need_count,
     parse_log_duplicate,
 )
 from md_merge._conditions import filter_procedure
+from md_merge._noref import apply_outside_noref
 from md_merge.merge._recipe import _AUTO_FILENAMES, get_targetbasefilename, resolve_input_dirs
 from ._slide_operation import SlideOperation, build_slide_insert_operations
 from ._slide_titles import (
@@ -270,6 +272,21 @@ def _slide_has_noreplace_com(slide: Any) -> bool:
     return False
 
 
+def _replace_note_placeholders(
+    text: str, info: dict, resolved_map: dict[str, dict] | None
+) -> str:
+    """ノート文字列の ``<__X__>`` / ``{{v:}}`` / 参照を置換する。"""
+    text = text.replace("<__BASEFILENAME__>", info["basefilename"])
+    text = text.replace("<__FILENAME__>", info["filename"])
+    text = text.replace("<__SLIDENUM__>", info["slidenum"])
+    text = text.replace("<__TITLE__>", single_line_text(info["title"]))
+    for name, value in info["vars"].items():
+        text = text.replace("{{v:" + name + "}}", value)
+    if resolved_map:
+        text = _resolve_ref_in_text(text, resolved_map)
+    return text
+
+
 def _apply_notes_replacements(
     pptx_path: Path,
     pending: list[dict],
@@ -295,15 +312,12 @@ def _apply_notes_replacements(
         tf = slide.notes_slide.notes_text_frame
         text = _sanitize_note_text(tf.text or "")
 
-        new_text = text
-        new_text = new_text.replace("<__BASEFILENAME__>", info["basefilename"])
-        new_text = new_text.replace("<__FILENAME__>", info["filename"])
-        new_text = new_text.replace("<__SLIDENUM__>", info["slidenum"])
-        new_text = new_text.replace("<__TITLE__>", single_line_text(info["title"]))
-        for name, value in info["vars"].items():
-            new_text = new_text.replace("{{v:" + name + "}}", value)
-        if resolved_map:
-            new_text = _resolve_ref_in_text(new_text, resolved_map)
+        # {{noref:begin}}…{{noref:end}} の範囲内は置換しない（マーカーは残す）。
+        new_text = apply_outside_noref(
+            text,
+            lambda t: _replace_note_placeholders(t, info, resolved_map),
+            f"slide {info['composedslidenum']}",
+        )
         # Substituted values (titles, vars, refs) may carry soft returns or
         # control characters that lxml would reject.
         new_text = _sanitize_note_text(new_text)
@@ -627,7 +641,6 @@ def merge_pptx(
         return cropsrc_read_path(args, p)
 
     output = config["output"]
-    input_ = config.get("input") or {}
     separator = config.get("separator", {})
     vars_map: dict[str, str] = {str(k): str(v) for k, v in (config.get("vars") or {}).items()}
 
@@ -811,7 +824,11 @@ def merge_pptx(
 
                 # CSL スライド削除は結合済み pptx に対してのみ行う（postprocess 側）。
                 # 個別 pptx の挿入時には #CSL# を一切見ない。
-                slide_list = parse_slides(item.get("slides", "all"))
+                slides_spec = item.get("slides", "all")
+                slide_count = (
+                    len(_PptxPresentation(str(read_path)).slides) if slides_need_count(slides_spec) else None
+                )
+                slide_list = parse_slides(slides_spec, slide_count)
 
                 composed_start = dst.Slides.Count + 1
                 local_vars = {str(k): str(v) for k, v in (item.get("vars") or {}).items()}

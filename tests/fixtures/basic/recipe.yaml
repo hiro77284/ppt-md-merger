@@ -1,10 +1,9 @@
 version: 2
-input:
-  mddir: md
+fragment:
+  dirs: [md]
 output:
   mdfilename: merged.md
   inventoryfilename: inventory.yaml
-  mddir: out
 procedure:
   - insertmd: a.md
   - insertpptx: ignored.pptx

@@ -24,7 +24,7 @@ from __future__ import annotations
 import logging
 from pathlib import Path
 
-from md_merge._mdrange import expand_mdfilename
+from md_merge._mdrange import expand_mdfilename, is_open_range
 
 LATEST_VERSION = 4
 SUPPORTED_VERSIONS = frozenset({1, 2, 3, 4})
@@ -38,7 +38,7 @@ PROCEDURE_OPS = frozenset({
 })
 
 PROCEDURE_ITEM_KEYS: dict[str, frozenset] = {
-    "insertmd":    frozenset({"operation", "mdfilename"}),
+    "insertmd":    frozenset({"operation", "mdfilename", "range-max"}),
     "insertpptx":  frozenset({"operation", "pptxfilename", "slides", "separator_before", "vars"}),
     "insertvar":   frozenset({"operation", "varname"}),
     "chapter":     frozenset({"operation", "chapter", "section", "title", "note", "id"}),
@@ -61,6 +61,9 @@ INHERITED_WHEN_KEY = "_group_when"
 # 正規化時に insertmd / insertvfill / insertpagebreak の並びへ展開する。
 MDPAGES_OP = "insertmdpages"
 MDPAGES_SEPARATOR = ("insertvfill", "insertpagebreak")
+# insertmdpages の [from-END] は存在するファイルが merge 時まで決まらないため、正規化では
+# insertmd 1 つに残してこの内部キーを付け、merge のファイル収集で区切りを挟む。
+MDPAGES_INTERNAL_KEY = "_mdpages"
 # v2 の要素に書ける操作キー（内部の操作 + 略記）
 V2_OPS = PROCEDURE_OPS | {MDPAGES_OP}
 
@@ -242,6 +245,9 @@ def _expand_mdpages(item: dict) -> list[dict]:
     extras = {k: v for k, v in item.items() if k not in ("operation", "mdfilename")}
     shared = {k: v for k, v in extras.items() if k == "when"}
     val = item.get("mdfilename")
+    if is_open_range(val):
+        # [from-END]: 実在ファイルは merge 時に決まる → 区切りは collect_procedure_items が挟む
+        return [{"operation": "insertmd", "mdfilename": val, **extras, MDPAGES_INTERNAL_KEY: True}]
     try:
         names = expand_mdfilename(val) if isinstance(val, str) else [val]
     except ValueError:
@@ -284,10 +290,13 @@ def normalize_recipe(
     """procedure を内部表現（operation 記法）へ正規化したレシピを返す。
 
     記法に不整合があれば ProcedureNotationError。version 1 のレシピは
-    ファイルごとに 1 回だけ非推奨の warning を出す。
+    ファイルごとに 1 回だけ非推奨の warning を出す。旧 ``input`` セクションは
+    ``fragment`` / ``source`` に読み替える（_source_keys.py）。
     """
     if not isinstance(recipe, dict):
         return recipe
+    from md_merge._source_keys import normalize_source_keys  # 循環 import を避ける
+    recipe = normalize_source_keys(recipe, source, warn=warn_deprecated)
     errors = check_procedure_notation(recipe)
     where = f": {source}" if source is not None else ""
     if errors:

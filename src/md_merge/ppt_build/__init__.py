@@ -1,5 +1,6 @@
 """ppt_build: run the shared front half (pptpdfexport … render) once, then the
 selected output tails (--pdf / --puremd / --githubmd / --notecom / --transfer).
+With no output option it stops after render and keeps the rendered MD.
 
 Each output corresponds to one existing pipeline command (``ppt_to_pdf`` etc.).
 Running them together saves repeating the front half, which every ppt_to_*
@@ -85,7 +86,7 @@ def work_file_keys(outputs: list[str]) -> tuple[str, ...]:
     """
     sel = set(outputs)
     keep: set[str] = set()
-    if "pdf" in sel:
+    if not sel or "pdf" in sel:  # 出力指定なし = render まで（rendered MD が成果物）
         keep.add("renderedfilename")
     if sel & {"puremd", "githubmd", "notecom"}:
         keep.add("puremdfilename")
@@ -103,7 +104,8 @@ def equivalent_commands(outputs: list[str]) -> list[str]:
     """The ppt_to_* commands whose deliverables this run produces (for when.command)."""
     sel = set(outputs)
     cmds: list[str] = []
-    if "pdf" in sel:
+    # 出力指定なし（render まで）は ppt_to_pdf と同じ rendered MD を作るので ppt_to_pdf で照合する
+    if not sel or "pdf" in sel:
         cmds.append("ppt_to_pdf")
     if "puremd" in sel:
         cmds.append("ppt_to_puremd")
@@ -153,18 +155,12 @@ def resolve_condition_command(args: argparse.Namespace, commands: list[str]) -> 
 def run(args: argparse.Namespace) -> int:
     setup_logging(args.log_level)
     outputs = selected_outputs(args)
-    if not outputs:
-        logging.error(
-            "%s: 出力を 1 つ以上指定してください（--pdf / --puremd / --githubmd / --notecom / --transfer）",
-            COMMAND,
-        )
-        return EXIT_BAD_INPUT
 
     code, cond_cmd = resolve_condition_command(args, equivalent_commands(outputs))
     if code != EXIT_OK:
         return code
     args.condition_command = cond_cmd
-    logging.info("[%s] outputs: %s", COMMAND, ", ".join(outputs))
+    logging.info("[%s] outputs: %s", COMMAND, ", ".join(outputs) or "rendered (render まで)")
 
     if "pdf" in outputs:
         code = check_pdf_collision(args)

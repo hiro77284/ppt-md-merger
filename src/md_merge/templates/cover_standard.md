@@ -11,6 +11,17 @@ version 2 以前のレシピでは、typst-cover-md を省略し cover-md か co
 見つからなければ typst-images.lua が resource-path から探す。
 文字の大きさは LaTeX 版（\Huge / \LARGE / \large）を和文スケール 0.962 で縮めた値。
 空き（#v）は基準 PDF（lualatex 版）の位置に合わせて調整してある。
+
+使う変数（vars）:
+COVER_IMAGE トップ画像
+COVER_TITLE タイトル文字列
+COVER_SUBTITLE サブタイトル文字列
+COVER_AUTHOR　著者
+COVER_AFFILIATION　所属
+COVER_CONTACT　連絡先
+COVER_NOTE　説明文
+COVER_FOOTERIMAGE　フッター画像
+
 -->
 
 ```{=typst}
@@ -20,6 +31,7 @@ version 2 以前のレシピでは、typst-cover-md を省略し cover-md か co
 {{#if:COVER_IMAGE}}
 ::: {.center}
 ![]({{v:COVER_IMAGE}}){width=80%}
+
 :::
 
 ```{=typst}

@@ -33,7 +33,7 @@ def _run(root: Path, notes: list[str]) -> subprocess.CompletedProcess:
     recipe = root / "r.yaml"
     recipe.write_text(textwrap.dedent("""\
         version: 2
-        input:
+        source:
           cropsrc:
             pptx: deck.pptx
         """), encoding="utf-8")

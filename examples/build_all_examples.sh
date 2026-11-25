@@ -43,25 +43,25 @@ RECIPES=$(cat <<'EOF'
 # path                                                                  | subcommand    | parameters
 pm1_simple_ppt_merge/src/simple_ppt_merge_guide_recipe.yaml             | pptmerge | --force
 pm1_simple_ppt_merge/src/simple_ppt_merge_guide_pdf_recipe.yaml         | ppt_build | --githubmd --transfer --pdf --yes-clear-dir
-pm2_simple_numbering/src/simple_numbering_guide_recipe.yaml             | pptmerge |
+pm2_simple_numbering/src/simple_numbering_guide_recipe.yaml             | pptmerge | --force
 pm2_simple_numbering/src/simple_numbering_guide_pdf_recipe.yaml         | ppt_build | --githubmd --transfer --pdf --yes-clear-dir
-pm3_chapter_marker_numbering/src/chapter_marker_numbering_guide_recipe.yaml | pptmerge |
+pm3_chapter_marker_numbering/src/chapter_marker_numbering_guide_recipe.yaml | pptmerge | --force
 pm3_chapter_marker_numbering/src/chapter_marker_numbering_guide_pdf_recipe.yaml | ppt_build | --githubmd --transfer --pdf --yes-clear-dir
-pm4_variable_replacement/src/variable_replacement_guide_recipe.yaml     | pptmerge |
+pm4_variable_replacement/src/variable_replacement_guide_recipe.yaml     | pptmerge | --force
 pm4_variable_replacement/src/variable_replacement_guide_pdf_recipe.yaml | ppt_build | --githubmd --transfer --pdf --yes-clear-dir
-pm5_chapter_cover_insertion/src/chapter_cover_insertion_guide_recipe.yaml | pptmerge |
+pm5_chapter_cover_insertion/src/chapter_cover_insertion_guide_recipe.yaml | pptmerge | --force
 pm5_chapter_cover_insertion/src/chapter_cover_insertion_guide_pdf_recipe.yaml | ppt_build | --githubmd --transfer --pdf --yes-clear-dir
-pm6_stylebase/src/stylebase_guide_recipe.yaml                           | pptmerge |
+pm6_stylebase/src/stylebase_guide_recipe.yaml                           | pptmerge | --force
 pm6_stylebase/src/stylebase_guide_pdf_recipe.yaml                       | ppt_build | --githubmd --transfer --pdf --yes-clear-dir
-pm7_splitted_insertion/src/splitted_insertion_guide_recipe.yaml         | pptmerge |
+pm7_splitted_insertion/src/splitted_insertion_guide_recipe.yaml         | pptmerge | --force
 pm7_splitted_insertion/src/splitted_insertion_guide_pdf_recipe.yaml     | ppt_build | --githubmd --transfer --pdf --yes-clear-dir
-pm8_delete_csp/src/delete_csp_guide_recipe.yaml                         | pptmerge |
+pm8_delete_csp/src/delete_csp_guide_recipe.yaml                         | pptmerge | --force
 pm8_delete_csp/src/delete_csp_guide_pdf_recipe.yaml                     | ppt_build | --githubmd --transfer --pdf --yes-clear-dir
-pm9_delete_csl/src/delete_csl_guide_recipe.yaml                         | pptmerge |
+pm9_delete_csl/src/delete_csl_guide_recipe.yaml                         | pptmerge | --force
 pm9_delete_csl/src/delete_csl_guide_pdf_recipe.yaml                     | ppt_build | --githubmd --transfer --pdf --yes-clear-dir
-pm10_memo_temp/src/memo_temp_guide_recipe.yaml                          | pptmerge |
+pm10_memo_temp/src/memo_temp_guide_recipe.yaml                          | pptmerge | --force
 pm10_memo_temp/src/memo_temp_guide_pdf_recipe.yaml                      | ppt_build | --githubmd --transfer --pdf --yes-clear-dir
-pm11_title_filename/src/title_filename_guide_recipe.yaml                | pptmerge |
+pm11_title_filename/src/title_filename_guide_recipe.yaml                | pptmerge | --force
 pm11_title_filename/src/title_filename_guide_pdf_recipe.yaml            | ppt_build | --githubmd --transfer --pdf --yes-clear-dir
 pdf1_minimum/src/pdf1_minimum_pdf_recipe.yaml                           | ppt_build | --githubmd --transfer --pdf --yes-clear-dir
 #pdf2_minimum/src/pdf1_minimum_pdf_recipe.yaml                          | ppt_build | --githubmd --transfer --pdf --yes-clear-dir

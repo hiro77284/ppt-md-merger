@@ -100,10 +100,12 @@ output:
   targetbasefilename: sample_doc   # 成果物のベース名。pptx 名と変えておく（後述）
   force: true                      # 既存の成果物を上書きする
 
-input:
+fragment:
   dirs:
     - .
     - mds                          # 切り出された MD を探す場所
+
+source:
   cropsrc:
     pptx: src/sample.pptx          # 図と原稿の供給元
 
@@ -172,7 +174,7 @@ build/sample_doc.pdf          ← 完成した PDF（ppt_to_pdf）
 | 症状 | 原因と対処 |
 |---|---|
 | `export-note を持つスライドが見つかりません` | ノートの 1 行目が `NOTE_CONTENT_FORMAT: 1.0` になっていない。または `{{BLOCK:MD}}` の本文 1 行目が `export-note:` でない |
-| `MD file not found: ..._slide1.md — skipping` | `mds/` に切り出せていない（上と同じ原因）か、`input.dirs` に `mds` が入っていない |
+| `MD file not found: ..._slide1.md — skipping` | `mds/` に切り出せていない（上と同じ原因）か、`fragment.dirs` に `mds` が入っていない |
 | `シェイプ 'exportrange' が見つかりません` | 図形の**名前**が `exportrange` になっていない（表示テキストではなく選択ウィンドウ上の名前） |
 | `シェイプ 'exportrange' はグループ内にあります` | 対象の図形が他の図形とグループ化されている。**グループを解除する**（グループ内の座標は親の子座標系になるため使えない） |
 | 2 回目の実行で「全削除してよいですか？」と聞かれる | `build/images/` を merge 前に空にする確認（既定で有効）。`y` で続行。確認なしで削除させるなら `--yes-clear-dir`（`--force` では省略されない）。削除自体をやめるならレシピに `merge: clear-dir-before-merge: false` |

@@ -529,7 +529,7 @@ metadata:
   lang: en
 ```
 
-* 値は 1 行の文字列として使う（改行は空白に、Markdown の記法は解釈しない）。`metadata:` に空の値（`subject: ""`）を書くとそのプロパティは付けない
+* 値は 1 行の文字列として使う（改行は空白に、Markdown の記法は解釈しない）。表紙で改行に使う `{{br}}`（大文字小文字は問わない）と行末の `\`（強制改行）も空白にする（`ppt-md-merger{{br}}利用ガイド` → `ppt-md-merger 利用ガイド`）。`metadata:` に空の値（`subject: ""`）を書くとそのプロパティは付けない
 * `lang` は本文の言語（行分割・ハイフネーション・引用符）にも効く。言語コードでない値は警告して使わない
 * 同梱テンプレート `report_template.typst` が `#set document(...)` / `#set text(lang: ...)` として出す（`src/md_merge/_pdf_metadata.py`）。自作のテンプレートでは変数 `sem-document` を出力すると同じ結果になる
 

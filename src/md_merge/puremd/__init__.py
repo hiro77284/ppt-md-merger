@@ -295,13 +295,15 @@ def _transform_leaves(content: str, sem: Semantics) -> str:
     """Lower leaf markers (``{{vspace:N}}`` / ``{{pagebreak}}`` / ``{{vfill}}``) per registry.
 
     GFM rules: ``drop`` removes the marker entirely; ``text`` replaces it with a
-    literal (e.g. ``---`` for a page break).
+    literal (e.g. ``---`` for a page break). ``ignorecase: true`` matches the
+    marker name case-insensitively (``{{BR}}``).
     """
     for name, rule in sem.leaves.items():
+        flags = re.IGNORECASE if rule.get("ignorecase") else 0
         if rule.get("arg"):
-            rx = re.compile(r"\{\{" + re.escape(name) + r":[^}]*\}\}")
+            rx = re.compile(r"\{\{" + re.escape(name) + r":[^}]*\}\}", flags)
         else:
-            rx = re.compile(r"\{\{" + re.escape(name) + r"\}\}")
+            rx = re.compile(r"\{\{" + re.escape(name) + r"\}\}", flags)
         g = rule.get("gfm") or {}
         if g.get("drop"):
             content = rx.sub("", content)

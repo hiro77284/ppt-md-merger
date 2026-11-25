@@ -114,10 +114,17 @@ class TestConditionConsistency(unittest.TestCase):
 
 
 class TestRun(unittest.TestCase):
-    def test_no_outputs_is_error(self):
-        with mock.patch.object(pb, "run_pipeline") as rp, self.assertLogs(level="ERROR"):
-            self.assertEqual(pb.run(_args()), EXIT_BAD_INPUT)
-        rp.assert_not_called()
+    def test_no_outputs_runs_until_render(self):
+        with mock.patch.object(pb, "run_pipeline", return_value=0) as rp, \
+             mock.patch.object(pb, "check_pdf_collision") as cc:
+            args = _args()
+            self.assertEqual(pb.run(args), 0)
+        kw = rp.call_args.kwargs
+        self.assertEqual([n for n, _ in kw["steps"]], _FRONT)
+        self.assertNotIn("renderedfilename", kw["work_file_keys"])
+        self.assertIsNone(kw["transfer_source_key"])
+        self.assertEqual(args.condition_command, "ppt_to_pdf")
+        cc.assert_not_called()
 
     def test_run_pipeline_args(self):
         with mock.patch.object(pb, "run_pipeline", return_value=0) as rp:

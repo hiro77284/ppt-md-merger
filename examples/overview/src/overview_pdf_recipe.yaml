@@ -66,13 +66,14 @@ pandoc:
 
 #  format: tex
 
-input:
+fragment:
   dirs: 
     - .
     - ../mds
     - ../../../user_settings/common_assets
 
-  imagesdir: 
+source:
+  cropimagedirs: 
     - ../images
     - ../../../user_settings/common_assets
 

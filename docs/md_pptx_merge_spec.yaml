@@ -54,23 +54,23 @@ output:
     enum: [source, current]
     description: 相対パスの基準。source はこの yaml ファイルの場所、current は実行時カレントディレクトリ
 
-input:
-  pptxdir:
-    type: string
-    required: true
-    description: 入力 pptx ファイルを探すディレクトリ
-
-  mddir:
-    type: string
-    required: true
-    description: 入力 md ファイルを探すディレクトリ
-
-  path_base:
-    type: string
+fragment:
+  dirs:
+    type: [string, list]
     required: false
-    default: source
-    enum: [source, current]
-    description: input.dir が相対パスの場合の基準
+    description: 部品ファイル（insertmd の MD / insertpptx の pptx）を先頭から順に探すディレクトリ。相対パスはレシピ YAML のあるディレクトリ基準
+
+source:
+  cropsrc:
+    type: [mapping, list]
+    required: false
+    description: 画像・MD・図版 YAML を取り出す元の pptx（pptx / pdf / dpi）
+  cropimagedirs:
+    type: [string, list]
+    required: false
+    description: crop が RANGE 付き画像を探すディレクトリ
+
+# 旧 input セクションは廃止（input.dirs / imagesdir / cropsrc は非推奨、mddir / pptxdir はエラー）
 
 separator:
   enabled:
@@ -180,11 +180,15 @@ procedure:
   item:
     insertpptx:
       type: string
-      description: 挿入する pptx。input.dirs からの相対ファイル名、または絶対パス
+      description: 挿入する pptx。fragment.dirs から探すファイル名、または絶対パス
 
     insertmd:
       type: string
-      description: 挿入する MD。input.dirs からの相対ファイル名、または絶対パス。[from-to] のレンジを 1 つ書ける
+      description: 挿入する MD。fragment.dirs から探すファイル名、または絶対パス。[from-to] のレンジを 1 つ書ける。to に END（[1-END]）で「残り全部」= 存在するファイルだけ
+
+    range-max:
+      type: integer
+      description: insertmd / insertmdpages のファイル名が [from-END] のとき数える上限の番号。省略時 99。1 以上かつ from 以上
 
     insertmdpages:
       type: string
@@ -230,7 +234,7 @@ procedure:
       type: string | array[integer]
       required: false
       default: all
-      description: insertpptx で読み込むスライド。all またはスライド番号リスト。スライド番号は1始まり
+      description: insertpptx で読み込むスライド。all またはスライド番号リスト（N-M 範囲、N-END で N から最後まで）。スライド番号は1始まり
 
     separator_before:
       type: boolean

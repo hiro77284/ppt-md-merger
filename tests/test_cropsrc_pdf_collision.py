@@ -30,7 +30,7 @@ def _write(root: Path, cropsrc_pdf: str = "") -> Path:
         output:
           outputdir: build
           targetbasefilename: 強調表示
-        input:
+        source:
           cropsrc:
             - pptx: src/強調表示.pptx
               pdf: {cropsrc_pdf}

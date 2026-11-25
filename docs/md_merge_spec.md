@@ -70,7 +70,7 @@ pptmdmerge merge input.yaml
 | `ppt_to_puremd`    | `ppt_to_transfer` から末尾の transfer を除いた版。pptpdfexport → … → render → puremd まで実行し、puremd 処理済み MD を成果物として残す                            | yamlファイル | MD・画像ファイル     |
 | `ppt_to_githubmd`  | `ppt_to_puremd` の末尾に githubmd を足した版。pptpdfexport → … → render → puremd → githubmd を連続実行し、GitHub 表示用 MD を成果物として残す。`--transfer` で末尾に transfer を追加（`ppt_to_puremd` も同様） | yamlファイル | MD・画像ファイル     |
 | `ppt_to_notecom`   | `ppt_to_transfer` の末尾 transfer を notecomexport に差し替えた版。pptpdfexport → … → puremd → notecomexport を連続実行し、note.com 投稿用 YAML を成果物として残す | yamlファイル | YAML・画像ファイル   |
-| `ppt_build`        | pptpdfexport → … → render を 1 回だけ実行し、`--pdf` / `--puremd` / `--githubmd` / `--notecom` / `--transfer` で選んだ出力だけを作る（`ppt_to_*` を複数回実行する代わり） | yamlファイル | PDF・MD・YAML・画像ファイル |
+| `ppt_build`        | pptpdfexport → … → render を 1 回だけ実行し、`--pdf` / `--puremd` / `--githubmd` / `--notecom` / `--transfer` で選んだ出力だけを作る（`ppt_to_*` を複数回実行する代わり。出力指定なしなら render まで） | yamlファイル | PDF・MD・YAML・画像ファイル |
 | `validate`         | レシピ YAML の整合性（未知キー・vars 値の生 LaTeX・params: と変数/条件/番号マーカー）を検査し、cropsrc と procedure の対応を info 表示する                                   | yamlファイル | （検査結果のみ）      |
 | `explain`          | `--var` のもとで procedure のどの項目が採用／除外されるかを理由つきで表示（`--matrix` で値ごとの差分、`--blocks` で `{{#if}}` の判定） | yamlファイル | （表示のみ）      |
 
@@ -273,7 +273,7 @@ procedure:
 | 操作 | 値（主引数） | version 1 での書き方 |
 | ---- | ------------ | -------------------- |
 | `insertpptx` | 入力 pptx ファイル名 | `pptxfilename` |
-| `insertmd` | 入力 MD ファイル名（`[from-to]` レンジ可） | `mdfilename` |
+| `insertmd` | 入力 MD ファイル名（`[from-to]` レンジ可。`[1-END]` で残り全部、上限は `range-max`（省略時 99）） | `mdfilename` |
 | `insertmdpages` | 入力 MD ファイル名（`[from-to]` レンジ可）。各 MD の間に `insertvfill` と `insertpagebreak` を挟んだ insertmd の並びに展開する（[md_pipeline.md](spec/md_pipeline.md)「MD ごとに改ページして並べる」） | （なし。version 2 以降のみ） |
 | `insertvar` | 変数名（値の文字列をそのまま MD として挿入） | `varname` |
 | `chapter` / `section` / `subsection` | カウンタ値（`"+"` / `n` / `+n` / `-n`）。省略可 | 同名キー |
@@ -480,7 +480,7 @@ md_merge/
 │       ├── __init__.py
 │       ├── __main__.py
 │       ├── _filters.py             # 共有フィルター（escape_backslash_smart・replace_slide_placeholders）（pptmdexport / pptimgexport / pptyamlexport 共有）
-│       ├── _cropsrc.py             # input.cropsrc の正規化・パス解決（ppt*export / --preprocess 共有）
+│       ├── _cropsrc.py             # source.cropsrc の正規化・パス解決（ppt*export / --preprocess 共有）
 │       ├── _note_parser.py         # NOTE_CONTENT_FORMAT パーサー（pptmdexport / pptimgexport / pptyamlexport 共有）
 │       ├── _inventory.py           # ID インベントリ抽出・出力（merge / idinventory 共有）
 │       ├── _output.py              # 終了コード・ログ設定・emit（全サブコマンド共有）
@@ -581,8 +581,8 @@ my_project/
 ```yaml
 # doc_a/recipe.yaml
 version: 2
-input:
-  mddir: md
+fragment:
+  dirs: [., md]
 output:
   outputdir: out
   mdfilename: merged.md

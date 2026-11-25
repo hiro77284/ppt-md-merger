@@ -28,7 +28,7 @@ from md_merge._condblock import _RE_ELSE, _RE_ENDIF, _RE_FENCE, _RE_IF, eval_con
 from md_merge._conditions import WHEN_KEY, _as_list, _commands
 from md_merge._output import EXIT_BAD_INPUT, EXIT_FAILURE, EXIT_NOT_FOUND, EXIT_OK, setup_logging
 from md_merge._params import PARAMS_KEY, ParamsError, apply_params, condition_vars, param_domain
-from md_merge._procedure import INHERITED_WHEN_KEY, PRIMARY_ARG, ProcedureNotationError, normalize_recipe
+from md_merge._procedure import INHERITED_WHEN_KEY, MDPAGES_INTERNAL_KEY, PRIMARY_ARG, ProcedureNotationError, normalize_recipe
 from md_merge.merge._recipe import cli_vars, load_yaml, resolve_input_path
 
 _MAX_COMBINATIONS = 64
@@ -46,6 +46,8 @@ def describe_item(item: dict) -> str:
     elif op == "insertpptx":
         key = "pptxfilename"
     arg = item.get(key) if key else None
+    if op == "insertmd" and item.get(MDPAGES_INTERNAL_KEY):
+        op = "insertmdpages"
     text = op if arg in (None, "") else f"{op} {arg}"
     if op == "insertpptx" and "slides" in item:
         slides = item["slides"]

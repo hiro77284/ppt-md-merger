@@ -40,7 +40,7 @@ class TestClearDirGuard(unittest.TestCase):
               force: true
               targetbasefilename: r
             """) + out + textwrap.dedent("""\
-            input:
+            fragment:
               dirs:
                 - .
                 - mds

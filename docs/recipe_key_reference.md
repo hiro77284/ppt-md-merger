@@ -93,17 +93,42 @@
 
 ---
 
-## input セクション
+## fragment セクション
+
+結合する部品ファイル（insertmd の MD・insertpptx の pptx など）をどこから探すか。
 
 | キー | mg | ic | ir | rd | pd | ur | pm | ie | me | pe | cr | 備考 |
 | ---- |:--:|:--:|:--:|:--:|:--:|:--:|:--:|:--:|:--:|:--:|:--:| ---- |
-| `input.dirs` | R |  |  |  |  |  | R |  |  |  |  | 入力ファイル（MD/PPTX・`!include` 参照先）の検索パス一覧。リスト可で先頭から順に探索。各エントリは**レシピ YAML のあるディレクトリ基準**で解決（`workdir`・`data-dir` の影響を受けない）。慣例として先頭に `.`（YAML のあるディレクトリ）を置く（無い場合は警告）。省略時は警告のうえ `workdir`（または YAML の親）にフォールバック。非推奨の `mddir`/`pptxdir` は末尾に追加される |
-| `input.mddir` | R |  |  |  |  |  |  |  |  |  |  | **非推奨**（`input.dirs` 推奨）。省略時は `workdir` と同じディレクトリ。リスト可 |
-| `input.pptxdir` |  |  |  |  |  |  | R |  |  |  |  | **非推奨**（`input.dirs` 推奨）。省略時は `workdir` と同じディレクトリ。リスト可 |
-| `input.cropsrc.pptx` |  |  |  |  |  |  |  | R | R | R |  | 辞書またはリスト形式 |
-| `input.cropsrc.pdf` |  |  |  |  |  |  |  | R |  | W |  | pe が生成、ie が読む。省略時は `<outputdir>/<pptx の stem>_slides.pdf` |
-| `input.cropsrc.dpi` |  |  |  |  |  |  |  | R |  |  |  | 省略時 150 |
-| `input.imagesdir` |  |  |  |  |  |  |  |  |  |  | R | crop 専用 |
+| `fragment.dirs` | R |  |  |  |  |  | R |  |  |  |  | 部品ファイル（MD/PPTX）の検索パス一覧。リスト可で先頭から順に探索。各エントリは**レシピ YAML のあるディレクトリ基準**で解決（`workdir`・`data-dir` の影響を受けない）。慣例として先頭に `.`（YAML のあるディレクトリ）を置く（無い場合は警告）。省略時は警告のうえ `workdir`（または YAML の親）にフォールバック。checkgen / checkverify / validate / explain も insertmd の解決に使う |
+
+---
+
+## source セクション
+
+pptx から画像・MD・図版 YAML を取り出す元（cropsrc）と、crop が RANGE 付き画像を探す場所。
+
+| キー | mg | ic | ir | rd | pd | ur | pm | ie | me | pe | cr | 備考 |
+| ---- |:--:|:--:|:--:|:--:|:--:|:--:|:--:|:--:|:--:|:--:|:--:| ---- |
+| `source.cropsrc.pptx` |  |  |  |  |  |  |  | R | R | R |  | 辞書またはリスト形式。pptyamlexport と `--preprocess` も読む |
+| `source.cropsrc.pdf` |  |  |  |  |  |  |  | R |  | W |  | pe が生成、ie が読む。省略時は `<outputdir>/<pptx の stem>_slides.pdf` |
+| `source.cropsrc.dpi` |  |  |  |  |  |  |  | R |  |  |  | 省略時 150 |
+| `source.cropimagedirs` |  |  |  |  |  |  |  |  |  |  | R | crop 専用。RANGE 付き画像を探すディレクトリ。リスト可。省略時は `workdir`（または YAML の親） |
+
+---
+
+## 旧 input セクション（廃止）
+
+`input` セクションは廃止し、中身を `fragment` と `source` に分けた。recipe version によらず次のように扱う。`tools/convert_input_keys.py` でレシピを書き換えられる（コメントは残る）。
+
+| 旧キー | 扱い | 移行先 |
+| ---- | ---- | ---- |
+| `input.dirs` | **非推奨**（読み替えて warning） | `fragment.dirs` |
+| `input.imagesdir` | **非推奨**（読み替えて warning） | `source.cropimagedirs` |
+| `input.cropsrc` | **非推奨**（読み替えて warning） | `source.cropsrc` |
+| `input.mddir` | **エラー** | `fragment.dirs`（相対パスの基準がレシピ YAML のディレクトリになる点に注意） |
+| `input.pptxdir` | **エラー** | `fragment.dirs`（同上） |
+
+旧キーと移行先のキーを両方書くとエラー（例: `input.dirs` と `fragment.dirs`）。
 
 ---
 
@@ -162,6 +187,7 @@
 | キー | ir | rd | pm | 備考 |
 | ---- |:--:|:--:|:--:| ---- |
 | `indexer.pptxnumbering` |  | R | R | `no`（既定）/ `chapt_section` / `idresolve` |
+| `indexer.autoid` |  |  |  | **merge** が参照。`true` で、結合済み MD の `#`/`##`/`###` 見出しのうち `{{#id:}}` の無いものに `{{#id:chapter/section/subsection:AUTOHEAD:N}}` を自動で付ける（既定 `false`。原稿は書き換えない）。番号が付くのは `pptxnumbering` が `no` 以外のとき（`idresolve` 推奨）。スライドタイトルには効かない。詳細は `docs/spec/md_pipeline.md`「#id の自動付与」 |
 | `indexer.delimiter` | R |  | R | 節番号の区切り文字。既定 `"."` |
 | `indexer.separator` | R |  | R | 番号とタイトルの区切り文字。既定 `") "` |
 | `indexer.chapter_marker` |  |  | R | 既定 `"#CHAPT#"`。`chapt_section` モードのみ |
@@ -181,6 +207,7 @@
 | `params.*` | R | R | R | 切り替え（`when.var` / `{{#if}}`）に使う変数の宣言。`type`（`bool`/`string`）・`values`・`default`・`description`。`--var` で渡さなければ `default`。宣言があるレシピでは未宣言の名前・取りうる値でない値を読み込み時にエラーにする。`va --list-params` で一覧。詳細は `docs/spec/md_pipeline.md` |
 | `procedure` | R |  | R | `mg` は `insertmd`/`insertvar`/`chapter`/`section`/`subsection`/`insertvspace`/`insertpagebreak`/`insertvfill`、`pm` は `insertpptx`/`chapter`/`section`/`subsection`/`beginstay`/`endstay`。`pm` は MD 専用の操作（`insertmd`/`insertvar`/`insertvspace`/`insertpagebreak`/`insertvfill`）も**許可はするが無視**する（同一 procedure を mg と pm で共用できるようにするため） |
 | `procedure[].when` | R |  | R | 項目の条件付き適用。`command` / `not_command`（起動サブコマンド名）、`var`（`vars:` ＋ `--var` に対する条件式 `NAME` / `!NAME` / `NAME=VALUE` / `NAME!=VALUE`）。値は文字列またはリスト。`ck`/`cv`/`va` は条件を無視して全項目を対象にする。詳細は `docs/spec/md_pipeline.md` |
+| `procedure[].range-max` | R |  |  | `insertmd` / `insertmdpages` のファイル名が `[from-END]`（残り全部）のときに数える上限の番号（1 以上の整数、省略時 99）。それ以外のファイル名では無視（validate が警告）。詳細は `docs/spec/md_pipeline.md`「残り全部」 |
 | `procedure[].insertmdpages` | R |  | R | （version 2 以降）`insertmd` と同じファイル名（`[from-to]` レンジ可）を展開し、各 MD の間に `insertvfill` + `insertpagebreak` を挟んだ insertmd の並びにする略記。1 ファイルなら insertmd と同じ。読み込み時に展開される（`pm` では insertmd と同じく無視）。詳細は `docs/spec/md_pipeline.md` |
 | `procedure[].group` | R |  | R | （version 2 以降）項目のリストを束ねる。同じ要素の `when:` が配下の全項目に掛かる（項目自身の `when:` とは AND、入れ子可）。書けるキーは `group` / `when` / `description`。読み込み時に展開される。詳細は `docs/spec/md_pipeline.md` |
 | `separator.enabled` |  |  | R | `insertpptx` 間に空白スライドを挿入するか |

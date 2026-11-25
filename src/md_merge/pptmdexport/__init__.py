@@ -11,6 +11,7 @@ from pptx import Presentation
 
 from md_merge._params import condition_vars
 from md_merge._filters import escape_backslash_smart, replace_slide_placeholders
+from md_merge._noref import apply_outside_noref
 from md_merge._fingerprint import extract_headings
 from md_merge._condblock import process_text
 from md_merge._note_parser import parse_note_image_directives, parse_note_md_blocks
@@ -262,13 +263,13 @@ def run(args: argparse.Namespace) -> int:
     logging.debug("pptmdexport: latex_check=%s", latex_check)
 
     if not entries:
-        logging.error("input.cropsrc が指定されていません: %s", yaml_path)
+        logging.error("source.cropsrc が指定されていません: %s", yaml_path)
         return EXIT_BAD_INPUT
 
     # ── 全エントリのパス解決と存在確認（fail fast）────────────────────────
     resolved_pptx_paths: list[tuple[str, Path]] = []
     for i, entry in enumerate(entries):
-        label = f"input.cropsrc[{i}]" if len(entries) > 1 else "input.cropsrc"
+        label = f"source.cropsrc[{i}]" if len(entries) > 1 else "source.cropsrc"
         pptx_val = entry.get("pptx")
 
         if not pptx_val:
@@ -319,7 +320,13 @@ def run(args: argparse.Namespace) -> int:
             }
             md_entries_for_slide: list[dict] = []
 
-            note_text = replace_slide_placeholders(note_text, pptx_path, slide_title, slide_idx)
+            # {{noref:begin}}…{{noref:end}} の範囲内はプレースホルダーを置換しない
+            # （マーカーは残し、render で除去する）。
+            note_text = apply_outside_noref(
+                note_text,
+                lambda t: replace_slide_placeholders(t, pptx_path, slide_title, slide_idx),
+                f"{pptx_path.name} スライド {slide_idx}",
+            )
             # <!-- #steps --> の [all] 等を展開するための、同じスライドの IMAGE ブロック
             image_directives = parse_note_image_directives(note_text)
 

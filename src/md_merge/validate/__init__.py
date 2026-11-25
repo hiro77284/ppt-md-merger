@@ -9,6 +9,7 @@ from pathlib import Path
 from md_merge._conditions import WHEN_KEY, check_when, check_when_errors
 from md_merge._output import EXIT_BAD_INPUT, EXIT_FAILURE, EXIT_NOT_FOUND, EXIT_OK, setup_logging
 from md_merge._procedure import (
+    MDPAGES_INTERNAL_KEY,
     DEFAULT_OP_V1,
     GROUP_KEY,
     INHERITED_WHEN_KEY,
@@ -23,28 +24,36 @@ from md_merge._procedure import (
 from md_merge._condblock import is_truthy
 from md_merge._pandoc_keys import deprecated_keys_warning, pandoc_key_errors, removed_latex_keys_warning
 from md_merge._typst_cover import select_typst_cover
+from md_merge._source_keys import (
+    FRAGMENT_KEYS,
+    SOURCE_KEYS,
+    deprecated_input_keys,
+    deprecation_message,
+    source_key_errors,
+    source_section,
+)
 from md_merge._params import PARAMS_KEY, check_params_errors, param_domain
 from md_merge.merge._copy_keys import copy_key_errors
 from md_merge.merge._recipe import _expand_mdfilename, cli_vars, load_yaml, resolve_input_path
 from md_merge.validate._lint import lint
+from md_merge._mdrange import RANGE_MAX_KEY, is_open_range
 
 
 # ── known key schemas ────────────────────────────────────────────────────────
 
 _TOP_LEVEL_KEYS = frozenset({
     "version",
-    "workdir", "input", "output", "procedure",
+    "workdir", "fragment", "source", "output", "procedure",
+    "input",  # 廃止（中身は fragment / source へ）。旧キーは normalize_recipe が読み替える
     "merge", "pandoc", "puremd", "indexer", "vars", "params", "log",
     "pptmerge", "pptmdexport", "separator", "transfer", "notecomexport",
 })
 
-_INPUT_KEYS = frozenset({
-    "dirs",       # merge / pptmerge (統合ファイル探索パス)
-    "mddir",      # merge (非推奨。input.dirs を推奨)
-    "imagesdir",  # crop
-    "cropsrc",    # pptimgexport / pptmdexport / pptpdfexport
-    "pptxdir",    # pptmerge (非推奨。input.dirs を推奨)
-})
+# fragment.dirs: merge / pptmerge ほか（部品ファイルの探索パス）
+# source.cropimagedirs: crop / source.cropsrc: pptimgexport / pptmdexport / pptyamlexport / pptpdfexport
+# 旧 input.dirs / imagesdir / cropsrc は normalize_recipe が読み替えるので、正規化後に input に
+# 残るのは未知のキーだけ（空集合のスキーマで未知のキーとして報告する）。
+_INPUT_KEYS: frozenset[str] = frozenset()
 
 _OUTPUT_KEYS = frozenset({
     "outputdir", "force",
@@ -77,7 +86,7 @@ _PUREMD_KEYS = frozenset({
 })
 
 _INDEXER_KEYS = frozenset({
-    "delimiter", "separator", "pptxnumbering", "deletecsl", "deletecsp",
+    "delimiter", "separator", "pptxnumbering", "autoid", "deletecsl", "deletecsp",
     "chapter_marker", "section_marker", "subsection_marker", "stay_marker",
 })
 
@@ -107,6 +116,8 @@ _NOTECOMEXPORT_KEYS = frozenset({
 })
 
 _SECTION_SCHEMAS: dict[str, frozenset] = {
+    "fragment": FRAGMENT_KEYS,
+    "source": SOURCE_KEYS,
     "input": _INPUT_KEYS,
     "output": _OUTPUT_KEYS,
     "merge": _MERGE_KEYS,
@@ -193,6 +204,18 @@ def validate_recipe(recipe: dict) -> list[str]:
         for k in _unknown(set(val.keys()), schema):
             warnings.append(f"未知のキー: {section}.{k!r}")
 
+    # indexer.autoid（bool。番号が付くのは pptxnumbering が no 以外のとき）
+    indexer = recipe.get("indexer")
+    if isinstance(indexer, dict) and "autoid" in indexer:
+        autoid = indexer.get("autoid")
+        if not isinstance(autoid, bool):
+            warnings.append(f"indexer.autoid は true / false で指定してください: {autoid!r}")
+        elif autoid and indexer.get("pptxnumbering", "no") in ("no", False):
+            warnings.append(
+                "indexer.autoid: true ですが indexer.pptxnumbering が no のため見出しに番号が付きません"
+                "（idresolve にしてください）"
+            )
+
     # procedure アイテム
     procedure = recipe.get("procedure")
     if isinstance(procedure, list):
@@ -207,12 +230,14 @@ def validate_recipe(recipe: dict) -> list[str]:
                     f"  (有効値: {', '.join(sorted(_PROCEDURE_OPS))})"
                 )
                 continue
-            known_keys = _PROCEDURE_ITEM_KEYS.get(op, frozenset()) | {WHEN_KEY, INHERITED_WHEN_KEY}
+            known_keys = _PROCEDURE_ITEM_KEYS.get(op, frozenset()) | {WHEN_KEY, INHERITED_WHEN_KEY, MDPAGES_INTERNAL_KEY}
             for k in _unknown(set(item.keys()), known_keys):
                 warnings.append(f"未知のキー: procedure[{i}]({op}).{k!r}")
             if WHEN_KEY in item:
                 for msg in check_when(item[WHEN_KEY]):
                     warnings.append(f"procedure[{i}]({op}): {msg}")
+            if op == "insertmd":
+                warnings.extend(f"procedure[{i}]({op}): {msg}" for msg in _check_mdfilename_range(item))
 
     # vars: 値に生 LaTeX（\cmd や {=fmt}）が無いか。{{v:}} は実データ置換専用。
     vars_section = recipe.get("vars")
@@ -225,6 +250,21 @@ def validate_recipe(recipe: dict) -> list[str]:
                 )
 
     return warnings
+
+
+def _check_mdfilename_range(item: dict) -> list[str]:
+    """insertmd の mdfilename レンジと range-max の書式を検査する。"""
+    val = item.get("mdfilename")
+    if not isinstance(val, str):
+        return []
+    msgs: list[str] = []
+    if RANGE_MAX_KEY in item and not is_open_range(val):
+        msgs.append(f"{RANGE_MAX_KEY} は [from-END] レンジのときだけ有効です（無視されます）: {val}")
+    try:
+        _expand_mdfilename(val, range_max=item.get(RANGE_MAX_KEY) if is_open_range(val) else None)
+    except ValueError as e:
+        msgs.append(f"mdfilename のレンジが不正です: {e}")
+    return msgs
 
 
 def check_group_when(procedure: object, prefix: str = "procedure") -> list[str]:
@@ -252,8 +292,8 @@ _SLIDE_MD_RE = re.compile(r"^(.+)_slide\d+_md\.md$")
 
 
 def _cropsrc_stems(recipe: dict) -> list[str]:
-    """input.cropsrc[].pptx の stem を登場順（重複除去）で返す。"""
-    cropsrc = (recipe.get("input") or {}).get("cropsrc") or {}
+    """source.cropsrc[].pptx の stem を登場順（重複除去）で返す。"""
+    cropsrc = source_section(recipe).get("cropsrc") or {}
     entries = cropsrc if isinstance(cropsrc, list) else [cropsrc]
     stems: list[str] = []
     seen: set[str] = set()
@@ -380,7 +420,7 @@ def run(args: argparse.Namespace) -> int:
     notation_errors = (
         check_procedure_notation(recipe) + check_when_errors(recipe)
         + check_params_errors(recipe, cli_vars()) + _pandoc_errors(recipe)
-        + copy_key_errors(recipe.get("merge"))
+        + copy_key_errors(recipe.get("merge")) + source_key_errors(recipe)
     )
     if notation_errors:
         return _report_errors(yaml_path, notation_errors, [], json_mode)
@@ -390,7 +430,8 @@ def run(args: argparse.Namespace) -> int:
     workdir = Path(args.workdir).resolve() if getattr(args, "workdir", None) else None
     lint_result = lint(recipe, normalized, yaml_path, workdir)
 
-    warnings = validate_recipe(normalized) + group_warnings + lint_result.warnings
+    input_warnings = [deprecation_message(k) for k in deprecated_input_keys(recipe)]
+    warnings = input_warnings + validate_recipe(normalized) + group_warnings + lint_result.warnings
     cropsrc_usage = check_cropsrc_usage(normalized)
     suggestions = lint_result.info
 

@@ -60,13 +60,13 @@ def run(args: argparse.Namespace) -> int:
     dry_run = getattr(args, "dry_run", False)
 
     if not entries:
-        logging.error("input.cropsrc が指定されていません: %s", yaml_path)
+        logging.error("source.cropsrc が指定されていません: %s", yaml_path)
         return EXIT_BAD_INPUT
 
     # ── 全エントリのパス解決と事前検証（fail fast）────────────────────────
     resolved: list[tuple[Path, Path]] = []
     for i, entry in enumerate(entries):
-        label = f"input.cropsrc[{i}]" if len(entries) > 1 else "input.cropsrc"
+        label = f"source.cropsrc[{i}]" if len(entries) > 1 else "source.cropsrc"
         pptx_val = entry.get("pptx")
         pdf_val = entry.get("pdf")
 

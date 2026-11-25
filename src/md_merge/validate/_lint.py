@@ -1,6 +1,6 @@
 """validate の変数・条件・マーカーの静的検査（スパゲッティ化の予防）。
 
-レシピだけでなく、procedure の insertmd が参照する MD と input.cropsrc の pptx ノートも
+レシピだけでなく、procedure の insertmd が参照する MD と source.cropsrc の pptx ノートも
 読んで、次を検査する。
 
 - 未定義の変数の参照（when.var / ``{{#if}}`` / ``{{v:}}``）
@@ -24,6 +24,7 @@ from pathlib import Path
 
 from md_merge._condblock import _RE_ELSE, _RE_ENDIF, _RE_EXPR, _RE_FENCE, _RE_IF, eval_condition
 from md_merge._conditions import WHEN_KEY, _as_list, iter_whens
+from md_merge._noref import NOREF_BEGIN, NOREF_BEGIN_RE, NOREF_END, NOREF_END_RE
 from md_merge._params import PARAMS_KEY, param_domain
 from md_merge._procedure import GROUP_KEY, INHERITED_WHEN_KEY
 
@@ -74,7 +75,7 @@ def collect_sources(recipe: dict, yaml_path: Path, workdir: Path | None) -> tupl
 
     root = logging.getLogger()
     level = root.level
-    root.setLevel(logging.ERROR)  # input.dirs の推奨警告などは validate では出さない
+    root.setLevel(logging.ERROR)  # fragment.dirs の推奨警告などは validate では出さない
     try:
         in_dirs = resolve_input_dirs(recipe, yaml_path, workdir)
         md_entries = iter_insertmd_entries(recipe, in_dirs, yaml_path)
@@ -136,6 +137,7 @@ def _scan_source(src: Source, refs: list[_Ref], result: LintResult) -> None:
     depth = 0
     max_depth = 0
     fence: str | None = None
+    noref_where: str | None = None  # 開いている {{noref:begin}} の位置
     for lineno, raw in enumerate(src.text.splitlines(), start=1):
         where = f"{src.label} line {lineno}"
         mf = _RE_FENCE.match(raw)
@@ -165,8 +167,22 @@ def _scan_source(src: Source, refs: list[_Ref], result: LintResult) -> None:
         if _RE_ELSE.match(raw):
             continue
 
-        for m in _VAR_REF_RE.finditer(raw):
-            refs.append(_Ref(m.group(1), where))
+        if NOREF_BEGIN_RE.match(raw):
+            if noref_where is not None:
+                result.warnings.append(
+                    f"{where}: {NOREF_BEGIN} の範囲内で再び {NOREF_BEGIN} があります（入れ子はできません）"
+                )
+            noref_where = where
+            continue
+        if NOREF_END_RE.match(raw):
+            if noref_where is None:
+                result.warnings.append(f"{where}: {NOREF_END} に対応する {NOREF_BEGIN} がありません")
+            noref_where = None
+            continue
+
+        if noref_where is None:  # 置換抑制範囲内の {{v:}} は置換されないので検査しない
+            for m in _VAR_REF_RE.finditer(raw):
+                refs.append(_Ref(m.group(1), where))
 
         markers = set(_MARKER_RE.findall(raw))
         if markers and not _ID_RE.search(raw):
@@ -176,6 +192,8 @@ def _scan_source(src: Source, refs: list[_Ref], result: LintResult) -> None:
             result.warnings.append(
                 f"{where}: {{{{nonum}}}} は採番しないので {{{{nolabel}}}} は不要です（どちらか一方に）"
             )
+    if noref_where is not None:
+        result.warnings.append(f"{noref_where}: {NOREF_BEGIN} の範囲が閉じていません（{NOREF_END} が必要）")
 
 
 # ── procedure の検査 ────────────────────────────────────────────────────────

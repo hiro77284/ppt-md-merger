@@ -47,7 +47,7 @@ pptmdmerge crop_to_pdf recipe.yaml --dry-run
 
 - いずれかのステップが非ゼロを返すと、以降のステップを実行せずに終了する。
 - エラーログに失敗したステップ名と終了コードを出力する。
-- `crop` ステップは `input.imagesdir` が未定義または対象画像なしの場合も  
+- `crop` ステップは `source.cropimagedirs` が未定義または対象画像なしの場合も  
   非ゼロを返さないため（`crop` 単体の仕様に従う）、パイプラインは継続する。
 
 ### `--force` の扱い
@@ -80,7 +80,7 @@ pptmdmerge ppt_to_pdf recipe.yaml --dry-run
 | `--force` | 全ステップで既存ファイルを上書きする | 任意 |
 | `--yes-clear-dir` | merge 前の image-dir 全削除（clear-dir-before-merge）の確認を省略して削除する。`--force` では省略されない | 任意 |
 | `--rebuild` | `pptpdfexport` ステップで、出力 PDF がソース PPTX より新しくても再生成する（タイムスタンプによるスキップを無効化） | 任意 |
-| `--preprocess` | 各 `input.cropsrc.pptx` を前処理し、以降の pptx 利用ステップで前処理済み pptx を使用する（後述） | 任意 |
+| `--preprocess` | 各 `source.cropsrc.pptx` を前処理し、以降の pptx 利用ステップで前処理済み pptx を使用する（後述） | 任意 |
 | `--deletecsl` `[on\|off]` | **無視される。** パイプラインでは CSL マーカーを一切処理しないため効果がない（指定すると警告を出す）。後述「CSL マーカーの扱い」参照 | 任意 |
 | `--deletecsp` `[on\|off]` | 前処理時に `#CSP#` を含むシェイプを削除する。引数省略（ベアフラグ）で `on`、`off` で明示無効、オプション自体を省略するとレシピ `indexer.deletecsp` に従う。`--preprocess` 指定時のみ有効 | 任意 |
 | `--closepptx` | `pptpdfexport` / `pptimgexport` / `pptmdexport` で処理完了後にファイルを close する（**省略時も close する**。COM ファイルロックを解放するため `ppt_to_pdf` ではデフォルト有効） | 任意 |
@@ -91,7 +91,7 @@ pptmdmerge ppt_to_pdf recipe.yaml --dry-run
 
 ### 前処理（`--preprocess`）
 
-`--preprocess` を指定すると、パイプライン本体の実行前に、各 `input.cropsrc.pptx` に対して**単一ファイルの pptmerge** を行い、前処理済み pptx を生成する。以降の pptx を利用するステップ（`pptpdfexport` / `pptimgexport` / `pptmdexport`）は、元の pptx の代わりに前処理済み pptx の**内容を読み込む**。増分ビルドチェック対象も前処理済み pptx に差し替わるため、結果として増分ビルドは行われず、常に再生成される（--rebuildが指定されたと同じ動き）。
+`--preprocess` を指定すると、パイプライン本体の実行前に、各 `source.cropsrc.pptx` に対して**単一ファイルの pptmerge** を行い、前処理済み pptx を生成する。以降の pptx を利用するステップ（`pptpdfexport` / `pptimgexport` / `pptmdexport`）は、元の pptx の代わりに前処理済み pptx の**内容を読み込む**。増分ビルドチェック対象も前処理済み pptx に差し替わるため、結果として増分ビルドは行われず、常に再生成される（--rebuildが指定されたと同じ動き）。
 
 | 項目 | 内容 |
 | ---- | ---- |
@@ -178,7 +178,7 @@ pptmdmerge ppt_to_transfer recipe.yaml --dry-run
 | `--force` | 全ステップで既存ファイルを上書きする | 任意 |
 | `--yes-clear-dir` | merge 前の image-dir 全削除（clear-dir-before-merge）の確認を省略して削除する。`--force` では省略されない | 任意 |
 | `--rebuild` | `pptpdfexport` ステップで、出力 PDF がソース PPTX より新しくても再生成する（タイムスタンプによるスキップを無効化） | 任意 |
-| `--preprocess` | 各 `input.cropsrc.pptx` を前処理し、以降の pptx 利用ステップで前処理済み pptx を使用する（[ppt_to_pdf の「前処理」](#前処理--preprocess)と同仕様。削除は `transfer` 完了後） | 任意 |
+| `--preprocess` | 各 `source.cropsrc.pptx` を前処理し、以降の pptx 利用ステップで前処理済み pptx を使用する（[ppt_to_pdf の「前処理」](#前処理--preprocess)と同仕様。削除は `transfer` 完了後） | 任意 |
 | `--deletecsl` `[on\|off]` | **無視される。** パイプラインでは CSL マーカーを一切処理しない（指定すると警告を出す） | 任意 |
 | `--deletecsp` `[on\|off]` | 前処理時に `#CSP#` を含むシェイプを削除する。ベアフラグで `on`、`off` で明示無効、省略でレシピ追従（`--preprocess` 指定時のみ有効） | 任意 |
 | `--keep-work` | 完了後に中間生成ファイル（後述）を削除せず残す。前処理済み pptx も保持する | 任意 |
@@ -310,11 +310,12 @@ python tools/notecom_autopilot.py build/<base>_notecom.yaml --auth-state auth.js
 pptmdmerge ppt_build recipe.yaml --pdf --githubmd
 pptmdmerge ppt_build recipe.yaml --pdf --githubmd --transfer   # GitHub 用 MD を転送
 pptmdmerge ppt_build recipe.yaml --puremd --notecom --transfer  # puremd MD を転送
+pptmdmerge ppt_build recipe.yaml                                # 出力指定なし: render まで（rendered MD を残す）
 ```
 
 ### 出力オプション
 
-1 つ以上の指定が必要（1 つも無ければエラー、終了コード 2）。
+**1 つも指定しなければ `render` まで実行して終わる**（成果物は `output.renderedfilename` の rendered MD。`pandoc` 以降の段は走らない）。`when.command` の照合と中間ファイルの扱いは `ppt_to_pdf` と同じ（rendered MD を残し、それ以外の work ファイルを削除）。PDF のパス衝突検査は行わない。
 
 | オプション | 追加される段 | 成果物 | 同等のコマンド |
 | ---------- | ------------ | ------ | -------------- |
@@ -326,7 +327,7 @@ pptmdmerge ppt_build recipe.yaml --puremd --notecom --transfer  # puremd MD を�
 
 * `render` の後の段は `puremd` → `githubmd` → `notecomexport` → `transfer` → `pandoc` の順に、選んだものだけ実行する。`puremd` は MD 系の出力のどれかを選べば 1 回だけ入る。**`pandoc` は最後**に回す（最も時間がかかり失敗しやすいため。PDF が失敗しても MD 系の成果物は残る）。
 * 中間生成ファイルの削除は、各出力に対応する `ppt_to_*` が残すファイルの和集合を残し、それ以外を削除する（`--pdf` なら `output.renderedfilename`、`--puremd` / `--githubmd` / `--notecom` なら `output.puremdfilename` を残す）。`--keep-work` で全て残す。
-* `--pdf` を含むときは `ppt_to_pdf` と同じく、`input.cropsrc` のスライド PDF と成果物 PDF のパス衝突を開始前に検査する。
+* `--pdf` を含むときは `ppt_to_pdf` と同じく、`source.cropsrc` のスライド PDF と成果物 PDF のパス衝突を開始前に検査する。
 
 ### `--transfer` の転送元
 
@@ -334,7 +335,7 @@ pptmdmerge ppt_build recipe.yaml --puremd --notecom --transfer  # puremd MD を�
 
 ### `when.command` の扱い
 
-1 回の merge で全ての出力を作るため、procedure の `when.command` / `not_command` は、選んだ出力に対応するコマンド（上表の「同等のコマンド」）の名前で照合する。対応するコマンドごとに残る procedure 項目が**同じなら**そのまま 1 回で実行する。**異なる場合**（例: `not_command: ppt_to_pdf` の項目があるレシピで `--pdf --githubmd`）は、1 回の merge では両方を正しく作れないので**開始前にエラー（終了コード 2）**とし、該当する `ppt_to_*` を別々に実行するよう案内する。`ppt_build` 自体の名前は `when.command` には書けない。
+1 回の merge で全ての出力を作るため、procedure の `when.command` / `not_command` は、選んだ出力に対応するコマンド（上表の「同等のコマンド」。出力指定なしなら `ppt_to_pdf`）の名前で照合する。対応するコマンドごとに残る procedure 項目が**同じなら**そのまま 1 回で実行する。**異なる場合**（例: `not_command: ppt_to_pdf` の項目があるレシピで `--pdf --githubmd`）は、1 回の merge では両方を正しく作れないので**開始前にエラー（終了コード 2）**とし、該当する `ppt_to_*` を別々に実行するよう案内する。`ppt_build` 自体の名前は `when.command` には書けない。
 
 固有オプションは出力オプションのほか `--workdir` / `--force` / `--rebuild` / `--preprocess` / `--deletecsl`（無視）/ `--deletecsp` / `--no-check` / `--keep-work` / `--yes-clear-dir` / `--source`。
 

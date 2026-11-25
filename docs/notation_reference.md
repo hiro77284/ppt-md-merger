@@ -18,6 +18,7 @@
 | 記法 | 書く場所 | 処理する段 | 意味 | 詳細 |
 |---|---|---|---|---|
 | `{{#id:TYPE:PART:LOCAL}}` | 原稿MD / ノート | idcollect → idresolve → render | ID 定義。直後の見出しを採番対象にする。`TYPE` = `chapter`/`section`/`subsection`/`image`/`var` | [md_pipeline](spec/md_pipeline.md#マーカーフォーマット) |
+| （`indexer.autoid: true`） | レシピ | merge | `{{#id:}}` の無い `#`/`##`/`###` 見出しに `{{#id:TYPE:AUTOHEAD:N}}` を自動で付ける（PART `AUTOHEAD` は予約語） | [md_pipeline](spec/md_pipeline.md#id-の自動付与indexerautoid) |
 | `{{num:FULL_ID}}` | 原稿MD | render | 番号参照 | [md_pipeline](spec/md_pipeline.md#2-参照変換) |
 | `{{title:FULL_ID}}` | 原稿MD | render | タイトル参照 | 同上 |
 | `{{label:FULL_ID}}` | 原稿MD | render | ラベル（番号＋タイトル）参照 | 同上 |
@@ -27,6 +28,7 @@
 | `{{sectionlist}}` / `{{sectionlist:chapter:PART:LOCAL}}` | 原稿MD | render | 章に属するセクション一覧を箇条書きに展開（章とびら用） | [md_pipeline](spec/md_pipeline.md#4-セクション一覧展開sectionlist) |
 | `{{nolabel}}` | 原稿MD（`{{#id:}}` と同じ行） | render | その見出しの label 置換をスキップ（**採番はされる**） | [md_pipeline](spec/md_pipeline.md#インライン制御マーカー) |
 | `{{noref}}` | 原稿MD（`{{#id:}}` と同じ行） | render | その行と直後の見出しの参照変換・変数置換をスキップ | 同上 |
+| `{{noref:begin}}` … `{{noref:end}}` | 原稿MD / ノート（MD ブロック。単独行） | pptmerge（ノート）・pptmdexport・render | 囲んだ行の参照変換・変数置換・プレースホルダー置換・`{{sectionlist}}` 展開をスキップ（本文版の `#NOREPLACE#`）。範囲内の `{{#id:}}` は `{{noref}}` 付き扱い。マーカー行は render が除去 | [md_pipeline](spec/md_pipeline.md#置換抑制範囲norefbegin--norefend) |
 | `{{nonum}}` | 原稿MD / ノート（`{{#id:}}` と同じ行） | idcollect → idresolve → render・pptmerge | ID は登録するが**採番しない**（番号を消費せず後続は連番のまま）。見出し・スライドタイトルは書いたまま | 同上 |
 | `{{enclosenum:FULL_ID}}` | ノート | pptmerge（idresolve モード） | スライドタイトルの先頭に `(番号) ` を前置。ID を定義しないので複数スライドで使える | [pptx](spec/pptx.md#idresolve-モードの動作詳細) |
 | `{{titlelabel:FULL_ID}}` | ノート | pptmerge（idresolve モード） | スライドタイトルを label で置換。ID を定義しない | 同上 |
@@ -121,7 +123,7 @@ indent=6em で深く字下げしています。
 | `{{vspace:N}}` / `{{vspace:5mm}}` | 垂直スペース（数値=行数、単位付き=その長さ） | `#v` | `div.vspace` | 破棄 |
 | `{{pagebreak}}` | 改ページ | `#pagebreak(weak: true)` | `div.pagebreak` | 破棄 |
 | `{{vfill}}` | 残り高を埋める | `#v(1fr)` | `div.vfill` | 破棄 |
-| `{{br}}` | 見出し内の強制改行 | `#linebreak()` | `<br>` | 破棄 |
+| `{{br}}`（大文字小文字は問わない） | 見出し内の強制改行 | `#linebreak()` | `<br>` | 破棄 |
 
 > リーフ記法はレシピの `procedure` に `insertvspace` / `insertpagebreak` / `insertvfill` 操作を書いても挿入できる（[md_pipeline](spec/md_pipeline.md#行空け改ページの挿入insertvspace--insertpagebreak--insertvfill)）。
 
@@ -182,7 +184,7 @@ indent=6em で深く字下げしています。
 | `<__SLIDENUM__>` | ソース pptx でのスライド番号（1 始まり） |
 | `<__TITLE__>` | そのスライドのタイトル文字列 |
 
-`#NOREPLACE#` を含むスライドでは置換をスキップする。
+`#NOREPLACE#` を含むスライドでは置換をスキップする。ノートの一部だけ置換しないときは、その行を `{{noref:begin}}` … `{{noref:end}}` で囲む（[1 章](#1-id参照マーカー)）。
 
 ### 5.3 テキストマーカー（スライド内のシェイプ本文に書く）
 
@@ -217,6 +219,8 @@ indent=6em で深く字下げしています。
 | `_constants: path.toml` | 同上（トップレベル） | TOML の定数ファイルを読み込む（リスト可）。旧書式 `!constants` は非推奨 | [pptx](spec/pptx.md#ノート-yaml-での-_include) |
 | `__NAME__` | 同上 | 定数置換。組み込みは `__DATE__` / `__TIME__` / `__DATETIME__` | 同上 |
 | `name[1-7].md` | `procedure` の `insertmd` / `insertmdpages` | レンジ展開（`name1.md` … `name7.md`） | [md_pipeline](spec/md_pipeline.md#insertmd-ファイル名のレンジ展開from-to) |
+| `name[1-END].md` | `procedure` の `insertmd` / `insertmdpages` | 残り全部: 1 から上限（`range-max`、省略時 99）まで数え、存在するファイルだけ挿入。飛ばした番号と見つかった最大番号をログに出す | [md_pipeline](spec/md_pipeline.md#残り全部from-end) |
+| `slides: 3-END` | `procedure` の `insertpptx` | スライド 3 から最後まで（`1, 4-END` のように混在可）。全スライドは `all` | [pptx](spec/pptx.md#insertpptx-の-slides-指定書式) |
 | `fig__10_20_90_80.png` | crop 対象の画像ファイル名 | 末尾の `__{L}_{T}_{R}_{B}`（各 0〜100）で切り出し範囲を指定 | [pipelines](spec/pipelines.md) |
 
 ---

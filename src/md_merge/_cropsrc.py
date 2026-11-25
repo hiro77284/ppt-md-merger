@@ -1,7 +1,7 @@
-"""`input.cropsrc` セクションの共有ヘルパ。
+"""`source.cropsrc` セクションの共有ヘルパ。
 
 pptimgexport / pptmdexport / pptyamlexport / pptpdfexport と `--preprocess` は
-いずれも同じ `input.cropsrc` を読む。各サブコマンドが同一の正規化・パス解決を
+いずれも同じ `source.cropsrc` を読む。各サブコマンドが同一の正規化・パス解決を
 私有コピーで持っていたため、ここに集約する。
 """
 
@@ -9,6 +9,7 @@ from __future__ import annotations
 
 from pathlib import Path
 
+from md_merge._source_keys import source_section
 from md_merge.pptmerge._config import resolve_base
 
 
@@ -22,8 +23,8 @@ def normalize_cropsrc(cropsrc: dict | list) -> list[dict]:
 
 
 def cropsrc_entries(recipe: dict) -> list[dict]:
-    """レシピの `input.cropsrc` を正規化済みリストとして返す。"""
-    return normalize_cropsrc((recipe.get("input") or {}).get("cropsrc") or {})
+    """レシピの `source.cropsrc` を正規化済みリストとして返す（旧 input.cropsrc は読み替え済み）。"""
+    return normalize_cropsrc(source_section(recipe).get("cropsrc") or {})
 
 
 def resolve_cropsrc_path(val: str, yaml_path: Path, workdir: Path | None) -> Path:
@@ -43,7 +44,7 @@ AUTO_PDF_SUFFIX = "_slides"
 
 
 def auto_cropsrc_pdf_path(pptx_val: str, output_section: dict, yaml_path: Path, workdir: Path | None) -> Path:
-    """`input.cropsrc[].pdf` 省略時の PDF パス: ``output.outputdir/<pptx_stem>_slides.pdf``。"""
+    """`source.cropsrc[].pdf` 省略時の PDF パス: ``output.outputdir/<pptx_stem>_slides.pdf``。"""
     base = resolve_base(yaml_path, workdir)
     outdir_val = (output_section or {}).get("outputdir")
     if outdir_val:

@@ -30,7 +30,7 @@ class ImageCopier:
     out_md: Path          # destination merged MD (images go next to it)
     dir_name: str         # name of the image subdirectory
     flatten: bool         # True → flat dir; False → preserve relative structure
-    in_dir: Path | None   # base for structure-preserving mode (input.mddir)
+    in_dir: Path | None   # base for structure-preserving mode (first fragment.dirs entry)
     naming: str           # "preserve" (keep the source name) | "sanitize" (ASCII slug)
     collision: str        # "rename" (add _1/_2) | "overwrite" (warn and clobber)
     _registry: dict[Path, Path] = field(default_factory=dict, init=False)

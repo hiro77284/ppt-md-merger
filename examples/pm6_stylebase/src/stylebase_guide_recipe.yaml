@@ -12,7 +12,7 @@ output:
 pptmerge:
   stylebase: simple_stylebase.pptx           # stylebase として使用する pptx ファイルのパス
 
-input:
+fragment:
   dirs: 
     - .
     - ../mds

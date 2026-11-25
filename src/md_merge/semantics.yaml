@@ -89,6 +89,8 @@ leaves:
     # ここに置かない（置くと semantic-leaf.lua がブロックとして誤処理する）。GFM のみ定義。
     # GFM（puremd → transfer / notecomexport の Web 系出力）では破棄する。改行位置の指定は
     # PDF の固定幅組版向けで、表示幅が可変な Web では不要（日本語見出しなので空白も入れない）。
+    # ignorecase: 大文字小文字を区別しない（{{BR}} も同じ扱い。semantic-break.lua と揃える）。
+    ignorecase: true
     gfm:   { drop: true }
 
 # ── escape hatch（raw passthrough）────────────────────────────────────────
