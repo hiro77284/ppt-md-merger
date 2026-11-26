@@ -32,7 +32,7 @@ PPT \& MD merger の主な用途の１つが、複数の PowerPoint ファイル
 
 などの課題を一括して解決するのが PPT \& MD merger です。
 
-この用途の実際の使用例と使い方解説はこちらから → [PPTXをもとにPDFを生成するサンプル](/examples/pdf1_minimum/README.md)
+この用途の実際の使用例と使い方解説はこちらから → [PPTXをもとにPDFを生成するサンプル](https://github.com/hiro77284/ppt-md-merger-samples) （別リポジトリとして作ってあります）
 
 
 
