@@ -70,7 +70,7 @@ pptmdmerge merge input.yaml
 | `ppt_to_puremd`    | `ppt_to_transfer` から末尾の transfer を除いた版。pptpdfexport → … → render → puremd まで実行し、puremd 処理済み MD を成果物として残す                            | yamlファイル | MD・画像ファイル     |
 | `ppt_to_githubmd`  | `ppt_to_puremd` の末尾に githubmd を足した版。pptpdfexport → … → render → puremd → githubmd を連続実行し、GitHub 表示用 MD を成果物として残す。`--transfer` で末尾に transfer を追加（`ppt_to_puremd` も同様） | yamlファイル | MD・画像ファイル     |
 | `ppt_to_notecom`   | `ppt_to_transfer` の末尾 transfer を notecomexport に差し替えた版。pptpdfexport → … → puremd → notecomexport を連続実行し、note.com 投稿用 YAML を成果物として残す | yamlファイル | YAML・画像ファイル   |
-| `ppt_build`        | pptpdfexport → … → render を 1 回だけ実行し、`--pdf` / `--puremd` / `--githubmd` / `--notecom` / `--transfer` で選んだ出力だけを作る（`ppt_to_*` を複数回実行する代わり。出力指定なしなら render まで） | yamlファイル | PDF・MD・YAML・画像ファイル |
+| `ppt_build`        | pptpdfexport → … → render を 1 回だけ実行し、`--pdf` / `--puremd` / `--githubmd` / `--notecom` / `--transfer` / `--pptx` で選んだ出力だけを作る（`ppt_to_*` や `pptmerge` を複数回実行する代わり。MD 系の出力指定なしなら render まで） | yamlファイル | PDF・MD・YAML・画像・pptx ファイル |
 | `validate`         | レシピ YAML の整合性（未知キー・vars 値の生 LaTeX・params: と変数/条件/番号マーカー）を検査し、cropsrc と procedure の対応を info 表示する                                   | yamlファイル | （検査結果のみ）      |
 | `explain`          | `--var` のもとで procedure のどの項目が採用／除外されるかを理由つきで表示（`--matrix` で値ごとの差分、`--blocks` で `{{#if}}` の判定） | yamlファイル | （表示のみ）      |
 
@@ -166,7 +166,7 @@ output:
 - 同一プロセス実行内では全サブコマンドで同一のタイムスタンプを使用する（セッションキャッシュ）
 - YAML 値・キー・コメントを問わずテキスト全体に適用される
 - `_include` で読み込まれたファイル内の定数も同様に置換される（読み込み元の `_constants` も効く）
-- 値に改行を含む定数は、その定数だけが書かれた行全体を複数行に置換する
+- 値に改行を含む定数は、その定数だけが書かれた行（後ろにコメントがあってもよい）全体を複数行に置換する。元の行の字下げを各行の先頭に付ける
 
 ### ユーザー定義定数ファイル（TOML）
 
@@ -192,11 +192,11 @@ output:
 __AUTHOR__  = '山田太郎'
 __VERSION__ = '1.0.0'
 
-# 複数行定数（シングルクォートでバックスラッシュをそのまま保持）
-__LATEX_PACKAGES__ = '''
-\usepackage{luatexja}
-\usepackage{graphicx}
-\setmainfont{Noto Serif CJK JP}
+# 複数行定数（''' で囲む。シングルクォートなのでバックスラッシュもそのまま書ける）
+__COVER_COMMON__ = '''
+COVER_AUTHOR: "__AUTHOR__"
+COVER_AFFILIATION: "株式会社サンプル"
+COVER_COPYRIGHT: "© 2026 株式会社サンプル"
 '''
 ```
 
@@ -208,9 +208,19 @@ _constants: project/constants.toml
 output:
   pdffilename: doc___DATE__.pdf
 
-pandoc:
-  include-in-header:
-    __LATEX_PACKAGES__   # この行全体が複数行に展開される
+vars:
+  __COVER_COMMON__        # この行全体が複数行に展開される
+  COVER_TITLE: "個別の文書名"
+```
+
+展開後（行頭の字下げは展開した各行に付く。値の中のインライン定数 `__AUTHOR__` も置換される）：
+
+```yaml
+vars:
+  COVER_AUTHOR: "山田太郎"
+  COVER_AFFILIATION: "株式会社サンプル"
+  COVER_COPYRIGHT: "© 2026 株式会社サンプル"
+  COVER_TITLE: "個別の文書名"
 ```
 
 ## 5.3 レシピ YAML の version と procedure 記法
@@ -273,8 +283,9 @@ procedure:
 | 操作 | 値（主引数） | version 1 での書き方 |
 | ---- | ------------ | -------------------- |
 | `insertpptx` | 入力 pptx ファイル名 | `pptxfilename` |
-| `insertmd` | 入力 MD ファイル名（`[from-to]` レンジ可。`[1-END]` で残り全部、上限は `range-max`（省略時 99）） | `mdfilename` |
-| `insertmdpages` | 入力 MD ファイル名（`[from-to]` レンジ可）。各 MD の間に `insertvfill` と `insertpagebreak` を挟んだ insertmd の並びに展開する（[md_pipeline.md](spec/md_pipeline.md)「MD ごとに改ページして並べる」） | （なし。version 2 以降のみ） |
+| `insertmd` | 入力 MD ファイル名（`[from-to]` レンジ可。`[1-END]` で残り全部、上限は `range-max`（省略時 99）。`[1,2,4-END]` のカンマ区切りも可） | `mdfilename` |
+| `insertmdpages` | 入力 MD ファイル名（`[from-to]` / `[1,2,4-END]` レンジ可）。各 MD の間に `insertvfill` と `insertpagebreak` を挟んだ insertmd の並びに展開する（[md_pipeline.md](spec/md_pipeline.md)「MD ごとに改ページして並べる」） | （なし。version 2 以降のみ） |
+| `insertvfillpagebreak` | なし。`insertvfill` + `insertpagebreak` の 2 項目に展開する（[md_pipeline.md](spec/md_pipeline.md)「下を埋めて改ページ」） | （なし。version 2 以降のみ） |
 | `insertvar` | 変数名（値の文字列をそのまま MD として挿入） | `varname` |
 | `chapter` / `section` / `subsection` | カウンタ値（`"+"` / `n` / `+n` / `-n`）。省略可 | 同名キー |
 | `insertvspace` | 行数または単位付き長さ | `lines` |

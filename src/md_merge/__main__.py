@@ -367,22 +367,24 @@ def _make_parser() -> argparse.ArgumentParser:
     pb = sub.add_parser(
         "ppt_build",
         parents=[common],
-        help="Run pptpdfexport → … → render once, then only the selected outputs (--pdf / --puremd / --githubmd / --notecom / --transfer); with none, stop after render and keep the rendered MD",
+        help="Run pptpdfexport → … → render once, then only the selected outputs (--pdf / --puremd / --githubmd / --notecom / --transfer / --pptx); with no MD output, stop after render and keep the rendered MD",
     )
     pb.add_argument("input", nargs="?", metavar="INPUT", help="Input YAML file")
     pb.add_argument("--workdir", "-w", metavar="DIR", help="Base directory for relative paths")
     pb.add_argument("--force", action="store_true", help="Overwrite existing output files")
-    pb.add_argument("--rebuild", action="store_true", help="Force the pptpdfexport step to rebuild PDFs even when newer than the source PPTX")
-    pb.add_argument("--preprocess", action="store_true", help="Preprocess each source.cropsrc.pptx (single-file pptmerge, slides:all) and use the preprocessed pptx for the pptx-consuming steps")
-    pb.add_argument("--deletecsl", nargs="?", const="on", choices=["on", "off"], default=None, dest="delete_csl", metavar="[on|off]", help="[非推奨/無視] パイプラインでは CSL 処理を行わないため効果がない。指定すると警告する")
-    pb.add_argument("--deletecsp", nargs="?", const="on", choices=["on", "off"], default=None, dest="delete_csp", metavar="[on|off]", help="Preprocess: delete shapes containing #CSP#. Bare flag = on; 'off' forces off; omitted = recipe indexer.deletecsp. Effective only with --preprocess")
-    pb.add_argument("--no-check", action="store_true", dest="no_check", help="Skip the pre-merge insertmd drift check (no confirmation prompt)")
-    pb_out = pb.add_argument_group("outputs (none = stop after render, rendered MD is the deliverable)")
+    pb.add_argument("--rebuild", action="store_true", help="Force the pptpdfexport step to rebuild PDFs even when newer than the source PPTX (with --pptx, also rebuild the merged pptx like pptmerge --rebuild)")
+    pb.add_argument("--preprocess", action="store_true", help="Preprocess each source.cropsrc.pptx (single-file pptmerge, slides:all) and use the preprocessed pptx for the pptx-consuming steps (with --pptx, the pptmerge step also preprocesses its insertpptx sources like pptmerge --preprocess)")
+    pb.add_argument("--deletecsl", nargs="?", const="on", choices=["on", "off"], default=None, dest="delete_csl", metavar="[on|off]", help="--pptx の pptmerge にだけ効く: 結合済み pptx の CSL 処理 on=#CSL# スライド削除 / off=マーカー文字列のみ除去（recipe indexer.deletecsl を上書き）。--pptx なしでは無視して警告する")
+    pb.add_argument("--deletecsp", nargs="?", const="on", choices=["on", "off"], default=None, dest="delete_csp", metavar="[on|off]", help="Delete shapes containing #CSP#. Bare flag = on; 'off' forces off; omitted = recipe indexer.deletecsp. Effective with --preprocess and/or --pptx (applied to the merged pptx)")
+    pb.add_argument("--no-check", action="store_true", dest="no_check", help="Skip the pre-merge insertmd drift check (no confirmation prompt); with --pptx, also the insertpptx drift check")
+    pb.add_argument("--pptxnumbering", choices=["no", "chapt_section", "idresolve"], dest="pptxnumbering", help="--pptx の pptmerge の番号付け方法（recipe indexer.pptxnumbering を上書き）。--pptx なしでは無視して警告する")
+    pb_out = pb.add_argument_group("outputs (no MD output = stop after render, rendered MD is the deliverable)")
     pb_out.add_argument("--pdf", action="store_true", help="PDF via pandoc (output.pdffilename), like ppt_to_pdf")
     pb_out.add_argument("--puremd", action="store_true", help="puremd MD (output.puremdfilename), like ppt_to_puremd")
     pb_out.add_argument("--githubmd", action="store_true", help="GitHub MD (output.githubmdfilename), like ppt_to_githubmd")
     pb_out.add_argument("--notecom", action="store_true", help="note.com posting YAML (output.notecomyamlfilename), like ppt_to_notecom")
     pb_out.add_argument("--transfer", action="store_true", help="Copy the GitHub MD (with --githubmd) or else the puremd MD and its images to transfer.dataentry_input (needs the transfer: section)")
+    pb_out.add_argument("--pptx", action="store_true", help="Merged pptx (output.pptxfilename) via pptmerge with the same recipe, like running pptmerge. Runs after idresolve (pptxnumbering: idresolve works) and before pandoc; when.command is matched as pptmerge. Windows + PowerPoint only")
     pb.add_argument(
         "--source", choices=["puremd", "githubmd", "rendered", "merged"], dest="source",
         help="Transfer source MD override (wins over transfer.inputmd). Effective only with --transfer",

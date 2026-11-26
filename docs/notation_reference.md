@@ -17,7 +17,7 @@
 
 | 記法 | 書く場所 | 処理する段 | 意味 | 詳細 |
 |---|---|---|---|---|
-| `{{#id:TYPE:PART:LOCAL}}` | 原稿MD / ノート | idcollect → idresolve → render | ID 定義。直後の見出しを採番対象にする。`TYPE` = `chapter`/`section`/`subsection`/`image`/`var` | [md_pipeline](spec/md_pipeline.md#マーカーフォーマット) |
+| `{{#id:TYPE:PART:LOCAL}}` | 原稿MD / ノート | idcollect → idresolve → render | ID 定義。直後の見出しを採番対象にする。`TYPE` = `chapter`/`section`/`subsection`/`image`/`var`。3 部とも必須（`LOCAL` だけは `:` を含められる）。崩れた形は登録されず警告 | [md_pipeline](spec/md_pipeline.md#マーカーフォーマット) |
 | （`indexer.autoid: true`） | レシピ | merge | `{{#id:}}` の無い `#`/`##`/`###` 見出しに `{{#id:TYPE:AUTOHEAD:N}}` を自動で付ける（PART `AUTOHEAD` は予約語） | [md_pipeline](spec/md_pipeline.md#id-の自動付与indexerautoid) |
 | `{{num:FULL_ID}}` | 原稿MD | render | 番号参照 | [md_pipeline](spec/md_pipeline.md#2-参照変換) |
 | `{{title:FULL_ID}}` | 原稿MD | render | タイトル参照 | 同上 |
@@ -125,7 +125,7 @@ indent=6em で深く字下げしています。
 | `{{vfill}}` | 残り高を埋める | `#v(1fr)` | `div.vfill` | 破棄 |
 | `{{br}}`（大文字小文字は問わない） | 見出し内の強制改行 | `#linebreak()` | `<br>` | 破棄 |
 
-> リーフ記法はレシピの `procedure` に `insertvspace` / `insertpagebreak` / `insertvfill` 操作を書いても挿入できる（[md_pipeline](spec/md_pipeline.md#行空け改ページの挿入insertvspace--insertpagebreak--insertvfill)）。
+> リーフ記法はレシピの `procedure` に `insertvspace` / `insertpagebreak` / `insertvfill` 操作（vfill + 改ページは 1 行の `insertvfillpagebreak` でも可）を書いても挿入できる（[md_pipeline](spec/md_pipeline.md#行空け改ページの挿入insertvspace--insertpagebreak--insertvfill)）。
 
 ### 3.4 escape hatch
 
@@ -220,6 +220,7 @@ indent=6em で深く字下げしています。
 | `__NAME__` | 同上 | 定数置換。組み込みは `__DATE__` / `__TIME__` / `__DATETIME__` | 同上 |
 | `name[1-7].md` | `procedure` の `insertmd` / `insertmdpages` | レンジ展開（`name1.md` … `name7.md`） | [md_pipeline](spec/md_pipeline.md#insertmd-ファイル名のレンジ展開from-to) |
 | `name[1-END].md` | `procedure` の `insertmd` / `insertmdpages` | 残り全部: 1 から上限（`range-max`、省略時 99）まで数え、存在するファイルだけ挿入。飛ばした番号と見つかった最大番号をログに出す | [md_pipeline](spec/md_pipeline.md#残り全部from-end) |
+| `name[1,2,4-END].md` | `procedure` の `insertmd` / `insertmdpages` | カンマ区切り: 番号・`from-to`・`from-END` を書いた順に展開（重複も除かず挿入し、警告を出す） | [md_pipeline](spec/md_pipeline.md#カンマ区切り124-end) |
 | `slides: 3-END` | `procedure` の `insertpptx` | スライド 3 から最後まで（`1, 4-END` のように混在可）。全スライドは `all` | [pptx](spec/pptx.md#insertpptx-の-slides-指定書式) |
 | `fig__10_20_90_80.png` | crop 対象の画像ファイル名 | 末尾の `__{L}_{T}_{R}_{B}`（各 0〜100）で切り出し範囲を指定 | [pipelines](spec/pipelines.md) |
 

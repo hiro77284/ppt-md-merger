@@ -13,6 +13,8 @@ from pptx import Presentation
 from pptx.enum.shapes import MSO_SHAPE_TYPE
 from pptx.oxml.ns import qn
 
+from md_merge._idmarker import malformed_reason
+
 from ._com import dispatch_powerpoint
 from ._xmltext import single_line_text
 from ._csl import (
@@ -587,7 +589,7 @@ def modify_slide_shapes(pptx_path: Path, prs: Any, csl_mode: str, deletecsp: boo
 # Definition marker (declares an ID; collected by idcollect, must be unique per
 # FULL_ID). In notes it also drives label-based title replacement for the slide
 # that owns the definition.
-_ID_MARKER_RE = re.compile(r'\{\{#id:([^}]+)\}\}')
+_ID_MARKER_RE = re.compile(r'\{\{#id:([^}]*)\}\}')
 # Reference markers (NOT definitions, NOT collected; the same FULL_ID may appear
 # on many slides). They look up an already-resolved entry by FULL_ID and stamp it
 # onto the slide title.
@@ -602,6 +604,7 @@ def _parse_title_markers(notes_text: str) -> list[tuple[str, str, bool]]:
       "iddef" — {{#id:FULL_ID}} definition (title := label; nolabel may skip it)
       "num"   — {{enclosenum:FULL_ID}} reference (title := "(number) " + title)
       "label" — {{titlelabel:FULL_ID}} reference (title := label)
+      "bad"   — malformed {{#id:...}} (not TYPE:PART:LOCAL); warned, never applied
     ``nolabel`` is only meaningful for "iddef" (True when {{nolabel}} is on the
     same line).
     """
@@ -610,7 +613,12 @@ def _parse_title_markers(notes_text: str) -> list[tuple[str, str, bool]]:
         # {{nonum}} (unnumbered ID) leaves the slide title as is, like {{nolabel}}.
         nolabel = "{{nolabel}}" in line or "{{nonum}}" in line
         for m in _ID_MARKER_RE.finditer(line):
-            result.append(("iddef", m.group(1), nolabel))
+            if malformed_reason(m.group(1)) is not None:
+                # 形式不正の {{#id:}} は ID として登録されないので "bad" として返し、
+                # 呼び出し側で形式不正の警告を出す（タイトルは置換しない）。
+                result.append(("bad", m.group(1), nolabel))
+            else:
+                result.append(("iddef", m.group(1), nolabel))
         for m in _ENCLOSENUM_RE.finditer(line):
             result.append(("num", m.group(1), False))
         for m in _TITLELABEL_RE.finditer(line):
@@ -679,6 +687,15 @@ def postprocess_idresolve(
         enclosenum_applied = False
 
         for kind, full_id, nolabel in markers:
+            if kind == "bad":
+                reason = malformed_reason(full_id)
+                msg = (
+                    f"[警告] スライド {slide_num}: {{{{#id:{full_id}}}}} の形式が不正です"
+                    f"（{reason}）。{{{{#id:TYPE:PART:LOCAL}}}} の形で書いてください"
+                )
+                logging.warning("idresolve: slide %d: malformed {{#id:%s}}: %s", slide_num, full_id, reason)
+                lines.append(msg)
+                continue
             if has_noreplace:
                 continue
             if kind == "num" and enclosenum_applied:

@@ -86,7 +86,7 @@ PDF の pandoc テンプレートや、プリアンブルに読み込む `.typ`�
 
 #### defaults の多層指定（リスト）
 
-`defaults` / `htmldefaults` / `revealdefaults` は **単一ファイルまたはファイルのリスト**を指定できる。リスト指定時は各ファイルを記載順に `-d` として pandoc へ渡し、pandoc が後勝ちでマージする（スカラー・マップは後のファイルが優先、`filters` 等のリストは後のファイルが置換）。
+`defaults` / `htmldefaults` / `revealdefaults` は **単一ファイルまたはファイルのリスト**を指定できる。リスト指定時は各ファイルを記載順に `-d` として pandoc へ渡し、pandoc が後勝ちでマージする（スカラー・マップは後のファイルが優先。`filters` / `include-in-header` のリストは置き換わらず、前のファイルの後ろに後のファイルの分が足される。pandoc 3.1.3 で確認）。差分の defaults に同梱の `filters` や `include-in-header` を書き写すと二重に読まれるので、差分には足したいものだけを書く。
 
 用途は「変わらない共有基盤」と「文書ごとに変わる部分」の分離。`filters` / `include-in-header` / `toc` 等の基本挙動を共有ベースに集約し、`toc-depth`・`metadata` などを文書ごとの上書きファイルに切り出せる。
 
@@ -177,6 +177,45 @@ typst compile --root <root> <pdfstem>.typ <pdfstem>.pdf
 | 必要なもの | `typst` が PATH 上にあること（0.15.1 で確認） |
 
 セマンティック記法の Typst への変換は `semantics.yaml` の `typst:` 列で定義し、見た目は `semantic_macros.typ` の関数が決める。ブロックの属性は旧 LaTeX（tcolorbox）版と同じ名前・書き方を受け付け、Typst の値に読み替える（`width="0.6\linewidth"` → 60%、`colback=blue!8` → 青 8%＋白、`fontsize="\large"` → 1.2em など）。読み替えられない値は警告して無視する。`typst:` が無いクラスは中身だけが残る。
+
+#### typst のコードを足す（`include-in-header`）
+
+コードブロックの文字の大きさなど、同梱の見た目を一部だけ変えたいときは、typst のコードを書いた `.typ` を defaults の `include-in-header:` で読み込む。レシピの `pandoc` セクションには書かない（version 4 ではエラー。前述「出力ファイルとフォーマットの決定」）。
+
+例: コードブロック（```` ``` ````）の文字を 1.3 倍にする。
+
+```
+recipe_dir/
+├─ my_recipe.yaml
+└─ pandoc/
+   ├─ code_style.yaml
+   └─ code_style.typ
+```
+
+```yaml
+# my_recipe.yaml
+version: 4
+pandoc:
+  defaults:
+    - report_base_defaults.yaml     # 同梱の土台（defaults を書くと自動では付かないので明示する）
+    - pandoc/code_style.yaml        # 差分
+```
+
+```yaml
+# pandoc/code_style.yaml
+include-in-header:
+  - pandoc/code_style.typ           # レシピ dir（workdir）基準。defaults ファイルの場所基準ではない
+```
+
+```typst
+// pandoc/code_style.typ
+#show raw.where(block: true): set text(size: 1.3em)
+```
+
+* 差分の `include-in-header` は土台の分（`semantic_macros.typ` / `report_style.typ`）の後ろに足される（前述「defaults の多層指定」）。`.typ` の中では後に書いた `set` / `show` が優先されるので、同梱の設定をそのまま上書きできる。土台の 2 ファイルを差分に書き写す必要はない
+* `include-in-header` のパスは、`data-dir` → workdir（省略時はレシピ dir）→ 同梱 templates（basename）の順に探す（前述「pandoc defaults ファイル内の `filters` / `include-in-header` / `template` も同様に解決する」）。defaults ファイルの置き場所は基準にならないので、上の例の `code_style.yaml` の中でも `pandoc/code_style.typ` と書く。どこにも見つからないパスはそのまま pandoc に渡り、pandoc を起動するディレクトリ（PDF の出力先）基準で探されるので、たいていは pandoc のエラーになる
+* 書いた typst のコードは `.typ`（`output.pdffilename` と同じ名前で残る）のテンプレート冒頭部分にそのまま入る。typst のエラーはこのファイルで位置を確かめる
+* インラインコード（`` `x` ``）も変えるときは `raw.where(block: true)` を `raw` にする。同梱の `report_style.typ` は `#show raw: set text(font: sem-fonts.mono)` で等幅フォントだけを決めている
 
 ### 完了メッセージ
 

@@ -75,6 +75,7 @@ pptmdmerge merge sample.yaml
 | 数値（ゼロ埋め） | `[01-03]` | `01`, `02`, `03`（桁幅を維持） |
 | 単一英字 | `[a-c]` / `[A-C]` | `a,b,c` / `A,B,C`（降順も可） |
 | 数値（残り全部） | `[1-END]` | `1` から数え、**存在するファイルだけ**（後述） |
+| カンマ区切り | `[1,2,4-END]` | `1`, `2`, `4` 以降の存在するもの（後述） |
 
 仕様・制約:
 
@@ -83,6 +84,26 @@ pptmdmerge merge sample.yaml
 * 全角文字を含むレンジ、`[1-2-3]` のような不正書式は **ValueError** となり、merge ではその insertmd エントリを警告してスキップする。
 * レンジを含まない通常のファイル名はそのまま 1 件として扱う。
 * この展開は `checkgen` / `checkverify` / `validate` の insertmd 判定でも同様に行われる。
+
+#### カンマ区切り（`[1,2,4-END]`）
+
+`[...]` の中に番号・レンジをカンマで区切って並べられる。要素は「番号または単一英字」（`3` / `a`）、「`from-to`」、「`from-END`」のいずれか。
+
+```yaml
+procedure:
+  - insertmd: sourcemd[1,2,4-END].md      # sourcemd1.md, sourcemd2.md, sourcemd4.md 以降の存在するもの
+  - insertmd: chap[5,1-3].md              # chap5.md, chap1.md, chap2.md, chap3.md（書いた順）
+```
+
+* **書いた順**に要素を展開して連結する（並べ替えない）。
+* 同じファイル名が 2 回以上出てきても（例: `[1,2,1-END]`）**除かず、出てきた回数だけ挿入する**（insertpptx の `slides` と同じ）。意図しない重複に気づけるよう、重複したファイル名を warning に出す。
+* ファイルの有無の扱いは要素ごとに従来どおり: 明示した番号と `from-to` はファイルが無くても候補に残る（merge が「見つからない」警告、`--strict` ならエラー）。`from-END` の要素だけが**存在するファイルだけ**を採る。
+* `from-END` の要素で 1 つも見つからなかった場合は、ほかの要素があるので warning ではなく info ログ（`[4-END] に該当するファイルが 1 つもありません`）。飛ばした番号・見つかった最大番号のログも `[4-END]` のように要素名付きで出る。
+* `range-max` は `from-END` の要素に掛かる（`from-END` を含むリストなら書ける）。
+* ゼロ埋めは要素ごとの桁幅（`[01,03-04]` → `01`, `03`, `04`）。カンマ前後の空白は無視する（`[1, 2, 4-END]` も可）。
+* 空の要素（`[1,,2]` / `[1,]`）や不正な要素は ValueError（insertmd エントリを警告してスキップ、`validate` はレンジ不正を警告）。カンマなしの `[3]` は従来どおり書式エラー。全角のカンマ（`，`）も不可。
+* `insertmdpages` でも同じ記法が使える。`from-END` を含まないリストは読み込み時に展開され、含むリストは merge 時に見つかったファイルの間に区切りが入る。
+* 追加的な変更（従来カンマ入りは書式エラー）なので、レシピの `version` は上げない。insertpptx の `slides: 1, 4-END` と同じ並べ方。
 
 #### 残り全部（`[from-END]`）
 
@@ -362,7 +383,7 @@ procedure:
 
 - 値は文字列 1 つ、または文字列のリスト。リスト内は OR、キー同士は AND。
 - **サブコマンドはトップレベルで起動したコマンド名で照合する。** パイプラインは各段に同じ引数を渡すため、`ppt_to_pdf` の中の merge 段では command は `ppt_to_pdf` になる。逆に `merge` を単独実行すると command は `merge` なので、`command: [ppt_to_puremd]` の項目は除外される。`githubmd` は puremd の別名ではなく独立したサブコマンドなので、`command: [puremd]` は `githubmd` 単独実行には一致しない。
-- **`ppt_build` は選んだ出力に対応する `ppt_to_*` の名前で照合する**（`--pdf` → `ppt_to_pdf`、`--githubmd` → `ppt_to_githubmd` 等）。出力ごとに残る項目が異なるとエラーになる（[ppt_build](pipelines.md#ppt_build) を参照）。
+- **`ppt_build` は選んだ出力に対応する `ppt_to_*` の名前で照合する**（`--pdf` → `ppt_to_pdf`、`--githubmd` → `ppt_to_githubmd` 等）。出力ごとに残る項目が異なるとエラーになる（[ppt_build](pipelines.md#ppt_build) を参照）。`--pptx` の `pptmerge` 段だけは別の結合なので `pptmerge` の名前で照合する。
 - `var` の変数はレシピの `vars:` に、全サブコマンド共通の `--var NAME=VALUE`（`--var NAME` だけなら true）を上書きしたもの。真偽判定は行単位の IF ブロックと同じ（偽 = 未定義 / null / 空文字 / false / 文字列 `false`・`0`・`no`・`off`・`none`・`null`）。
 - 旧 `tag` / `not_tag`（`--tag`）は廃止した。`when:` に書かれていると読み込み時・validate ともにエラーになる。`tag: X` は `var: X`、`not_tag: X` は `var: '!X'` に、`--tag X` は `--var X` に置き換える（`!` で始まる値は YAML のタグ記法と衝突するので引用符で囲む）。
 - 条件判定はレシピ読み込み直後に 1 回だけ行い、除外した項目は procedure から取り除いてから後段に渡す（除外した項目は info ログに `procedure[N] (...) をスキップ` と出る）。章・節を除外すると、以降の番号はそのぶん詰まる。
@@ -489,6 +510,7 @@ procedure:
 | `insertvspace` | 数値=baselineskip 単位の倍（整数/小数、省略時 1）、または単位付き長さ `5mm` / `1.5cm` 等 | `{{vspace:N}}` | 垂直スペース |
 | `insertpagebreak` | なし | `{{pagebreak}}` | 改ページ |
 | `insertvfill` | なし | `{{vfill}}` | 残り高を埋める |
+| `insertvfillpagebreak` | なし | `{{vfill}}` + `{{pagebreak}}` | 残り高を埋めて改ページ（insertvfill + insertpagebreak の略記。version 2 以降） |
 
 ```yaml
 procedure:
@@ -498,6 +520,22 @@ procedure:
   - insertmd: b.md
   - insertvfill
 ```
+
+#### 下を埋めて改ページ（insertvfillpagebreak）
+
+`- insertvfillpagebreak` は `- insertvfill` と `- insertpagebreak` の 2 行を 1 行で書く略記（version 2 以降）。ページの残りを空白で埋めてから改ページする（`insertmdpages` がファイルの間に挟む区切りと同じ）。
+
+```yaml
+procedure:
+  - insertmd: a.md
+  - insertvfillpagebreak       # = - insertvfill と - insertpagebreak
+  - insertmd: b.md
+```
+
+- 値は取らない（`- insertvfillpagebreak` または `- insertvfillpagebreak:`）。値を書くとエラー。
+- 読み込み時に `insertvfill` + `insertpagebreak` の 2 項目へ展開されるので、`merge` 以降・`explain`・`validate` からは 2 行で書いた場合と区別できない。`pptmerge` では insertvfill / insertpagebreak と同じく無視される。
+- `when:` は展開した 2 項目の両方に掛かる。`group:` の中にも書ける。`description` などその他の兄弟キーは先頭の insertvfill にだけ残る。
+- 追加的な変更なので、レシピの `version` は上げない。version 1 のレシピでは使えない（エラー）。
 
 `insertvspace` の値が数値でも単位付き長さでもない・負値の場合は警告して `1` を使用する。各出力形式での挙動: PDF は `\par\vspace{N\baselineskip}`（単位付きは `\par\vspace{5mm}` のようにそのまま）/ `\newpage` / `\vspace*{\fill}`、HTML は対応する `<div class>`（vspace は `height`。数値=`em`、単位付き=その単位）、MD（puremd）は vspace/pagebreak/vfill をいずれも破棄する（v1.0.3 までは pagebreak を `---` に変換していた）。
 
@@ -630,6 +668,18 @@ pptmdmerge idcollect recipe.yaml
 | `IDENTIFIER_TYPE` | `chapter` / `section` / `subsection` / `image` / `var`。未知の値は警告を出したうえで受け入れ、処理を続行する |
 | `PART_ID` | パート識別子 |
 | `LOCAL_ID` | ローカル識別子 |
+
+3 つの部は最初の 2 つの `:` で区切る。`IDENTIFIER_TYPE` と `PART_ID` には `:` を含められないが、`LOCAL_ID` は `:` を含んでよい（例: `{{#id:section:p:a:b}}` は `LOCAL_ID` = `a:b`）。どの部も空にはできない。
+
+#### 形式が不正なマーカー
+
+`{{#id:` で始まり `}}` で閉じているが上の形式になっていないもの（`{{#id:section:PARTonly}}` のように部が 2 つ以下、`{{#id:section::s}}` のように空の部がある等）は **ID として登録されない**（inventory に載らず採番もされない。本文には `{{#id:...}}` の文字列のまま残る）。打ち間違いに気づけるよう、次の各段で警告を出す（いずれもエラーにはしない）。
+
+| 段 | 警告 |
+| -- | ---- |
+| `validate` | MD / ノートの該当行（`line N`）と理由を warning として表示（コードブロック内は対象外） |
+| `idcollect` | 結合済み MD 上の行番号・`source` と理由をログに警告 |
+| `pptmerge`（idresolve） | ノートの該当スライド番号と理由を警告し、そのマーカーによるタイトル置換はしない |
 
 ### 抽出ロジック
 

@@ -172,6 +172,27 @@ pptx から画像・MD・図版 YAML を取り出す元（cropsrc）と、crop �
 
 廃止したキー: `engine` / `format` / `template` / `include-in-header` / `include-before-body` / `conditional-process-input` / `conditional-process-output`（LaTeX 用。2026-11-15）と、version 3 までの名前 `typst-cover-md` / `typstdefaults`。version 4 で書くとエラー、version 3 以前は警告して使わない（`engine` に typst 以外はエラー）。`metadata-file` も version 4 で廃止した（エラー。version 3 以前は非推奨の警告を出して使う）。メタデータは defaults ファイルの `metadata:` に書く。typst のテンプレートや `include-in-header` は defaults ファイルに書く。
 
+typst のコードを足す例（コードブロックの文字を 1.3 倍にする）。詳しくは `docs/spec/output_formats.md` の「typst のコードを足す（`include-in-header`）」。
+
+```yaml
+# レシピ
+pandoc:
+  defaults:
+    - report_base_defaults.yaml     # 同梱の土台も明示する
+    - pandoc/code_style.yaml
+```
+
+```yaml
+# pandoc/code_style.yaml（差分の defaults）
+include-in-header:
+  - pandoc/code_style.typ           # レシピ dir（workdir）基準。土台の 2 ファイルは書かない（後ろに足される）
+```
+
+```typst
+// pandoc/code_style.typ
+#show raw.where(block: true): set text(size: 1.3em)
+```
+
 ---
 
 ## pptmerge セクション
@@ -205,10 +226,11 @@ pptx から画像・MD・図版 YAML を取り出す元（cropsrc）と、crop �
 | ---- |:--:|:--:|:--:| ---- |
 | `vars.*` | R | R | R | 変数置換に使用。`mg` は chapter/section タイトルと `insertvar`、`rd` は `{{v:VAR}}`、`pm` はスライドテキスト。表紙（`cover-md` / `htmlcover`）でも `{{v:VAR}}` を置換し、`COVER_TITLE` / `COVER_AUTHOR` / `COVER_SUBTITLE` は PDF の文書プロパティにも使う（`docs/spec/output_formats.md`「PDF の文書プロパティ」）。条件ブロック `{{#if:NAME}}` は merge（insertmd）・pptmdexport・pptyamlexport でも使う。CLI の `--var NAME=VALUE` で上書きできる |
 | `params.*` | R | R | R | 切り替え（`when.var` / `{{#if}}`）に使う変数の宣言。`type`（`bool`/`string`）・`values`・`default`・`description`。`--var` で渡さなければ `default`。宣言があるレシピでは未宣言の名前・取りうる値でない値を読み込み時にエラーにする。`va --list-params` で一覧。詳細は `docs/spec/md_pipeline.md` |
-| `procedure` | R |  | R | `mg` は `insertmd`/`insertvar`/`chapter`/`section`/`subsection`/`insertvspace`/`insertpagebreak`/`insertvfill`、`pm` は `insertpptx`/`chapter`/`section`/`subsection`/`beginstay`/`endstay`。`pm` は MD 専用の操作（`insertmd`/`insertvar`/`insertvspace`/`insertpagebreak`/`insertvfill`）も**許可はするが無視**する（同一 procedure を mg と pm で共用できるようにするため） |
+| `procedure` | R |  | R | `mg` は `insertmd`/`insertvar`/`chapter`/`section`/`subsection`/`insertvspace`/`insertpagebreak`/`insertvfill`（version 2 以降は略記の `insertmdpages`/`insertvfillpagebreak` も）、`pm` は `insertpptx`/`chapter`/`section`/`subsection`/`beginstay`/`endstay`。`pm` は MD 専用の操作（`insertmd`/`insertvar`/`insertvspace`/`insertpagebreak`/`insertvfill`）も**許可はするが無視**する（同一 procedure を mg と pm で共用できるようにするため） |
 | `procedure[].when` | R |  | R | 項目の条件付き適用。`command` / `not_command`（起動サブコマンド名）、`var`（`vars:` ＋ `--var` に対する条件式 `NAME` / `!NAME` / `NAME=VALUE` / `NAME!=VALUE`）。値は文字列またはリスト。`ck`/`cv`/`va` は条件を無視して全項目を対象にする。詳細は `docs/spec/md_pipeline.md` |
-| `procedure[].range-max` | R |  |  | `insertmd` / `insertmdpages` のファイル名が `[from-END]`（残り全部）のときに数える上限の番号（1 以上の整数、省略時 99）。それ以外のファイル名では無視（validate が警告）。詳細は `docs/spec/md_pipeline.md`「残り全部」 |
-| `procedure[].insertmdpages` | R |  | R | （version 2 以降）`insertmd` と同じファイル名（`[from-to]` レンジ可）を展開し、各 MD の間に `insertvfill` + `insertpagebreak` を挟んだ insertmd の並びにする略記。1 ファイルなら insertmd と同じ。読み込み時に展開される（`pm` では insertmd と同じく無視）。詳細は `docs/spec/md_pipeline.md` |
+| `procedure[].range-max` | R |  |  | `insertmd` / `insertmdpages` のファイル名が `[from-END]`（残り全部。`[1,2,4-END]` のようにカンマ区切りの一部でも可）のときに数える上限の番号（1 以上の整数、省略時 99）。それ以外のファイル名では無視（validate が警告）。詳細は `docs/spec/md_pipeline.md`「残り全部」 |
+| `procedure[].insertmdpages` | R |  | R | （version 2 以降）`insertmd` と同じファイル名（`[from-to]` / `[1,2,4-END]` レンジ可）を展開し、各 MD の間に `insertvfill` + `insertpagebreak` を挟んだ insertmd の並びにする略記。1 ファイルなら insertmd と同じ。読み込み時に展開される（`pm` では insertmd と同じく無視）。詳細は `docs/spec/md_pipeline.md` |
+| `procedure[].insertvfillpagebreak` | R |  | R | （version 2 以降）値なし。`insertvfill` + `insertpagebreak` の 2 行の略記で、読み込み時に展開される（`pm` では無視）。詳細は `docs/spec/md_pipeline.md`「下を埋めて改ページ」 |
 | `procedure[].group` | R |  | R | （version 2 以降）項目のリストを束ねる。同じ要素の `when:` が配下の全項目に掛かる（項目自身の `when:` とは AND、入れ子可）。書けるキーは `group` / `when` / `description`。読み込み時に展開される。詳細は `docs/spec/md_pipeline.md` |
 | `separator.enabled` |  |  | R | `insertpptx` 間に空白スライドを挿入するか |
 | `log.filename` |  |  | R | 省略時は `<pptxfilename_stem>_merge.log` |

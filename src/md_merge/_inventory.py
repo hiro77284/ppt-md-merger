@@ -5,7 +5,9 @@ from pathlib import Path
 
 import yaml
 
-_ID_RE = re.compile(r'\{\{#id:([^:}]+):([^:}]+):([^}]+)\}\}')
+from md_merge._idmarker import ID_MARKER_RE as _ID_RE
+from md_merge._idmarker import find_malformed_id_markers
+
 _SOURCE_COMMENT_RE = re.compile(r'^<!-- source: (.+) -->$')
 # md_merge directive comment inserted before auto chapter/section/subsection markers,
 # carrying the numbering value: '+' (increment) or an integer (reset to that value).
@@ -76,6 +78,13 @@ def extract_entries(
         if m_rt:
             pending_rawtitle = m_rt.group(1)
             continue
+
+        for marker, reason in find_malformed_id_markers(line):
+            logging.warning(
+                "Malformed ID marker %s at line %d (%s): %s"
+                " — not registered (expected {{#id:TYPE:PART:LOCAL}})",
+                marker, line_no, current_source, reason,
+            )
 
         matches = list(_ID_RE.finditer(line))
         if not matches:

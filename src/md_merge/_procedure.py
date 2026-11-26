@@ -12,6 +12,7 @@
 v2 以降では ``- group: [...]`` で複数の項目を束ね、``when:`` をまとめて付けられる。
 また ``- insertmdpages: a[1-3].md`` は、レンジ展開した各 MD の間に insertvfill と
 insertpagebreak を挟んだ insertmd の並びの略記（正規化時に展開する。内部表現には残らない）。
+``- insertvfillpagebreak`` は ``- insertvfill`` + ``- insertpagebreak`` の 2 行の略記（同上）。
 グループは正規化時に平らに展開し、グループの ``when:`` は子の内部キー
 ``_group_when`` に (位置, when) の組として引き継ぐ（判定は _conditions.py）。
 
@@ -64,8 +65,11 @@ MDPAGES_SEPARATOR = ("insertvfill", "insertpagebreak")
 # insertmdpages の [from-END] は存在するファイルが merge 時まで決まらないため、正規化では
 # insertmd 1 つに残してこの内部キーを付け、merge のファイル収集で区切りを挟む。
 MDPAGES_INTERNAL_KEY = "_mdpages"
+# v2 の略記操作（内部表現には残らない）。引数なし。正規化時に insertvfill + insertpagebreak へ展開する。
+VFILLPAGEBREAK_OP = "insertvfillpagebreak"
 # v2 の要素に書ける操作キー（内部の操作 + 略記）
-V2_OPS = PROCEDURE_OPS | {MDPAGES_OP}
+V2_SHORTHAND_OPS = frozenset({MDPAGES_OP, VFILLPAGEBREAK_OP})
+V2_OPS = PROCEDURE_OPS | V2_SHORTHAND_OPS
 
 # v1 で operation キーがない場合の既定値 (pptmerge レシピの慣習)
 DEFAULT_OP_V1 = "insertpptx"
@@ -84,6 +88,7 @@ PRIMARY_ARG: dict[str, str | None] = {
     "insertpagebreak": None,
     "insertvfill": None,
     MDPAGES_OP: "mdfilename",
+    VFILLPAGEBREAK_OP: None,
 }
 
 
@@ -112,8 +117,9 @@ def _check_v1_item(i: int, item: object) -> list[str]:
     if GROUP_KEY in item:
         return [f"procedure[{i}]: group は version 2 以降でのみ使えます（version: {LATEST_VERSION} にしてください）"]
     op = item.get("operation")
-    if op == MDPAGES_OP or (op is None and MDPAGES_OP in item):
-        return [f"procedure[{i}]: {MDPAGES_OP} は version 2 以降でのみ使えます（version: {LATEST_VERSION} にしてください）"]
+    for short in sorted(V2_SHORTHAND_OPS):
+        if op == short or (op is None and short in item):
+            return [f"procedure[{i}]: {short} は version 2 以降でのみ使えます（version: {LATEST_VERSION} にしてください）"]
     if op is None:
         allowed: frozenset = frozenset()
     else:
@@ -224,12 +230,31 @@ def _flatten_v2_list(items: list, prefix: str, inherited: tuple) -> list:
             result.extend(_flatten_v2_list(item[GROUP_KEY], f"{label}.{GROUP_KEY}", inner))
             continue
         normalized = _normalize_v2_item(label, item)[0] if isinstance(item, (dict, str)) else item
-        expanded = _expand_mdpages(normalized) if isinstance(normalized, dict) else [normalized]
+        expanded = _expand_shorthand(normalized) if isinstance(normalized, dict) else [normalized]
         for one in expanded:
             if inherited and isinstance(one, dict):
                 one[INHERITED_WHEN_KEY] = list(inherited)
             result.append(one)
     return result
+
+
+def _expand_shorthand(item: dict) -> list[dict]:
+    """v2 の略記操作（insertmdpages / insertvfillpagebreak）を内部の操作の並びへ展開する。"""
+    if item.get("operation") == VFILLPAGEBREAK_OP:
+        return _expand_vfillpagebreak(item)
+    return _expand_mdpages(item)
+
+
+def _expand_vfillpagebreak(item: dict) -> list[dict]:
+    """insertvfillpagebreak を insertvfill / insertpagebreak の 2 項目へ展開する。
+
+    ``when:`` は両方に付ける（片方だけ残らないように）。その他の兄弟キー
+    （``description`` 等）は先頭の insertvfill にだけ残す。
+    """
+    extras = {k: v for k, v in item.items() if k != "operation"}
+    shared = {k: v for k, v in extras.items() if k == "when"}
+    first, second = MDPAGES_SEPARATOR
+    return [{"operation": first, **extras}, {"operation": second, **shared}]
 
 
 def _expand_mdpages(item: dict) -> list[dict]:

@@ -7,6 +7,7 @@
 - ``params:`` で宣言したのにどこからも参照されていない変数
 - 宣言された値のどの組み合わせでも結果が変わらない ``when:``（常に適用／常に除外）
 - 入れ子が深すぎる ``{{#if}}``（3 段以上）と ``group``（2 段以上）
+- 形式が崩れた ``{{#id:...}}``（TYPE:PART:LOCAL の 3 部がそろっていない等）
 - 番号マーカー（``{{nolabel}}`` / ``{{noref}}`` / ``{{nonum}}``）の置き場所・組み合わせの誤り
 - 同じ ``when:`` を続けて何度も書いている箇所（group にまとめる提案。info）
 
@@ -24,6 +25,7 @@ from pathlib import Path
 
 from md_merge._condblock import _RE_ELSE, _RE_ENDIF, _RE_EXPR, _RE_FENCE, _RE_IF, eval_condition
 from md_merge._conditions import WHEN_KEY, _as_list, iter_whens
+from md_merge._idmarker import find_malformed_id_markers
 from md_merge._noref import NOREF_BEGIN, NOREF_BEGIN_RE, NOREF_END, NOREF_END_RE
 from md_merge._params import PARAMS_KEY, param_domain
 from md_merge._procedure import GROUP_KEY, INHERITED_WHEN_KEY
@@ -183,6 +185,12 @@ def _scan_source(src: Source, refs: list[_Ref], result: LintResult) -> None:
         if noref_where is None:  # 置換抑制範囲内の {{v:}} は置換されないので検査しない
             for m in _VAR_REF_RE.finditer(raw):
                 refs.append(_Ref(m.group(1), where))
+
+        for marker, reason in find_malformed_id_markers(raw):
+            result.warnings.append(
+                f"{where}: {marker} の形式が不正です（{reason}）。"
+                "{{#id:TYPE:PART:LOCAL}} の形で書かないと ID として登録されません"
+            )
 
         markers = set(_MARKER_RE.findall(raw))
         if markers and not _ID_RE.search(raw):

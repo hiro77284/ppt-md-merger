@@ -1,6 +1,6 @@
 """ppt_build: run the shared front half (pptpdfexport … render) once, then the
-selected output tails (--pdf / --puremd / --githubmd / --notecom / --transfer).
-With no output option it stops after render and keeps the rendered MD.
+selected output tails (--pdf / --puremd / --githubmd / --notecom / --transfer /
+--pptx). With no MD output option it stops after render and keeps the rendered MD.
 
 Each output corresponds to one existing pipeline command (``ppt_to_pdf`` etc.).
 Running them together saves repeating the front half, which every ppt_to_*
@@ -10,6 +10,14 @@ pipeline shares unchanged.
 against those equivalent commands, because the single merge run has to serve
 every selected output. If the filtered procedure would differ between them,
 the outputs cannot share one merge and the command stops with an error.
+
+``--pptx`` runs ``pptmerge`` with the same recipe (the merged pptx,
+output.pptxfilename). It is a separate merge of the ``insertpptx`` items, so its
+procedure is filtered with ``when.command: pptmerge`` exactly like the standalone
+command, and it does not take part in the consistency check above. It runs after
+idresolve (so ``indexer.pptxnumbering: idresolve`` can read the resolved-id map
+before cleanup deletes it) and before pandoc. It needs PowerPoint (Windows +
+pywin32); elsewhere the command stops before running any step.
 """
 
 from __future__ import annotations
@@ -31,6 +39,8 @@ from md_merge.pandoc import run as run_pandoc
 from md_merge.ppt_to_pdf import check_pdf_collision
 from md_merge.pptimgexport import run as run_pptimgexport
 from md_merge.pptmdexport import run as run_pptmdexport
+from md_merge.pptmerge import run as run_pptmerge
+from md_merge.pptmerge._com import powerpoint_unavailable_reason
 from md_merge.pptpdfexport import run as run_pptpdfexport
 from md_merge.puremd import run as run_puremd
 from md_merge.render import run as run_render
@@ -39,7 +49,13 @@ from md_merge.transfer import run as run_transfer
 COMMAND = "ppt_build"
 
 # Output flags (argparse dest) in the order they are reported.
-OUTPUT_FLAGS = ("pdf", "puremd", "githubmd", "notecom", "transfer")
+OUTPUT_FLAGS = ("pdf", "puremd", "githubmd", "notecom", "transfer", "pptx")
+
+# Outputs produced from the MD pipeline (everything except the pptxmerge-side --pptx).
+MD_OUTPUT_FLAGS = ("pdf", "puremd", "githubmd", "notecom", "transfer")
+
+# The standalone command the --pptx step is equivalent to (for when.command).
+PPTX_COMMAND = "pptmerge"
 
 _FRONT_STEPS: list[tuple[str, object]] = [
     ("pptpdfexport", run_pptpdfexport),
@@ -56,11 +72,42 @@ def selected_outputs(args: argparse.Namespace) -> list[str]:
     return [name for name in OUTPUT_FLAGS if getattr(args, name, False)]
 
 
+def _md_outputs(outputs: list[str]) -> list[str]:
+    return [o for o in outputs if o in MD_OUTPUT_FLAGS]
+
+
+def run_pptx_step(args: argparse.Namespace) -> int:
+    """Run pptmerge as the --pptx step, as if ``pptmerge`` were run with the same recipe.
+
+    - when.command is matched against ``pptmerge`` (not the MD-side command)
+    - the insertpptx drift check follows the user's --no-check (the pipeline
+      turns args.no_check on to stop the merge step re-running the insertmd check)
+    - pptmerge's own --preprocess copies are added to the pipeline's override map
+      so the pipeline cleanup still sees the cropsrc copies it made
+    """
+    from md_merge._preprocess import _OVERRIDE_ATTR
+
+    saved_cmd = getattr(args, "condition_command", None)
+    saved_no_check = getattr(args, "no_check", False)
+    saved_override = dict(getattr(args, _OVERRIDE_ATTR, None) or {})
+    args.condition_command = PPTX_COMMAND
+    args.no_check = getattr(args, "pptx_no_check", saved_no_check)
+    try:
+        return run_pptmerge(args)
+    finally:
+        args.condition_command = saved_cmd
+        args.no_check = saved_no_check
+        merged = dict(getattr(args, _OVERRIDE_ATTR, None) or {})
+        merged.update(saved_override)
+        setattr(args, _OVERRIDE_ATTR, merged or None)
+
+
 def build_steps(outputs: list[str]) -> list[tuple[str, object]]:
     """Front half + the tails the selected outputs need, in dependency order.
 
     pandoc runs last: it is the slowest and most failure-prone step, so the MD
-    deliverables already exist even when the PDF fails.
+    deliverables already exist even when the PDF fails. pptmerge (--pptx) runs
+    just before it, after the MD tails, for the same reason (PowerPoint COM).
     """
     sel = set(outputs)
     steps = list(_FRONT_STEPS)
@@ -72,6 +119,8 @@ def build_steps(outputs: list[str]) -> list[tuple[str, object]]:
         steps.append(("notecomexport", run_notecomexport))
     if "transfer" in sel:
         steps.append(("transfer", run_transfer))
+    if "pptx" in sel:
+        steps.append(("pptmerge", run_pptx_step))
     if "pdf" in sel:
         steps.append(("pandoc", run_pandoc))
     return steps
@@ -82,9 +131,10 @@ def work_file_keys(outputs: list[str]) -> tuple[str, ...]:
 
     Mirrors the single-output pipelines: ppt_to_pdf keeps the rendered MD,
     ppt_to_puremd / ppt_to_githubmd / ppt_to_notecom keep the puremd MD, and a
-    transfer-only run (ppt_to_transfer) keeps neither.
+    transfer-only run (ppt_to_transfer) keeps neither. --pptx alone counts as
+    no MD output (the rendered MD is kept, as when stopping after render).
     """
-    sel = set(outputs)
+    sel = set(_md_outputs(outputs))
     keep: set[str] = set()
     if not sel or "pdf" in sel:  # 出力指定なし = render まで（rendered MD が成果物）
         keep.add("renderedfilename")
@@ -101,8 +151,12 @@ def transfer_source_key(outputs: list[str]) -> str | None:
 
 
 def equivalent_commands(outputs: list[str]) -> list[str]:
-    """The ppt_to_* commands whose deliverables this run produces (for when.command)."""
-    sel = set(outputs)
+    """The ppt_to_* commands whose deliverables this run produces (for when.command).
+
+    --pptx is not included: its pptmerge step filters the procedure on its own
+    (as ``pptmerge``), see run_pptx_step.
+    """
+    sel = set(_md_outputs(outputs))
     cmds: list[str] = []
     # 出力指定なし（render まで）は ppt_to_pdf と同じ rendered MD を作るので ppt_to_pdf で照合する
     if not sel or "pdf" in sel:
@@ -161,6 +215,25 @@ def run(args: argparse.Namespace) -> int:
         return code
     args.condition_command = cond_cmd
     logging.info("[%s] outputs: %s", COMMAND, ", ".join(outputs) or "rendered (render まで)")
+
+    if "pptx" in outputs:
+        # pipeline は insertmd チェックの二重実行を避けるため no_check を上書きするので、
+        # pptmerge ステップ用に利用者の指定を退避しておく
+        args.pptx_no_check = getattr(args, "no_check", False)
+        if not getattr(args, "dry_run", False):
+            reason = powerpoint_unavailable_reason()
+            if reason is not None:
+                logging.error(
+                    "--pptx（pptmerge）は PowerPoint を使うため Windows + pywin32 が必要です"
+                    "（%s）。--pptx を外すか、Windows で実行してください", reason,
+                )
+                return EXIT_BAD_INPUT
+    else:
+        for dest, opt in (("delete_csl", "--deletecsl"), ("pptxnumbering", "--pptxnumbering")):
+            if getattr(args, dest, None) is not None and not (
+                dest == "delete_csl" and getattr(args, "preprocess", False)
+            ):  # --preprocess 付きの --deletecsl は前処理側で警告する
+                logging.warning("%s は --pptx を指定したときだけ有効です（無視します）", opt)
 
     if "pdf" in outputs:
         code = check_pdf_collision(args)

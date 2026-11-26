@@ -178,6 +178,7 @@ pptmdmerge validate recipe.yaml --var TARGET=RECIPRO   # --var の値も宣言�
 | 未使用の param | `params:` で宣言したが when.var / insertvar / MD / ノートのどこからも参照されていない（表紙テンプレートだけで使う場合は無視してよい） | warning |
 | 結果が変わらない when | 値を列挙できる param（`values` / `bool`）だけを使う `when.var` で、どの値の組み合わせでも常に適用、または常に除外になる（group から引き継いだ条件も含めて判定。`command` 条件は見ない） | warning |
 | 深すぎる入れ子 | `{{#if}}` が 3 段以上、`group` が 2 段以上 | warning |
+| 形式が不正な `{{#id:}}` | `{{#id:...}}` が `TYPE:PART:LOCAL` の 3 部になっていない（`{{#id:section:PARTonly}}` 等）、または空の部がある。ID として登録されず本文に残る（[md_pipeline のマーカーフォーマット](md_pipeline.md#マーカーフォーマット)参照）。コードブロック内は対象外 | warning |
 | 番号マーカーの誤り | `{{nolabel}}` / `{{noref}}` / `{{nonum}}` が `{{#id:}}` の無い行にある（効かない）。`{{nolabel}}` と `{{nonum}}` の併用（`nonum` は採番しないので `nolabel` は不要） | warning |
 | `indexer.autoid` | 値が true / false 以外。`true` なのに `indexer.pptxnumbering` が `no`（番号が付かない） | warning |
 | 同じ when の連続 | トップレベルで同じ `when:` が 3 回以上続く（insertvfill 等の区切りは連続を切らない）。`- group:` にまとめる提案 | info |

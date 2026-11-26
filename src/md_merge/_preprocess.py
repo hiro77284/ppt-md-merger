@@ -177,7 +177,11 @@ def apply_preprocess(args: argparse.Namespace) -> int:
         return ctx
     yaml_path, recipe, workdir, deletecsp, vars_map, outdir = ctx
 
-    if getattr(args, "delete_csl", None) is not None:
+    if getattr(args, "pptx", False):
+        # ppt_build --pptx: CSL 処理は後段の pptmerge ステップ（結合済み pptx）で行う
+        if getattr(args, "delete_csl", None) is not None or (recipe.get("indexer") or {}).get("deletecsl"):
+            logging.info("CSL 処理は前処理では行わず、--pptx の pptmerge（結合済み pptx）でだけ行います")
+    elif getattr(args, "delete_csl", None) is not None:
         logging.warning(
             "--deletecsl はパイプラインでは無視されます"
             "（CSL スライド削除は pptmerge の最後でのみ行います）"

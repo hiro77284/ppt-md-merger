@@ -230,6 +230,10 @@ procedure:
       type: "null"
       description: 残り高を埋める空白を挿入する
 
+    insertvfillpagebreak:
+      type: "null"
+      description: insertvfill + insertpagebreak の略記。読み込み時に 2 項目へ展開する。version 2 以降
+
     slides:
       type: string | array[integer]
       required: false

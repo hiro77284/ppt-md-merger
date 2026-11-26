@@ -310,6 +310,7 @@ python tools/notecom_autopilot.py build/<base>_notecom.yaml --auth-state auth.js
 pptmdmerge ppt_build recipe.yaml --pdf --githubmd
 pptmdmerge ppt_build recipe.yaml --pdf --githubmd --transfer   # GitHub 用 MD を転送
 pptmdmerge ppt_build recipe.yaml --puremd --notecom --transfer  # puremd MD を転送
+pptmdmerge ppt_build recipe.yaml --pdf --pptx                  # PDF と結合済み pptx（pptmerge）を 1 回で
 pptmdmerge ppt_build recipe.yaml                                # 出力指定なし: render まで（rendered MD を残す）
 ```
 
@@ -324,8 +325,9 @@ pptmdmerge ppt_build recipe.yaml                                # 出力指定�
 | `--githubmd` | `puremd` → `githubmd` | `output.githubmdfilename`（puremd MD も残す） | `ppt_to_githubmd` |
 | `--notecom` | `puremd` → `notecomexport` | `output.notecomyamlfilename`（puremd MD も残す） | `ppt_to_notecom` |
 | `--transfer` | `puremd` → `transfer` | `transfer.dataentry_input` への転送 | `ppt_to_transfer`（`--puremd` / `--githubmd` と併用時はそれぞれの `--transfer`） |
+| `--pptx` | `pptmerge` | `output.pptxfilename`（結合済み pptx） | `pptmerge`（詳細は [`--pptx`（pptmerge）](#--pptxpptmerge)） |
 
-* `render` の後の段は `puremd` → `githubmd` → `notecomexport` → `transfer` → `pandoc` の順に、選んだものだけ実行する。`puremd` は MD 系の出力のどれかを選べば 1 回だけ入る。**`pandoc` は最後**に回す（最も時間がかかり失敗しやすいため。PDF が失敗しても MD 系の成果物は残る）。
+* `render` の後の段は `puremd` → `githubmd` → `notecomexport` → `transfer` → `pptmerge` → `pandoc` の順に、選んだものだけ実行する。`puremd` は MD 系の出力のどれかを選べば 1 回だけ入る。**`pandoc` は最後**に回す（最も時間がかかり失敗しやすいため。PDF が失敗しても MD 系の成果物は残る）。`pptmerge`（`--pptx`）も PowerPoint を操作して時間がかかるので MD 系の後、`pandoc` の直前に置く。
 * 中間生成ファイルの削除は、各出力に対応する `ppt_to_*` が残すファイルの和集合を残し、それ以外を削除する（`--pdf` なら `output.renderedfilename`、`--puremd` / `--githubmd` / `--notecom` なら `output.puremdfilename` を残す）。`--keep-work` で全て残す。
 * `--pdf` を含むときは `ppt_to_pdf` と同じく、`source.cropsrc` のスライド PDF と成果物 PDF のパス衝突を開始前に検査する。
 
@@ -337,13 +339,25 @@ pptmdmerge ppt_build recipe.yaml                                # 出力指定�
 
 1 回の merge で全ての出力を作るため、procedure の `when.command` / `not_command` は、選んだ出力に対応するコマンド（上表の「同等のコマンド」。出力指定なしなら `ppt_to_pdf`）の名前で照合する。対応するコマンドごとに残る procedure 項目が**同じなら**そのまま 1 回で実行する。**異なる場合**（例: `not_command: ppt_to_pdf` の項目があるレシピで `--pdf --githubmd`）は、1 回の merge では両方を正しく作れないので**開始前にエラー（終了コード 2）**とし、該当する `ppt_to_*` を別々に実行するよう案内する。`ppt_build` 自体の名前は `when.command` には書けない。
 
-固有オプションは出力オプションのほか `--workdir` / `--force` / `--rebuild` / `--preprocess` / `--deletecsl`（無視）/ `--deletecsp` / `--no-check` / `--keep-work` / `--yes-clear-dir` / `--source`。
+### `--pptx`（pptmerge）
+
+`--pptx` を付けると、同じレシピで `pptmerge` を実行して結合済み pptx（`output.pptxfilename`）も作る。`pptmerge recipe.yaml` を別に実行するのと同じ結果になる。
+
+* **実行位置**: `idresolve` より後（MD 系の出力の後、`pandoc` の直前）。`indexer.pptxnumbering: idresolve` のときは `idresolve` が作った `output.idresolvedfilename` を読んで番号を振る。ID 解決済みマップは work ファイルとして最後に削除されるが、削除は全段の後なので `pptmerge` からは読める。
+* **MD 系の出力は増えない**: `--pptx` だけを指定した場合、MD 側は出力指定なしと同じ扱い（`render` まで実行し、rendered MD を残す。`when.command` は `ppt_to_pdf` で照合）。
+* **`when.command`**: `pptmerge` 段は MD の merge とは別の結合なので、procedure を **`pptmerge` の名前で**照合する（単独の `pptmerge` と同じ項目が残る）。MD 側の「出力ごとに procedure が同じか」の検査には加わらない。
+* **Windows 専用**: `pptmerge` は PowerPoint（Windows + pywin32）を使う。win32com を読み込めない環境で `--pptx` を指定すると、**どの段も実行せずに開始前にエラー（終了コード 2）**にする（`--dry-run` のときは検査しない）。
+* **上書き**: 既存の pptx を上書きするには `--force` か `output.force: true` が要る（`pptmerge` と同じ）。`pptmerge` の差分スキップは ID 解決済みマップも入力に含めるため、`ppt_build` では毎回作り直しになることが多い。
+* **`pptmerge` 段にだけ効くオプション**: `--deletecsl`（結合済み pptx の CSL 処理）、`--pptxnumbering`（`indexer.pptxnumbering` を上書き）。`--pptx` なしで指定すると無視して警告する。
+* **両方に効くオプション**: `--deletecsp`（前処理と結合済み pptx）、`--rebuild`（`pptpdfexport` の PDF と結合済み pptx を作り直す）、`--preprocess`（`source.cropsrc.pptx` に加え、`pptmerge` 段では procedure の insertpptx 元も前処理する。`pptmerge --preprocess` と同じ）、`--no-check`（insertmd のドリフトゲートに加え insertpptx のドリフトチェックも省く）。
+
+固有オプションは出力オプションのほか `--workdir` / `--force` / `--rebuild` / `--preprocess` / `--deletecsl`（`--pptx` 時のみ有効）/ `--deletecsp` / `--pptxnumbering`（`--pptx` 時のみ有効）/ `--no-check` / `--keep-work` / `--yes-clear-dir` / `--source`。
 
 ---
 
 ## パイプラインにおける CSL マーカーの扱い
 
-全体方針として **CSL スライド削除処理は `pptmerge` の最後（結合済み pptx）でのみ行う**。`ppt_to_pdf` / `ppt_to_transfer` / `ppt_to_puremd` / `ppt_to_githubmd` / `ppt_to_notecom` / `ppt_build` / `crop_to_pdf` のパイプライン系コマンドは `pptmerge` を通らないため、**CSL マーカーを一切処理しない**。
+全体方針として **CSL スライド削除処理は `pptmerge` の最後（結合済み pptx）でのみ行う**。`ppt_to_pdf` / `ppt_to_transfer` / `ppt_to_puremd` / `ppt_to_githubmd` / `ppt_to_notecom` / `ppt_build` / `crop_to_pdf` のパイプライン系コマンドは `pptmerge` を通らないため、**CSL マーカーを一切処理しない**（例外は `ppt_build --pptx` の `pptmerge` 段で、ここでは単独の `pptmerge` と同じく結合済み pptx に CSL 処理を行う。PDF・MD 側は下表のとおり未処理のまま）。
 
 | 項目 | 挙動 |
 | ---- | ---- |

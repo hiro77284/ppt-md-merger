@@ -1,5 +1,8 @@
 """insertmd のファイル名に書く ``[from-to]`` レンジの展開。
 
+``[1,2,4-END]`` のようにカンマ区切りで番号・レンジを並べることもできる（書いた順に
+展開して連結する。重複は insertpptx の slides と同じく除かず、警告だけ出す）。
+
 merge（ファイル収集）・validate・procedure の正規化（insertmdpages の展開）で共用する。
 
 to に ``END`` を書くと「残り全部」（終端開放レンジ）。from から 1 ずつ数え、
@@ -39,8 +42,12 @@ def is_open_range(val: object) -> bool:
     parts = _split_range(val)
     if parts is None:
         return False
-    spec = parts[1].split("-")
-    return len(spec) == 2 and spec[1].upper() == END_KEYWORD
+    return any(_is_open_element(e) for e in parts[1].split(","))
+
+
+def _is_open_element(elem: str) -> bool:
+    pair = elem.strip().split("-")
+    return len(pair) == 2 and pair[1].upper() == END_KEYWORD
 
 
 def parse_range_max(raw: object) -> int:
@@ -81,6 +88,7 @@ def _expand_open(
     exists: "Callable[[str], bool] | None",
     range_max: object,
     log: bool,
+    in_list: bool = False,
 ) -> list[str]:
     if not frm.isdigit():
         raise ValueError(f"[from-{END_KEYWORD}] の from は数値で指定してください: [{frm}-{END_KEYWORD}]")
@@ -99,20 +107,25 @@ def _expand_open(
     found = [(n, name) for n, name in candidates if exists(name)]
     if log:
         if not found:
-            logging.warning(
+            # カンマ区切りの一部（[1,2,4-END] の 4-END 等）なら「追加分なし」も普通なので info
+            logging.log(
+                logging.INFO if in_list else logging.WARNING,
+                "insertmd: %s の [%s-%s] に該当するファイルが 1 つもありません（%d〜%d を探索）"
+                if in_list else
                 "insertmd: %s に該当するファイルが 1 つもありません（%d〜%d を探索）",
-                val, frm_i, max_i,
+                *((val, frm, END_KEYWORD) if in_list else (val,)), frm_i, max_i,
             )
         else:
             last = found[-1][0]
             found_nums = {n for n, _ in found}
             skipped = [n for n in range(frm_i, last + 1) if n not in found_nums]
+            label = f"{val} の [{frm}-{END_KEYWORD}]" if in_list else val
             logging.info(
                 "insertmd: %s → %d 件（見つかった最大番号 %d、探索上限 %d）",
-                val, len(found), last, max_i,
+                label, len(found), last, max_i,
             )
             if skipped:
-                logging.info("insertmd: %s でスキップした番号: %s", val, _format_numbers(skipped))
+                logging.info("insertmd: %s でスキップした番号: %s", label, _format_numbers(skipped))
     return [name for _, name in found]
 
 
@@ -122,13 +135,21 @@ def expand_mdfilename(
     range_max: object = None,
     log: bool = True,
 ) -> list[str]:
-    """Expand a single ``[from-to]`` range in *val* and return the filename list.
+    """Expand a single ``[...]`` range in *val* and return the filename list.
 
-    ``[from-END]`` counts up from *from* to *range_max* (default
+    The bracket holds one element or a comma-separated list of elements
+    (``[1,2,4-END]``). Each element is a number / single letter, a ``from-to``
+    range, or ``from-END``. Elements are expanded in the written order and
+    concatenated; duplicate names are kept (inserted each time, like insertpptx
+    ``slides``) and logged as a warning.
+
+    ``from-END`` counts up from *from* to *range_max* (default
     :data:`DEFAULT_RANGE_MAX`) and keeps only the names for which *exists*
     returns True. Without *exists* every candidate up to *range_max* is returned
-    (name-only callers). With *log*, skipped numbers and the largest number found
-    are logged.
+    (name-only callers). Explicit numbers and ``from-to`` ranges are kept
+    whether or not the file exists (missing files are reported by the caller,
+    as before). With *log*, skipped numbers and the largest number found are
+    logged.
 
     Raises ValueError for invalid range specifications.
     """
@@ -140,14 +161,59 @@ def expand_mdfilename(
     if not spec.isascii():
         raise ValueError(f"全角文字は使用できません: [{spec}]")
 
-    pair = spec.split("-")
+    elems = [e.strip() for e in spec.split(",")]
+    in_list = len(elems) > 1
+    if in_list and not all(elems):
+        raise ValueError(f"カンマ区切りに空の要素があります: [{spec}]")
+
+    names: list[str] = []
+    for elem in elems:
+        names.extend(
+            _expand_element(val, prefix, elem, suffix, exists, range_max, log, in_list)
+        )
+    if not in_list:
+        return names
+
+    seen: set[str] = set()
+    dups: list[str] = []
+    for name in names:
+        if name in seen and name not in dups:
+            dups.append(name)
+        seen.add(name)
+    if dups and log:
+        logging.warning(
+            "insertmd: %s で同じファイルを複数回挿入します: %s",
+            val, ", ".join(dups),
+        )
+    return names
+
+
+def _expand_element(
+    val: str,
+    prefix: str,
+    elem: str,
+    suffix: str,
+    exists: "Callable[[str], bool] | None",
+    range_max: object,
+    log: bool,
+    in_list: bool,
+) -> list[str]:
+    """``[...]`` 内の 1 要素（``3`` / ``a`` / ``2-4`` / ``4-END``）を展開する。"""
+    if "-" not in elem:
+        if in_list and (elem.isdigit() or (len(elem) == 1 and elem.isalpha())):
+            return [prefix + elem + suffix]
+        raise ValueError(
+            f"[from-to] 形式、またはカンマ区切りの番号・レンジで指定してください: [{elem}]"
+        )
+
+    pair = elem.split("-")
     if len(pair) != 2 or not pair[0] or not pair[1]:
-        raise ValueError(f"[from-to] 形式で指定してください: [{spec}]")
+        raise ValueError(f"[from-to] 形式で指定してください: [{elem}]")
 
     frm, to = pair
 
     if to.upper() == END_KEYWORD:
-        return _expand_open(val, prefix, frm, suffix, exists, range_max, log)
+        return _expand_open(val, prefix, frm, suffix, exists, range_max, log, in_list)
 
     if frm.isdigit() and to.isdigit():
         frm_i, to_i = int(frm), int(to)
@@ -161,10 +227,10 @@ def expand_mdfilename(
 
     if len(frm) == 1 and len(to) == 1 and frm.isalpha() and to.isalpha():
         if frm.isupper() != to.isupper():
-            raise ValueError(f"from と to の大文字小文字が一致しません: [{spec}]")
+            raise ValueError(f"from と to の大文字小文字が一致しません: [{elem}]")
         step = 1 if frm <= to else -1
         return [prefix + chr(c) + suffix for c in range(ord(frm), ord(to) + step, step)]
 
     raise ValueError(
-        f"from/to は数値または単一アルファベット文字で指定してください: [{spec}]"
+        f"from/to は数値または単一アルファベット文字で指定してください: [{elem}]"
     )

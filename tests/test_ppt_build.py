@@ -143,5 +143,77 @@ class TestRun(unittest.TestCase):
         cc.assert_called_once()
 
 
+class TestPptx(unittest.TestCase):
+    def test_steps_pptmerge_before_pandoc(self):
+        self.assertEqual(_names(["pptx"]), _FRONT + ["pptmerge"])
+        self.assertEqual(
+            _names(["pdf", "githubmd", "pptx"]),
+            _FRONT + ["puremd", "githubmd", "pptmerge", "pandoc"],
+        )
+
+    def test_pptx_is_not_an_md_output(self):
+        # --pptx だけなら MD 側は「render まで」と同じ扱い
+        self.assertEqual(pb.work_file_keys(["pptx"]), pb.work_file_keys([]))
+        self.assertEqual(pb.equivalent_commands(["pptx"]), ["ppt_to_pdf"])
+        self.assertEqual(pb.equivalent_commands(["githubmd", "pptx"]), ["ppt_to_githubmd"])
+        self.assertIsNone(pb.transfer_source_key(["pptx"]))
+
+    def test_pptx_step_matches_pptmerge_and_restores_args(self):
+        seen = {}
+
+        def fake_pptmerge(a):
+            seen["cmd"] = a.condition_command
+            seen["no_check"] = a.no_check
+            a.cropsrc_pptx_override = {"x.pptx": "x_preprocessed.pptx"}
+            return EXIT_OK
+
+        args = _args(pptx=True, condition_command="ppt_to_pdf", no_check=True, pptx_no_check=False,
+                     cropsrc_pptx_override={"g.pptx": "g_preprocessed.pptx"})
+        with mock.patch.object(pb, "run_pptmerge", side_effect=fake_pptmerge):
+            self.assertEqual(pb.run_pptx_step(args), EXIT_OK)
+        self.assertEqual(seen, {"cmd": "pptmerge", "no_check": False})
+        self.assertEqual(args.condition_command, "ppt_to_pdf")
+        self.assertTrue(args.no_check)
+        self.assertEqual(args.cropsrc_pptx_override,
+                         {"x.pptx": "x_preprocessed.pptx", "g.pptx": "g_preprocessed.pptx"})
+
+    def test_pptx_procedure_filtered_as_pptmerge(self):
+        from md_merge._conditions import filter_procedure
+        recipe = {"version": 4, "procedure": [
+            {"operation": "insertpptx", "pptxfilename": "a.pptx"},
+            {"operation": "insertpptx", "pptxfilename": "b.pptx", "when": {"command": "pptmerge"}},
+        ]}
+        ns = argparse.Namespace(subcommand="ppt_build", condition_command=pb.PPTX_COMMAND)
+        names = [i["pptxfilename"] for i in filter_procedure(recipe, ns)["procedure"]]
+        self.assertEqual(names, ["a.pptx", "b.pptx"])
+
+    def test_no_powerpoint_stops_before_pipeline(self):
+        with mock.patch.object(pb, "run_pipeline", return_value=0) as rp, \
+             mock.patch.object(pb, "powerpoint_unavailable_reason", return_value="no win32com"):
+            with self.assertLogs(level="ERROR"):
+                self.assertEqual(pb.run(_args(pdf=True, pptx=True)), EXIT_BAD_INPUT)
+        rp.assert_not_called()
+
+    def test_dry_run_skips_powerpoint_check(self):
+        with mock.patch.object(pb, "run_pipeline", return_value=0) as rp, \
+             mock.patch.object(pb, "powerpoint_unavailable_reason", return_value="no win32com"):
+            self.assertEqual(pb.run(_args(pptx=True, dry_run=True)), EXIT_OK)
+        self.assertEqual([n for n, _ in rp.call_args.kwargs["steps"]], _FRONT + ["pptmerge"])
+
+    def test_pptx_only_options_warn_without_pptx(self):
+        with mock.patch.object(pb, "run_pipeline", return_value=0):
+            with self.assertLogs(level="WARNING") as cm:
+                pb.run(_args(pptxnumbering="idresolve", delete_csl="on"))
+        text = "\n".join(cm.output)
+        self.assertIn("--pptxnumbering", text)
+        self.assertIn("--deletecsl", text)
+
+    def test_cli_parses_pptx(self):
+        from md_merge.__main__ import _make_parser
+        a = _make_parser().parse_args(["ppt_build", "r.yaml", "--pdf", "--pptx", "--pptxnumbering", "idresolve"])
+        self.assertTrue(a.pptx)
+        self.assertEqual(a.pptxnumbering, "idresolve")
+
+
 if __name__ == "__main__":
     unittest.main()

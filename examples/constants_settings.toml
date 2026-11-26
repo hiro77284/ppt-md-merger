@@ -30,11 +30,6 @@ __REVISION__     = 'Rev.A'
 # 大文字の特殊定数にしている。中身は semantic 記法の procedure なので
 # Typst/LaTeX どちらのエンジンでも使える。
 
-# 共通 LaTeX パッケージ群
-# 使用例（recipe yaml 内）:
-#   include-in-header:
-#     __LATEX_PACKAGES__
-
 # ページ送り（{{pagebreak}}）
 __NEWPAGE__ = '''
 - insertpagebreak:

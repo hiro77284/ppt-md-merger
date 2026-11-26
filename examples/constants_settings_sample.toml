@@ -23,19 +23,8 @@ __REVISION__     = 'Rev.A'
 
 __OUTPUTDIR__    = 'build'
 
-# ─── LaTeX 複数行定数（行まるごと置換）───────────────────────────────────────
+# ─── 複数行定数（行まるごと置換）─────────────────────────────────────────────
 # シングルクォート ''' ''' でバックスラッシュをそのまま書ける
-
-# 共通 LaTeX パッケージ群
-# 使用例（recipe yaml 内）:
-#   include-in-header:
-#     __LATEX_PACKAGES__
-__LATEX_PACKAGES__ = '''
-\usepackage{luatexja}
-\usepackage{graphicx}
-\usepackage{booktabs}
-\usepackage{longtable}
-'''
 
 # 表紙用変数ブロック
 # 使用例（recipe yaml 内）:
